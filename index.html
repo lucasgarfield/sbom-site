@@ -1,15 +1,15 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SBOM diff: today vs patched image-builder</title><link rel="icon" href="data:,"><link rel="stylesheet" href="style.css"></head><body>
-<header><h1>osbuild SBOMs: main vs. the patch series</h1>
+<header><h1>Fedora qcow2 SBOMs: osbuild main vs. the patches</h1>
 <p class="sub">Every number here comes from SBOM files and tool runs in the sbom-research workspace. Cells marked <span class="b nr">not run</span> weren't measured.</p>
 <nav><a href="#score">Scorecard</a><a href="#tree">Structure</a><a href="#field">Package fields</a><a href="#cov">Coverage</a><a href="#set">Package set</a><a href="#why">What changed</a></nav></header>
 <main>
-<section id="score"><h2>Scorecard</h2><div id="scorecard"></div><p class="legend"><span class="b pass">pass</span><span class="b warn">warn</span><span class="b fail">fail</span><span class="b nr">not run</span> Measured on these two files only.</p></section>
+<section id="case"><h2>Case</h2><div id="cases" class="tabs"></div></section><section id="score"><h2>Scorecard</h2><div id="scorecard"></div><p class="legend"><span class="b pass">pass</span><span class="b warn">warn</span><span class="b fail">fail</span><span class="b info">info</span><span class="b nr">not run</span> Every cell is a measured result on the SBOM in that column; built vs manifest-time is shown in the header.</p></section>
 <section id="cmp"><h2>Comparison</h2><div id="pairs"></div><p id="pairnote" class="note"></p></section>
 <section id="tree"><h2>Document structure</h2><p class="note">Root package (DESCRIBES), CONTAINS, GENERATED_FROM and external document refs (BUILD_TOOL_OF). Click a node to expand it.</p><div class="two"><div id="treeA"></div><div id="treeB"></div></div></section>
 <section id="field"><h2>Package field diff</h2><div class="ctl"><input id="pkgq" list="pkglist" placeholder="package name, e.g. bash"><datalist id="pkglist"></datalist><label><input type="checkbox" id="srcpkg"> source RPM</label></div><div id="fielddiff"></div></section>
 <section id="cov"><h2>Field coverage</h2><p class="note">How many packages in each SBOM have a value for each field (NOASSERTION/NONE/empty count as missing).</p><div id="coverage"></div></section>
 <section id="set"><h2>Package set diff</h2><div class="ctl"><input id="setq" placeholder="search…"><select id="setf"><option value="all">all</option><option value="a">only in A</option><option value="b">only in B</option><option value="both">in both</option><option value="rel">in both, release added</option><option value="ver">in both, version differs</option></select><select id="sete"><option value="rpm">RPM binaries</option><option value="src">source RPMs</option><option value="any">all ecosystems</option></select><span id="setcount"></span></div><div id="setdiff"></div></section>
 <section id="why"><h2>What changed, in plain language</h2><div id="explain"></div></section>
-</main><footer>Static page, no build step. Data: <code>data/sboms.json</code> (from <code>preprocess.py</code>), <code>data/scorecard.js</code>.</footer>
-<script src="data/sboms.js"></script><script src="data/scorecard.js"></script><script src="app.js"></script></body></html>
+</main><footer>Static page, no build step. Data: <code>data/sboms.json</code> (from <code>preprocess.py</code>); results in <code>data/meta.json</code>.</footer>
+<script src="data/sboms.js"></script><script src="app.js"></script></body></html>

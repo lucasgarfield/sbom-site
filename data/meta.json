@@ -1,0 +1,309 @@
+{
+ "cases": [
+  {
+   "id": "pkg",
+   "title": "Package mode (Fedora 44 qcow2)",
+   "docs": [
+    "u-pkg",
+    "p-pkg"
+   ],
+   "pairs": [
+    [
+     "u-pkg",
+     "p-pkg"
+    ]
+   ]
+  },
+  {
+   "id": "bootc",
+   "title": "bootc (Fedora 44 qcow2 from quay.io/fedora/fedora-bootc:44)",
+   "docs": [
+    "u-bootc",
+    "p-bootc",
+    "ctr-bootc"
+   ],
+   "pairs": [
+    [
+     "u-bootc",
+     "p-bootc"
+    ],
+    [
+     "ctr-bootc",
+     "p-bootc"
+    ]
+   ]
+  }
+ ],
+ "score": {
+  "rows": {
+   "spdx": "spdx-tools validation",
+   "grader": "sbom-grader (Red Hat guide)",
+   "mequp": "mequal, upstream policies",
+   "meqp": "mequal, ProdSec-patched policies",
+   "mobup": "mobster upstream: oci-artifact --from-sbom",
+   "mobp": "mobster PR branch: oci-artifact --from-sbom --fold-content-root",
+   "ecf": "Conforma, FCOS production policy (SBOM attached as-is)",
+   "ecs": "Conforma, @redhat_security (SBOM attached as-is)",
+   "ecwf": "Conforma, FCOS policy (mobster-wrapped SBOM)",
+   "ecws": "Conforma, @redhat_security (mobster-wrapped SBOM)",
+   "trust": "Trustify ingestion",
+   "tvuln": "Trustify vulnerability results"
+  },
+  "cases": {
+   "pkg": {
+    "u-pkg": {
+     "spdx": [
+      "fail",
+      "errors=1"
+     ],
+     "grader": [
+      "fail",
+      "D: fails All packages have a supplier; Document passes extra validation; License list has correct form; RPM packages have packageFileName"
+     ],
+     "mequp": [
+      "pass",
+      "clean"
+     ],
+     "meqp": [
+      "fail",
+      "error=1 tip=516 warning=510 (spdx_rpm_purl_known_namespace, spdx_single_described_root)"
+     ],
+     "mobup": [
+      "fail",
+      "rejected: unrecognized arguments: --from-sbom (upstream has no way to take a disk SBOM)"
+     ],
+     "mobp": [
+      "fail",
+      "refused: ValueError: Document is not valid. The following errors were detected: [ValidationMessage(validation_message='Unrecognized license reference: LicenseRef-Callaway-Redistributable-no-modification-permit"
+     ],
+     "trust": [
+      "warn",
+      "ingested, 510 packages; 1 warning(s): Replacing faulty SPDX license expression with NOASSERTION: Parsing for expression `Parsing for expression `LicenseRef-Callaway-LGPLv2+` failed.` failed."
+     ],
+     "tvuln": [
+      "info",
+      "0 advisories matched (no Fedora advisory data loaded; Trustify matches by purl namespace)"
+     ],
+     "ecf": [
+      "pass",
+      "SBOM/RPM rules: 0 failing, 0 warning (16 pass). Total incl. faked-provenance rules: 9 violations"
+     ],
+     "ecs": [
+      "warn",
+      "SBOM/RPM rules: 0 failing, 1 warning (17 pass); warns rpm_build_deps.download_location_valid \u00d7510. Total incl. faked-provenance rules: 45 violations"
+     ],
+     "ecwf": [
+      "na",
+      "not possible: mobster refused this SBOM"
+     ],
+     "ecws": [
+      "na",
+      "not possible: mobster refused this SBOM"
+     ]
+    },
+    "p-pkg": {
+     "spdx": [
+      "pass",
+      "valid"
+     ],
+     "grader": [
+      "pass",
+      "A"
+     ],
+     "mequp": [
+      "fail",
+      "error=307 (spdx_sbom_all_components_contain_checksums_field)"
+     ],
+     "meqp": [
+      "pass",
+      "tip=5"
+     ],
+     "mobup": [
+      "fail",
+      "rejected: unrecognized arguments: --from-sbom (upstream has no way to take a disk SBOM)"
+     ],
+     "mobp": [
+      "pass",
+      "wrapped, 819 packages in output"
+     ],
+     "trust": [
+      "pass",
+      "ingested, 818 packages; no warnings"
+     ],
+     "tvuln": [
+      "info",
+      "0 advisories matched (no Fedora advisory data loaded; Trustify matches by purl namespace)"
+     ],
+     "ecf": [
+      "pass",
+      "SBOM/RPM rules: 0 failing, 0 warning (16 pass). Total incl. faked-provenance rules: 9 violations"
+     ],
+     "ecs": [
+      "pass",
+      "SBOM/RPM rules: 0 failing, 0 warning (18 pass). Total incl. faked-provenance rules: 45 violations"
+     ],
+     "ecwf": [
+      "pass",
+      "SBOM/RPM rules: 0 failing, 0 warning (16 pass)"
+     ],
+     "ecws": [
+      "warn",
+      "SBOM/RPM rules: 0 failing, 1 warning (17 pass); warns rpm_build_deps.download_location_valid \u00d71"
+     ]
+    }
+   },
+   "bootc": {
+    "u-bootc": {
+     "spdx": [
+      "na",
+      "no SBOM"
+     ],
+     "grader": [
+      "na",
+      "no SBOM"
+     ],
+     "mequp": [
+      "na",
+      "no SBOM"
+     ],
+     "meqp": [
+      "na",
+      "no SBOM"
+     ],
+     "mobup": [
+      "na",
+      "no SBOM"
+     ],
+     "mobp": [
+      "na",
+      "no SBOM"
+     ],
+     "ecf": [
+      "na",
+      "no SBOM"
+     ],
+     "ecs": [
+      "na",
+      "no SBOM"
+     ],
+     "ecwf": [
+      "na",
+      "no SBOM"
+     ],
+     "ecws": [
+      "na",
+      "no SBOM"
+     ],
+     "trust": [
+      "na",
+      "no SBOM"
+     ],
+     "tvuln": [
+      "na",
+      "no SBOM"
+     ]
+    },
+    "p-bootc": {
+     "spdx": [
+      "nr",
+      "pending: build not finished"
+     ],
+     "grader": [
+      "nr",
+      "pending: build not finished"
+     ],
+     "mequp": [
+      "nr",
+      "pending: build not finished"
+     ],
+     "meqp": [
+      "nr",
+      "pending: build not finished"
+     ],
+     "mobup": [
+      "nr",
+      "pending: build not finished"
+     ],
+     "mobp": [
+      "nr",
+      "pending: build not finished"
+     ],
+     "ecf": [
+      "nr",
+      "pending: build not finished"
+     ],
+     "ecs": [
+      "nr",
+      "pending: build not finished"
+     ],
+     "ecwf": [
+      "nr",
+      "pending: build not finished"
+     ],
+     "ecws": [
+      "nr",
+      "pending: build not finished"
+     ],
+     "trust": [
+      "nr",
+      "pending: build not finished"
+     ],
+     "tvuln": [
+      "nr",
+      "pending: build not finished"
+     ]
+    },
+    "ctr-bootc": {
+     "spdx": [
+      "fail",
+      "errors=1"
+     ],
+     "grader": [
+      "fail",
+      "E: fails All Image PURLs contain qualifier repository_url and tag; All packages have a checksum; Document passes extra validation; RPM packages have packageFileName"
+     ],
+     "mequp": [
+      "fail",
+      "error=545 (spdx_sbom_all_components_contain_checksums_field)"
+     ],
+     "meqp": [
+      "fail",
+      "error=546 tip=6 (spdx_oci_root_purl_digest, spdx_sbom_all_components_contain_checksums_field)"
+     ],
+     "mobup": [
+      "fail",
+      "rejected: unrecognized arguments: --from-sbom (upstream has no way to take a disk SBOM)"
+     ],
+     "mobp": [
+      "fail",
+      "refused: ValueError: Content SBOM root SPDXRef-DocumentRoot-Image-quay.io-fedora-fedora-bootc records SHA256 36c8aac4265d19d14d1d552b0b70a25ede3a3c04689d703e1cc8aa3c46176f6a, but the artifact disk.qcow2 has 39"
+     ],
+     "trust": [
+      "pass",
+      "ingested, 546 packages; no warnings"
+     ],
+     "tvuln": [
+      "info",
+      "0 advisories matched (no Fedora advisory data loaded; Trustify matches by purl namespace)"
+     ],
+     "ecf": [
+      "nr",
+      "not run"
+     ],
+     "ecs": [
+      "nr",
+      "not run"
+     ],
+     "ecwf": [
+      "na",
+      "not possible: mobster refused this SBOM"
+     ],
+     "ecws": [
+      "na",
+      "not possible: mobster refused this SBOM"
+     ]
+    }
+   }
+  }
+ }
+}

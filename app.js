@@ -1,16 +1,22 @@
 'use strict';
-const S=window.SBOMS,SC=window.SCORECARD,$=id=>document.getElementById(id);
+const S=window.SBOMS,M=window.META,$=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const PR={osbuild:'https://github.com/lucasgarfield/osbuild/pull/1'};
-const PAIRS=[
- {a:'unpatched',b:'patched',t:'osbuild main vs osbuild + patches',d:'Same CentOS 9 qcow2 depsolve, image-os SBOM written at manifest time (so neither has a disk checksum).'},
-];
+let PAIRS=[],CASE=null;
+for(const k in S){if(S[k].missing){S[k].pkgs=[];S[k].rels=[];S[k].meta={}}}
 let A,B;
 const fv=v=>v!=null&&v!==''&&v!=='NOASSERTION'&&v!=='NONE';
 // scorecard
-(function(){let h='<table><tr><th>Check</th>'+SC.cols.map(c=>`<th>${esc(c)}</th>`).join('')+'</tr>';
- for(const r of SC.rows){h+=`<tr><td title="source: ${esc(r.src)}"><b>${esc(r.name)}</b><br><span class="muted" style="font-size:12px">${esc(r.src)}</span></td>`+r.cells.map(([s,t])=>`<td><span class="b ${s}">${s==='nr'?'not run':s}</span>${esc(t)}</td>`).join('')+'</tr>'}
- $('scorecard').innerHTML=h+'</table>'})();
+const STAGE={built:'built (real qcow2 build, sha256 recorded)',manifest:'manifest-time (no disk checksum)',input:'input to the build'};
+function scorecard(c){const ks=c.docs,sc=M.score.cases[c.id];let h='<table><tr><th>Check</th>'+ks.map(k=>`<th>${esc(S[k].label)}<br><span class="b ${S[k].stage==='built'?'pass':'nr'}">${esc(S[k].stage)}</span>${S[k].missing?'<span class="b fail">no SBOM</span>':''}</th>`).join('')+'</tr>';
+ for(const r in M.score.rows){h+=`<tr><td><b>${esc(M.score.rows[r])}</b></td>`+ks.map(k=>{const [s,t]=sc[k][r]||['nr','not run'];return `<td><span class="b ${s}">${s==='nr'?'not run':s==='na'?'n/a':s}</span>${esc(t)}</td>`}).join('')+'</tr>'}
+ h+='</table><p class="note">'+ks.map(k=>`<b>${esc(S[k].label)}</b> (${esc(STAGE[S[k].stage]||S[k].stage)}): ${esc(S[k].note)}${S[k].src?' — <code>'+esc(S[k].src)+'</code>':''}`).join('<br>')+'</p>';
+ $('scorecard').innerHTML=h}
+$('cases').innerHTML=M.cases.map((c,i)=>`<button data-c="${i}">${esc(c.title)}</button>`).join('');
+$('cases').onclick=e=>{const i=e.target.dataset.c;if(i!=null)pickCase(+i)};
+function pickCase(i){CASE=M.cases[i];document.querySelectorAll('#cases button').forEach((b,j)=>b.classList.toggle('on',j===i));scorecard(CASE);
+ PAIRS=CASE.pairs.map(([a,b])=>({a,b,t:`${S[a].label} → ${S[b].label}`,d:S[a].missing?`A has no SBOM: ${S[a].note}`:''}));
+ $('pairs').innerHTML=PAIRS.map((p,i)=>`<button data-i="${i}">${esc(p.t)}</button>`).join('');$('pairs').style.display=PAIRS.length>1?'':'none';pick(0)}
 // pairs
 $('pairs').innerHTML=PAIRS.map((p,i)=>`<button data-i="${i}">${esc(p.t)}</button>`).join('');
 $('pairs').onclick=e=>{const i=e.target.dataset.i;if(i!=null)pick(+i)};
@@ -18,7 +24,7 @@ function index(doc){if(doc._ix)return doc._ix;const out={},inn={},desc=[];
  doc.rels.forEach(([a,t,b])=>{if(a==='SPDXRef-DOCUMENT'&&t==='DESCRIBES'){desc.push(b);return}(out[a]=out[a]||[]).push([t,b]);(inn[b]=inn[b]||[]).push([t,a])});
  const byKey={};doc.pkgs.forEach((p,i)=>byKey[p.k]=i);return doc._ix={out,inn,desc,byKey}}
 function pname(doc,i){if(typeof i!=='number')return `<i>${esc(i)}</i>`;const p=doc.pkgs[i];return `${esc(p.n)} <span class="muted">${esc(p.f.versionInfo||'')}${p.t==='src'?' (src)':''}${p.e!=='rpm'?' ['+esc(p.e)+']':''}</span>`}
-function tree(el,key){const doc=S[key],ix=index(doc),m=doc.meta;
+function tree(el,key){const doc=S[key],ix=index(doc),m=doc.meta;if(doc.missing){el.innerHTML=`<div class="panel"><h3>${esc(doc.label)}</h3><p><span class="b fail">no SBOM</span>${esc(doc.note)}</p></div>`;return}
  let h=`<div class="panel"><h3>${esc(doc.label)}</h3><div class="muted">${esc(doc.src)}<br>${doc.pkgs.length} packages · ${esc(m.spdxVersion)} · ${esc((m.creators||[]).join(', '))}</div>`;
  h+=`<div class="muted">namespace: ${esc(m.namespace)}</div>`;
  h+=`<div class="node"><div class="leaf">document <b>${esc(m.name)}</b></div>`;
@@ -68,7 +74,7 @@ function setDiff(){const q=$('setq').value.trim().toLowerCase(),f=$('setf').valu
 ['setq','setf','sete'].forEach(i=>$(i).addEventListener('input',setDiff));
 $('setdiff').onclick=e=>{const a=e.target.closest('a[data-pkg]');if(a){$('pkgq').value=a.dataset.pkg;$('srcpkg').checked=a.dataset.src==='1';fieldDiff()}};
 function pick(i){const p=PAIRS[i];A=S[p.a];B=S[p.b];document.querySelectorAll('#pairs button').forEach((b,j)=>b.classList.toggle('on',j===i));
- $('pairnote').innerHTML=`<b>A</b> = ${esc(A.label)} · <b>B</b> = ${esc(B.label)}<br>${esc(p.d)}`;
+ $('pairnote').innerHTML=`<b>A</b> = ${esc(A.label)} <span class="b nr">${esc(A.stage)}</span> · <b>B</b> = ${esc(B.label)} <span class="b nr">${esc(B.stage)}</span><br>${esc(p.d)}`;
  tree($('treeA'),p.a);tree($('treeB'),p.b);
  const names=[...new Set([...A.pkgs,...B.pkgs].map(x=>x.n))].sort();$('pkglist').innerHTML=names.map(n=>`<option value="${esc(n)}">`).join('');
  if(!$('pkgq').value||!names.includes($('pkgq').value))$('pkgq').value=names.includes('bash')?'bash':names[0];
@@ -78,7 +84,8 @@ const EX=[
  ['osbuild','Richer RPM metadata','Each RPM now carries its full version-release (5.1.8 → 5.1.8-9.el9), its file name, supplier, a concluded license, and a GENERATED_FROM link to the source RPM it was built from, which is added as its own package. Scanners can match CVEs on the exact build.'],
  ['osbuild','Red Hat guide layout','downloadLocation becomes NOASSERTION (the mirror URL moves into an annotation), purls use repository_id instead of a mirror URL, LicenseRefs are defined and licenseListVersion is set. That is what the Red Hat SBOM guide asks for.'],
  ['osbuild','One root for the image','The document DESCRIBES a single OPERATING_SYSTEM package for the image, which CONTAINS the RPMs. Unpatched osbuild DESCRIBES every RPM directly, so tools such as Trustify have no single thing the SBOM is about.'],
+ ['osbuild','bootc disks get an SBOM (local prototype, images patch 0005)','image-builder main writes no SBOM for a bootc disk. With --bootc-ref-sbom, image-builder takes the container SBOM, checks it describes the same image digest as --bootc-ref (refuses a mismatch), lists the container packages inline under the disk root (CONTAINS), links the container SBOM with GENERATED_FROM, and records the disk sha256 after the build. Not in a PR yet.'],
  ['osbuild','Build root kept separate','Tools used only to build the image go in a second SBOM, linked with an externalDocumentRef and BUILD_TOOL_OF, so they stay out of the image package list.'],
 ];
 $('explain').innerHTML=EX.map(([r,t,d])=>`<div class="card"><h3>${esc(t)}</h3><p>${esc(d)}</p><a href="${PR[r]}">${PR[r].replace('https://github.com/','').replace('/pull/','#')}</a></div>`).join('');
-pick(0);document.getElementById('cmp').querySelector('#pairs').style.display='none';
+pickCase(0);

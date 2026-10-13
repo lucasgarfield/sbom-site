@@ -7,7 +7,7 @@ section{margin:28px 0}table{border-collapse:collapse;width:100%;font-size:14px}t
 .b{display:inline-block;padding:1px 7px;border-radius:10px;font-size:12px;font-weight:600;margin-right:6px}
 .pass{background:var(--passbg);color:var(--pass)}.warn{background:var(--warnbg);color:var(--warn)}.fail{background:var(--failbg);color:var(--fail)}.nr{background:var(--nrbg);color:var(--nr)}
 td.pass,td.warn,td.fail,td.nr{font-weight:400}
-#pairs button{margin:4px 6px 4px 0;padding:8px 12px;border:1px solid var(--bd);background:var(--card);color:var(--fg);border-radius:6px;cursor:pointer}#pairs button.on{border-color:var(--acc);outline:2px solid var(--acc)}
+#cases button,#pairs button{margin:4px 6px 4px 0;padding:8px 12px;border:1px solid var(--bd);background:var(--card);color:var(--fg);border-radius:6px;cursor:pointer}#cases button.on,#pairs button.on{border-color:var(--acc);outline:2px solid var(--acc)}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:16px}@media(max-width:800px){.two{grid-template-columns:1fr}}
 .panel{background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:10px;max-height:600px;overflow:auto;font-size:13px}
 .panel h3{margin:0 0 6px;font-size:15px}.node{margin-left:14px}.lbl{cursor:pointer;white-space:nowrap}.lbl:before{content:"▸ ";color:var(--mut)}.open>.lbl:before{content:"▾ "}.leaf:before{content:"• "}
@@ -18,3 +18,4 @@ tr.added td{background:var(--add)}tr.removed td{background:var(--rem)}tr.changed
 .bar{height:8px;background:var(--nrbg);border-radius:4px;overflow:hidden;margin-top:3px}.bar i{display:block;height:100%;background:var(--pass)}
 #setdiff{max-height:520px;overflow:auto}.card{background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:12px 16px;margin:10px 0}.card h3{margin:0 0 4px}
 a{color:var(--acc)}footer{color:var(--mut);padding:30px 20px;font-size:13px}.legend{margin-top:8px}.muted{color:var(--mut)}
+.info{background:#ddf4ff;color:#0550ae}.na{background:var(--nrbg);color:var(--nr)}@media(prefers-color-scheme:dark){.info{background:#0c2d6b;color:#a5d6ff}}

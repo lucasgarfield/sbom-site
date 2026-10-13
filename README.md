@@ -1,21 +1,28 @@
-# osbuild SBOMs: main vs. the patch series
+# Fedora qcow2 SBOMs: osbuild main vs. the patches
 
-A static page (plain HTML/CSS/JS, no build step) that compares two SBOMs for the **same CentOS 9 qcow2 depsolve**:
+A static page (plain HTML/CSS/JS, no build step) with two cases, each comparing osbuild/image-builder **main (unpatched)** against **our patches**: osbuild ([lucasgarfield/osbuild#1](https://github.com/lucasgarfield/osbuild/pull/1)) plus local image-builder patches 0001–0005.
 
-- **A:** written by osbuild main (unpatched)
-- **B:** written by osbuild with the patches in [lucasgarfield/osbuild#1](https://github.com/lucasgarfield/osbuild/pull/1)
+1. **Package mode:** Fedora 44 `qcow2`. Both sides are real builds in a Fedora 44 VM (TCG), from the same depsolve (identical manifests). The patched SBOM records the built qcow2's sha256 on its root.
+2. **bootc:** a qcow2 built from `quay.io/fedora/fedora-bootc@sha256:36c8aac4…` (amd64).
+   - **main:** writes no SBOM for `--bootc-ref`, even with `--with-sbom` (checked: the manifest is written, but no `*.spdx.json`).
+   - **patched:** a local prototype (images patch 0005, not in a PR). `--bootc-ref-sbom <file>` takes the container's SPDX SBOM, refuses it if its root doesn't name the resolved container digest, lists its packages inline under the disk root (CONTAINS), and links it with externalDocumentRef + GENERATED_FROM. The disk's sha256 is recorded after the build.
+   - **container SBOM:** the image has no published SBOM (no cosign/referrer artifacts), so the input was generated with syft 1.54.1 (`--select-catalogers rpm`) from the amd64 digest.
 
-Both are the image-os SBOM written at manifest time, so neither has a disk checksum.
+Every SBOM's header says whether it is *built* (real build, sha256 recorded), *manifest-time*, an *input*, or *pending*.
 
-Sections:
-- **Scorecard:** only tools actually run on these two files (spdx-tools, sbom-grader, mequal). Trustify and Conforma are marked not run.
-- **Document structure trees**
-- **Per-package field diff**
-- **Field coverage table**
-- **Package-set diff:** a version change that only appends the release (e.g. `5.1.8` → `5.1.8-9.el9`) is labelled "release added".
+## Scorecard checks
+Each check was run on the exact SBOM shown:
+- spdx-tools
+- SBOM-Grader
+- mequal: upstream and ProdSec-patched policies
+- mobster `generate oci-artifact --from-sbom`: upstream 3912af8 and the PR branch with `--fold-content-root`, using the real disk sha256
+- Conforma `ec validate image`, run the way Konflux does (local registry, `cosign attach sbom`, Chains-style SLSA provenance, local key): FCOS tenant production policy and `@redhat_security`. The provenance is faked from the conforma acceptance golden sample, so the same non-SBOM violations appear in every case. The SBOM and RPM rule counts are listed separately.
+- Trustify 0.6.3 (local `trustd`): ingestion warnings, package count, advisory matches. No Fedora advisory data exists, so 0 matches is expected.
+
+Cells that weren't measured say *not run*. Cells that can't apply (no SBOM, or mobster refused the input) say *n/a*.
 
 ## Regenerate
 ```
-SBOM_OUTPUT=path/to/sbom-output python3 preprocess.py
+SBOM_RESEARCH=path/to/sbom-research SBOM_OUTPUT=path/to/sbom-output python3 preprocess.py
 ```
-This reads `centos-9-unpatched/centos-9-qcow2-x86_64.image-os.spdx.json` and `final/manifest-centos-9/centos-9-qcow2-x86_64.image-os.spdx.json`, and writes `data/sboms.json` and `data/sboms.js`; the `.js` copy makes the page work from `file://`. The scorecard values are in `data/scorecard.js`.
+This reads the SBOMs from `$SBOM_OUTPUT/fedora-qcow2/{u-pkg-built,p-pkg-built,p-bootc-built}` and `$SBOM_RESEARCH/bootc/container.syft.spdx.json`, plus tool results from `$SBOM_OUTPUT/fedora-qcow2/results/`. Those results are produced by `eval-fedora.sh` and `conforma-fedora.sh` in sbom-research. It writes `data/sboms.json`, `data/sboms.js` (lets the page work from `file://`) and `data/meta.json` (cases and scorecard).
