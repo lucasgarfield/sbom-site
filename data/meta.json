@@ -205,52 +205,52 @@
     },
     "p-bootc": {
      "spdx": [
-      "nr",
-      "pending: build not finished"
+      "fail",
+      "errors=1"
      ],
      "grader": [
-      "nr",
-      "pending: build not finished"
+      "fail",
+      "D: fails All packages have a checksum; Document passes extra validation; RPM packages have packageFileName"
      ],
      "mequp": [
-      "nr",
-      "pending: build not finished"
+      "fail",
+      "error=546 (spdx_sbom_all_components_contain_checksums_field)"
      ],
      "meqp": [
-      "nr",
-      "pending: build not finished"
+      "fail",
+      "error=545 tip=5 (spdx_sbom_all_components_contain_checksums_field)"
      ],
      "mobup": [
-      "nr",
-      "pending: build not finished"
+      "fail",
+      "rejected: unrecognized arguments: --from-sbom (upstream has no way to take a disk SBOM)"
      ],
      "mobp": [
-      "nr",
-      "pending: build not finished"
-     ],
-     "ecf": [
-      "nr",
-      "pending: build not finished"
-     ],
-     "ecs": [
-      "nr",
-      "pending: build not finished"
-     ],
-     "ecwf": [
-      "nr",
-      "pending: build not finished"
-     ],
-     "ecws": [
-      "nr",
-      "pending: build not finished"
+      "fail",
+      "refused: ValueError: Document is not valid. The following errors were detected: [ValidationMessage(validation_message='Unrecognized license reference: LicenseRef-Fedora-Firmware. license_expression must only u"
      ],
      "trust": [
-      "nr",
-      "pending: build not finished"
+      "warn",
+      "ingested, 546 packages; 1 warning(s): Invalid reference 'DocumentRef-container:SPDXRef-DocumentRoot-Image-quay.io-fedora-fedora-bootc' of relationship 'SPDXRef-image-root' -[GeneratedFrom]-> 'DocumentRef-container:SPDXRef-DocumentRoot-Image-quay.io-fedora-fedora-bootc'"
      ],
      "tvuln": [
-      "nr",
-      "pending: build not finished"
+      "info",
+      "0 advisories matched (no Fedora advisory data loaded; Trustify matches by purl namespace)"
+     ],
+     "ecf": [
+      "pass",
+      "SBOM/RPM rules: 0 failing, 0 warning (16 pass). Total incl. faked-provenance rules: 9 violations"
+     ],
+     "ecs": [
+      "pass",
+      "SBOM/RPM rules: 0 failing, 0 warning (18 pass). Total incl. faked-provenance rules: 45 violations"
+     ],
+     "ecwf": [
+      "na",
+      "not possible: mobster refused this SBOM"
+     ],
+     "ecws": [
+      "na",
+      "not possible: mobster refused this SBOM"
      ]
     },
     "ctr-bootc": {

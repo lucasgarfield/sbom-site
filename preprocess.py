@@ -70,7 +70,9 @@ out={}
 for k,(p,label,stage,note) in DOCS.items():
     p=override(k) or p
     if p and '*' in p:
-        g=sorted(glob.glob(p)); p=g[0] if g else None
+        g=sorted(glob.glob(p)) or sorted(glob.glob(p.replace('-built/','-manifest/')))
+        if g and '-manifest/' in g[0]: stage='manifest'; note+=' (manifest-time copy: the bootc build had not finished, so no disk sha256 yet; Conforma pushed placeholder disk bytes, and matches_image passes only because the SBOM has no pkg:oci root to compare)'
+        p=g[0] if g else None
         if p is None: stage,note='pending','bootc build still running in the TCG VM; not measured yet'
     if p and not os.path.exists(p):
         alt=p.replace('-built/','/')  # manifest-time fallback
