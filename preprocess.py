@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Preprocess SPDX SBOMs from /workspace/sbom-research into compact JSON for the site."""
+"""Preprocess SPDX SBOMs (osbuild main vs patched) into compact JSON for the site."""
 import json, os, re, urllib.parse
 R=os.environ.get('SBOM_RESEARCH','../sbom-research'); O=os.environ.get('SBOM_OUTPUT','../sbom-output')
 DOCS={
