@@ -1,12 +1,9 @@
 'use strict';
 const S=window.SBOMS,SC=window.SCORECARD,$=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const PR={osbuild:'https://github.com/lucasgarfield/osbuild/pull/1',mobster:'https://github.com/lucasgarfield/mobster/pull/1',sdg:'https://github.com/lucasgarfield/security-data-guidelines/pull/1'};
+const PR={osbuild:'https://github.com/lucasgarfield/osbuild/pull/1'};
 const PAIRS=[
- {a:'ib-unpatched-c9',b:'ib-patched-c9-qcow2',t:'osbuild patches',d:'Same content: CentOS 9 qcow2 manifest-time SBOM, unpatched osbuild vs. the patched series. Neither has a disk checksum (manifest step).'},
- {a:'syft-f44',b:'ib-f44',t:'syft (Konflux-like) vs image-builder',d:'Same content: the same Fedora 44 oci.tar scanned by syft 1.54.1 as Konflux does, vs. the patched image-builder build SBOM. The 15 "version differs" rows are epoch-only: syft writes 1:V-R in versionInfo, image-builder puts the epoch in the purl.'},
- {a:'konflux-fcos',b:'ib-c9-tar',t:'build-vm-image today vs patched build',d:'Different content (FCOS rawhide container vs CentOS 9 tar), so compare shape and field coverage, not package lists. build-vm-image reuses the container SBOM on purpose.'},
- {a:'ib-c9-tar',b:'mob-c9-tar',t:'patched build vs mobster fold',d:'Same SBOM before and after mobster oci-artifact --from-sbom --fold-content-root.'},
+ {a:'unpatched',b:'patched',t:'osbuild main vs osbuild + patches',d:'Same CentOS 9 qcow2 depsolve, image-os SBOM written at manifest time (so neither has a disk checksum).'},
 ];
 let A,B;
 const fv=v=>v!=null&&v!==''&&v!=='NOASSERTION'&&v!=='NONE';
@@ -62,11 +59,11 @@ function coverage(){const sets=[A,B].map(d=>d.pkgs.filter(p=>p.e==='rpm'&&p.t!==
 function setDiff(){const q=$('setq').value.trim().toLowerCase(),f=$('setf').value,e=$('sete').value;
  const ok=p=>e==='any'||(e==='rpm'?p.e==='rpm'&&p.t!=='src':p.t==='src');
  const ma=new Map(),mb=new Map();A.pkgs.filter(ok).forEach(p=>ma.set(p.k,p));B.pkgs.filter(ok).forEach(p=>mb.set(p.k,p));
- const keys=[...new Set([...ma.keys(),...mb.keys()])].sort();let rows=[],c={a:0,b:0,both:0,ver:0};
- for(const k of keys){const a=ma.get(k),b=mb.get(k);const s=a&&b?'both':a?'a':'b';c[s]++;const vd=a&&b&&(a.f.versionInfo||'')!==(b.f.versionInfo||'');if(vd)c.ver++;
-  if(f!=='all'&&!(f==='ver'?vd:f===s))continue;if(q&&!k.toLowerCase().includes(q))continue;
-  rows.push(`<tr class="${s==='a'?'removed':s==='b'?'added':vd?'changed':''}"><td><a href="#field" data-pkg="${esc((a||b).n)}" data-src="${(a||b).t==='src'?1:0}">${esc((a||b).n)}</a></td><td>${s==='a'?'only A':s==='b'?'only B':'both'}</td><td class="v">${esc(a?.f.versionInfo||'')}</td><td class="v">${esc(b?.f.versionInfo||'')}</td></tr>`)}
- $('setcount').textContent=`only A: ${c.a} · only B: ${c.b} · both: ${c.both} (version differs: ${c.ver}) · showing ${rows.length}`;
+ const keys=[...new Set([...ma.keys(),...mb.keys()])].sort();let rows=[],c={a:0,b:0,both:0,ver:0,rel:0};
+ for(const k of keys){const a=ma.get(k),b=mb.get(k);const s=a&&b?'both':a?'a':'b';c[s]++;const va=a?.f.versionInfo||'',vb=b?.f.versionInfo||'';const vd=a&&b&&va!==vb;const ra=vd&&vb.startsWith(va+'-');if(ra)c.rel++;else if(vd)c.ver++;
+  if(f!=='all'&&!(f==='ver'?vd&&!ra:f==='rel'?ra:f===s))continue;if(q&&!k.toLowerCase().includes(q))continue;
+  rows.push(`<tr class="${s==='a'?'removed':s==='b'?'added':vd?'changed':''}"><td><a href="#field" data-pkg="${esc((a||b).n)}" data-src="${(a||b).t==='src'?1:0}">${esc((a||b).n)}</a></td><td>${s==='a'?'only A':s==='b'?'only B':ra?'both · release added':vd?'both · version differs':'both'}</td><td class="v">${esc(a?.f.versionInfo||'')}</td><td class="v">${esc(b?.f.versionInfo||'')}</td></tr>`)}
+ $('setcount').textContent=`only A: ${c.a} · only B: ${c.b} · both: ${c.both} (release added: ${c.rel}, version differs: ${c.ver}) · showing ${rows.length}`;
  $('setdiff').innerHTML=`<table><tr><th>package</th><th>where</th><th>A version</th><th>B version</th></tr>${rows.join('')}</table>`}
 ['setq','setf','sete'].forEach(i=>$(i).addEventListener('input',setDiff));
 $('setdiff').onclick=e=>{const a=e.target.closest('a[data-pkg]');if(a){$('pkgq').value=a.dataset.pkg;$('srcpkg').checked=a.dataset.src==='1';fieldDiff()}};
@@ -78,12 +75,10 @@ function pick(i){const p=PAIRS[i];A=S[p.a];B=S[p.b];document.querySelectorAll('#
  fieldDiff();coverage();setDiff();location.hash.length<2||0}
 // explainer
 const EX=[
- ['osbuild','Richer RPM metadata','Each RPM now carries its full version-release (5.1.8 → 5.1.8-9.el9), its file name, supplier, a concluded license, and a link (GENERATED_FROM) to the source RPM it was built from. Scanners can match CVEs on the exact build.'],
+ ['osbuild','Richer RPM metadata','Each RPM now carries its full version-release (5.1.8 → 5.1.8-9.el9), its file name, supplier, a concluded license, and a GENERATED_FROM link to the source RPM it was built from, which is added as its own package. Scanners can match CVEs on the exact build.'],
  ['osbuild','Red Hat guide layout','downloadLocation becomes NOASSERTION (the mirror URL moves into an annotation), purls use repository_id instead of a mirror URL, LicenseRefs are defined and licenseListVersion is set. That is what the Red Hat SBOM guide asks for.'],
- ['osbuild','A real root for the image','The SBOM DESCRIBES one OPERATING_SYSTEM package for the image. After the build, that package gets the SHA256 of the actual artifact file (image-builder patch, split flow §6.4). The unpatched SBOM had no root, so Trustify treated every RPM as "the thing described".'],
- ['osbuild','Build root kept separate','Tools used only to build the image (the build root) go in a second SBOM, linked with an externalDocumentRef + BUILD_TOOL_OF and verified by SHA1. They don\'t pollute the image\'s package list.'],
- ['mobster','mobster --from-sbom / --fold-content-root','Upstream mobster writes its own tiny SBOM for an OCI artifact. The patch lets it take ours and put our RPMs under the OCI artifact root, so Konflux, Conforma and Trustify find it by the artifact digest. It also checks that the root checksum matches the artifact. This is a delivery workaround.'],
- ['sdg','Proposed ProdSec disk-image guideline','A native disk-image section: the disk image is the single OPERATING_SYSTEM root with a required SHA256. There\'s no OCI wrapper, ISOs get one package per filesystem, and bootc disks list the container\'s packages inline and keep a GENERATED_FROM link. Mobster gets aligned once ProdSec agrees.'],
+ ['osbuild','One root for the image','The document DESCRIBES a single OPERATING_SYSTEM package for the image, which CONTAINS the RPMs. Unpatched osbuild DESCRIBES every RPM directly, so tools such as Trustify have no single thing the SBOM is about.'],
+ ['osbuild','Build root kept separate','Tools used only to build the image go in a second SBOM, linked with an externalDocumentRef and BUILD_TOOL_OF, so they stay out of the image package list.'],
 ];
 $('explain').innerHTML=EX.map(([r,t,d])=>`<div class="card"><h3>${esc(t)}</h3><p>${esc(d)}</p><a href="${PR[r]}">${PR[r].replace('https://github.com/','').replace('/pull/','#')}</a></div>`).join('');
-pick(0);
+pick(0);document.getElementById('cmp').querySelector('#pairs').style.display='none';

@@ -3,14 +3,8 @@
 import json, os, re, urllib.parse
 R=os.environ.get('SBOM_RESEARCH','../sbom-research'); O=os.environ.get('SBOM_OUTPUT','../sbom-output')
 DOCS={
- 'ib-unpatched-c9':(O+'/centos-9-unpatched/centos-9-qcow2-x86_64.image-os.spdx.json','image-builder unpatched (CentOS 9 qcow2, manifest)'),
- 'ib-patched-c9-qcow2':(O+'/final/manifest-centos-9/centos-9-qcow2-x86_64.image-os.spdx.json','image-builder patched (CentOS 9 qcow2, manifest)'),
- 'syft-f44':(R+'/samples/same-content-compare/syft-fedora-44-generic-container.spdx.json','syft, Konflux-like (Fedora 44 oci.tar)'),
- 'ib-f44':(R+'/samples/final/fedora-44-generic-container-x86_64.image-os.spdx.json','image-builder patched build (Fedora 44 oci.tar)'),
- 'konflux-fcos':(R+'/switch/konflux-fcos-rawhide-amd64.spdx.json','Konflux build-vm-image today (FCOS rawhide container SBOM)'),
- 'ib-c9-tar':(R+'/samples/final/centos-9-tar-x86_64.image-os.spdx.json','image-builder patched build (CentOS 9 tar, with sha256)'),
- 'ib-c9-tar-buildroot':(R+'/samples/final/centos-9-tar-x86_64.buildroot-build.spdx.json','build-root SBOM (CentOS 9 tar)'),
- 'mob-c9-tar':(R+'/samples/final/mob-fold.built.centos-9-tar-x86_64.spdx.json','patched build + mobster --from-sbom --fold-content-root'),
+ 'unpatched':(O+'/centos-9-unpatched/centos-9-qcow2-x86_64.image-os.spdx.json','osbuild main (unpatched)'),
+ 'patched':(O+'/final/manifest-centos-9/centos-9-qcow2-x86_64.image-os.spdx.json','osbuild + patches (osbuild#1)'),
 }
 def purls(p): return [r['referenceLocator'] for r in p.get('externalRefs',[]) if r.get('referenceType')=='purl']
 def eco(p):
