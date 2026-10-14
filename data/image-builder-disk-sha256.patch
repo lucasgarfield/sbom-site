@@ -1,0 +1,264 @@
+From 4e7e112b8945964bed16b7a3359d9e71ce661554 Mon Sep 17 00:00:00 2001
+From: Lucas Garfield <lucas@local>
+Date: Wed, 14 Oct 2026 21:10:06 +0300
+Subject: [PATCH] image-builder: record the built image's sha256 in its SBOM
+
+The image SBOM now has a root package for the image itself
+(SPDXRef-image-root, pkg:generic purl, packageFileName); the document
+DESCRIBES it and it CONTAINS the RPMs.
+
+- manifest --with-sbom: writes that SBOM, without a checksum (no image yet).
+- build --with-sbom: writes the same SBOM and, after osbuild finishes,
+  adds the sha256 of the built image file to the root package.
+
+That is the only difference between the two.
+---
+ cmd/image-builder/main.go            |  15 +++
+ cmd/image-builder/sbom_image.go      | 133 +++++++++++++++++++++++++++
+ cmd/image-builder/sbom_image_test.go |  54 +++++++++++
+ 3 files changed, 202 insertions(+)
+ create mode 100644 cmd/image-builder/sbom_image.go
+ create mode 100644 cmd/image-builder/sbom_image_test.go
+
+diff --git a/cmd/image-builder/main.go b/cmd/image-builder/main.go
+index b057bb972..1e97aeb49 100644
+--- a/cmd/image-builder/main.go
++++ b/cmd/image-builder/main.go
+@@ -353,6 +353,8 @@ func subscriptionImageOptions(cmd *cobra.Command) (*subscription.ImageOptions, e
+ 
+ type cmdManifestWrapperOptions struct {
+ 	useBootstrapIfNeeded bool
++	// set by generateManifest: paths of the image SBOMs it wrote
++	imageSBOMPaths []string
+ }
+ 
+ // used in tests
+@@ -684,6 +686,14 @@ func generateManifest(pbar progress.ProgressBar, cmd *cobra.Command, args []stri
+ 		}
+ 		mgOptions.SBOMWriter = func(filename string, content io.Reader, docType sbom.StandardType) error {
+ 			filename = fmt.Sprintf("%s.%s", sbomBasename, strings.SplitN(filename, ".", 2)[1])
++			if docType == sbom.StandardTypeSpdx && strings.HasPrefix(filename, sbomBasename+".image-") {
++				doc, err := addImageRoot(content, imageRootPackage(img, sbomBasename))
++				if err != nil {
++					return fmt.Errorf("cannot add image root package to %s: %w", filename, err)
++				}
++				content = bytes.NewReader(doc)
++				wrapperOpts.imageSBOMPaths = append(wrapperOpts.imageSBOMPaths, filepath.Join(sbomDir, filename))
++			}
+ 			return fileWriter(sbomDir, filename, content)
+ 		}
+ 	}
+@@ -923,6 +933,11 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
+ 		fmt.Fprintf(osStdout, "Image build successful: %s\n", p)
+ 	}
+ 	imagePath := outputPaths[0]
++	for _, p := range opts.imageSBOMPaths {
++		if err := setImageRootSHA256(p, imagePath); err != nil {
++			return fmt.Errorf("cannot record image checksum in SBOM: %w", err)
++		}
++	}
+ 
+ 	pbar, err = progressFromCmd(cmd, progress.ProgressConfig{
+ 		FilePath: filepath.Join(outputDir, fmt.Sprintf("%s.progress", basename)),
+diff --git a/cmd/image-builder/sbom_image.go b/cmd/image-builder/sbom_image.go
+new file mode 100644
+index 000000000..fded51d43
+--- /dev/null
++++ b/cmd/image-builder/sbom_image.go
+@@ -0,0 +1,133 @@
++package main
++
++import (
++	"crypto/sha256"
++	"encoding/hex"
++	"encoding/json"
++	"fmt"
++	"io"
++	"net/url"
++	"os"
++	"path/filepath"
++
++	"github.com/osbuild/image-builder/pkg/imagefilter"
++)
++
++// The image SBOM describes one package for the image itself, which CONTAINS
++// the RPMs. "manifest --with-sbom" writes it without a checksum (there is no
++// image yet); "build --with-sbom" writes the same document and then records
++// the sha256 of the built image file on that package.
++const imageRootSPDXID = "SPDXRef-image-root"
++
++type spdxRelationship struct {
++	SpdxElementID      string `json:"spdxElementId"`
++	RelationshipType   string `json:"relationshipType"`
++	RelatedSpdxElement string `json:"relatedSpdxElement"`
++}
++
++func imageRootPackage(img *imagefilter.Result, basename string) map[string]any {
++	d := img.ImgType.Arch().Distro()
++	q := url.Values{}
++	q.Set("arch", img.ImgType.Arch().Name())
++	q.Set("distro", d.Name())
++	q.Set("image_type", img.ImgType.Name())
++	return map[string]any{
++		"SPDXID":           imageRootSPDXID,
++		"name":             basename,
++		"versionInfo":      d.OsVersion(),
++		"packageFileName":  basename + filepath.Ext(img.ImgType.Filename()),
++		"downloadLocation": "NOASSERTION",
++		"supplier":         "NOASSERTION",
++		"filesAnalyzed":    false,
++		"externalRefs": []map[string]string{{
++			"referenceCategory": "PACKAGE-MANAGER",
++			"referenceType":     "purl",
++			"referenceLocator":  fmt.Sprintf("pkg:generic/%s@%s?%s", url.PathEscape(basename), url.PathEscape(d.OsVersion()), q.Encode()),
++		}},
++	}
++}
++
++// addImageRoot makes root the only package the document DESCRIBES; the
++// packages the document described before become CONTAINS of root.
++func addImageRoot(content io.Reader, root map[string]any) ([]byte, error) {
++	var doc map[string]json.RawMessage
++	if err := json.NewDecoder(content).Decode(&doc); err != nil {
++		return nil, err
++	}
++	var pkgs []json.RawMessage
++	var rels []spdxRelationship
++	for key, v := range map[string]any{"packages": &pkgs, "relationships": &rels} {
++		if raw, ok := doc[key]; ok {
++			if err := json.Unmarshal(raw, v); err != nil {
++				return nil, err
++			}
++		}
++	}
++	rootJSON, err := json.Marshal(root)
++	if err != nil {
++		return nil, err
++	}
++	newRels := []spdxRelationship{{"SPDXRef-DOCUMENT", "DESCRIBES", imageRootSPDXID}}
++	for _, r := range rels {
++		if r.SpdxElementID == "SPDXRef-DOCUMENT" && r.RelationshipType == "DESCRIBES" {
++			r = spdxRelationship{imageRootSPDXID, "CONTAINS", r.RelatedSpdxElement}
++		}
++		newRels = append(newRels, r)
++	}
++	if doc["packages"], err = json.Marshal(append([]json.RawMessage{rootJSON}, pkgs...)); err != nil {
++		return nil, err
++	}
++	if doc["relationships"], err = json.Marshal(newRels); err != nil {
++		return nil, err
++	}
++	return json.Marshal(doc)
++}
++
++// setImageRootSHA256 records the sha256 of the built image file on the
++// image root package of the SBOM at sbomPath.
++func setImageRootSHA256(sbomPath, imagePath string) error {
++	f, err := os.Open(imagePath)
++	if err != nil {
++		return err
++	}
++	defer f.Close()
++	h := sha256.New()
++	if _, err := io.Copy(h, f); err != nil {
++		return err
++	}
++	sum := hex.EncodeToString(h.Sum(nil))
++
++	data, err := os.ReadFile(sbomPath)
++	if err != nil {
++		return err
++	}
++	var doc map[string]json.RawMessage
++	if err := json.Unmarshal(data, &doc); err != nil {
++		return err
++	}
++	var pkgs []map[string]json.RawMessage
++	if err := json.Unmarshal(doc["packages"], &pkgs); err != nil {
++		return err
++	}
++	found := false
++	for _, p := range pkgs {
++		if string(p["SPDXID"]) == `"`+imageRootSPDXID+`"` {
++			if p["checksums"], err = json.Marshal([]map[string]string{{"algorithm": "SHA256", "checksumValue": sum}}); err != nil {
++				return err
++			}
++			found = true
++		}
++	}
++	if !found {
++		return fmt.Errorf("no %s package in %s", imageRootSPDXID, sbomPath)
++	}
++	if doc["packages"], err = json.Marshal(pkgs); err != nil {
++		return err
++	}
++	out, err := json.Marshal(doc)
++	if err != nil {
++		return err
++	}
++	// #nosec: G306
++	return os.WriteFile(sbomPath, out, 0644)
++}
+diff --git a/cmd/image-builder/sbom_image_test.go b/cmd/image-builder/sbom_image_test.go
+new file mode 100644
+index 000000000..1eff6c60b
+--- /dev/null
++++ b/cmd/image-builder/sbom_image_test.go
+@@ -0,0 +1,54 @@
++package main
++
++import (
++	"crypto/sha256"
++	"encoding/hex"
++	"encoding/json"
++	"os"
++	"path/filepath"
++	"strings"
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++	"github.com/stretchr/testify/require"
++)
++
++const testSPDX = `{"SPDXID":"SPDXRef-DOCUMENT","packages":[{"SPDXID":"SPDXRef-a","name":"a"}],
++"relationships":[{"spdxElementId":"SPDXRef-DOCUMENT","relationshipType":"DESCRIBES","relatedSpdxElement":"SPDXRef-a"}]}`
++
++func TestImageRootManifestNoSHABuildSHA(t *testing.T) {
++	root := map[string]any{"SPDXID": imageRootSPDXID, "name": "disk"}
++	doc, err := addImageRoot(strings.NewReader(testSPDX), root)
++	require.NoError(t, err)
++
++	// manifest: root package, no checksum
++	var d struct {
++		Packages      []map[string]any   `json:"packages"`
++		Relationships []spdxRelationship `json:"relationships"`
++	}
++	require.NoError(t, json.Unmarshal(doc, &d))
++	assert.Equal(t, imageRootSPDXID, d.Packages[0]["SPDXID"])
++	assert.NotContains(t, d.Packages[0], "checksums")
++	assert.Equal(t, []spdxRelationship{
++		{"SPDXRef-DOCUMENT", "DESCRIBES", imageRootSPDXID},
++		{imageRootSPDXID, "CONTAINS", "SPDXRef-a"},
++	}, d.Relationships)
++
++	// build: same document plus the sha256 of the image file
++	dir := t.TempDir()
++	sbomPath, imgPath := filepath.Join(dir, "x.image-os.spdx.json"), filepath.Join(dir, "x.qcow2")
++	require.NoError(t, os.WriteFile(sbomPath, doc, 0644))
++	require.NoError(t, os.WriteFile(imgPath, []byte("disk bytes"), 0644))
++	require.NoError(t, setImageRootSHA256(sbomPath, imgPath))
++	built, err := os.ReadFile(sbomPath)
++	require.NoError(t, err)
++	var b map[string]any
++	require.NoError(t, json.Unmarshal(built, &b))
++	sum := sha256.Sum256([]byte("disk bytes"))
++	pkg := b["packages"].([]any)[0].(map[string]any)
++	assert.Equal(t, []any{map[string]any{"algorithm": "SHA256", "checksumValue": hex.EncodeToString(sum[:])}}, pkg["checksums"])
++	delete(pkg, "checksums")
++	var m map[string]any
++	require.NoError(t, json.Unmarshal(doc, &m))
++	assert.Equal(t, m, b, "build SBOM differs from manifest SBOM only by the checksum")
++}
+-- 
+2.47.3
+

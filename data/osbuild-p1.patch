@@ -1,0 +1,267 @@
+From 9172b5446015732f8c9b17161da90f4e0a8ceb89 Mon Sep 17 00:00:00 2001
+From: Lucas Garfield <lucas@local>
+Date: Wed, 14 Oct 2026 20:57:26 +0300
+Subject: [PATCH] sbom/spdx: fix sbom-grader findings for RPM-based images
+
+sbom-grader (Red Hat ProdSec SBOM guide, generic_build/generic_release)
+grades osbuild main's Fedora 44 qcow2 image SBOM D. Fix its findings:
+
+- All packages have a supplier: emit supplier "Organization: <RPM Vendor>"
+  (NOASSERTION when the RPM has no Vendor).
+- RPM packages have packageFileName: record the RPM file name from the
+  repo location in the dnf/dnf5 converters and emit packageFileName.
+- Document passes extra validation: define every LicenseRef-* that an RPM
+  License tag passes through (e.g. LicenseRef-Callaway-*) in
+  hasExtractedLicensingInfos, and rewrite the invalid trailing '+' on a
+  LicenseRef to '-or-later' (SPDX 2.3 Annex D).
+- License list has correct form: emit creationInfo.licenseListVersion,
+  the SPDX License List version bundled with license-expression.
+
+With this the same SBOM grades A with no failed checks.
+---
+ osbuild/util/sbom/dnf.py         |  2 ++
+ osbuild/util/sbom/dnf5.py        |  2 ++
+ osbuild/util/sbom/spdx.py        | 45 ++++++++++++++++++++++++++++++--
+ osbuild/util/sbom/spdx2/model.py | 26 +++++++++++++-----
+ test/mod/test_util_sbom_spdx.py  |  7 +++--
+ 5 files changed, 72 insertions(+), 10 deletions(-)
+
+diff --git a/osbuild/util/sbom/dnf.py b/osbuild/util/sbom/dnf.py
+index f0ac6aac..ed03efa1 100644
+--- a/osbuild/util/sbom/dnf.py
++++ b/osbuild/util/sbom/dnf.py
+@@ -1,3 +1,4 @@
++import os
+ from datetime import datetime
+ from typing import Dict, List
+ 
+@@ -55,6 +56,7 @@ def dnf_pkgset_to_sbom_pkgset(dnf_pkgset: List[dnf.package.Package]) -> List[sbo
+             epoch=dnf_pkg.epoch,
+             license_declared=dnf_pkg.license,
+             vendor=dnf_pkg.vendor,
++            filename=os.path.basename(dnf_pkg.relativepath),
+             build_date=datetime.fromtimestamp(dnf_pkg.buildtime),
+             summary=dnf_pkg.summary,
+             description=dnf_pkg.description,
+diff --git a/osbuild/util/sbom/dnf5.py b/osbuild/util/sbom/dnf5.py
+index 01c0a4d8..770f0efe 100644
+--- a/osbuild/util/sbom/dnf5.py
++++ b/osbuild/util/sbom/dnf5.py
+@@ -1,3 +1,4 @@
++import os
+ from datetime import datetime
+ from typing import Dict, List
+ 
+@@ -49,6 +50,7 @@ def dnf_pkgset_to_sbom_pkgset(dnf_pkgset: List[libdnf5.rpm.Package]) -> List[sbo
+             epoch=dnf_pkg.get_epoch(),
+             license_declared=dnf_pkg.get_license(),
+             vendor=dnf_pkg.get_vendor(),
++            filename=os.path.basename(dnf_pkg.get_location()),
+             build_date=datetime.fromtimestamp(dnf_pkg.get_build_time()),
+             summary=dnf_pkg.get_summary(),
+             description=dnf_pkg.get_description(),
+diff --git a/osbuild/util/sbom/spdx.py b/osbuild/util/sbom/spdx.py
+index 541452b3..d4906817 100644
+--- a/osbuild/util/sbom/spdx.py
++++ b/osbuild/util/sbom/spdx.py
+@@ -1,4 +1,5 @@
+ import os
++import re
+ from datetime import datetime
+ from typing import Dict, List, Optional, Union
+ from uuid import uuid4
+@@ -43,6 +44,21 @@ class SpdxLicenseExpressionCreator:
+         eli = spdx2.ExtractedLicensingInfo(license_str)
+         return self._extracted_license_infos.setdefault(eli.license_ref_id, eli)
+ 
++    def _define_license_refs(self, expression: str) -> str:
++        """
++        SPDX 2.3 clause 10: every LicenseRef-* used in the document must be defined
++        in hasExtractedLicensingInfos. RPM License tags (e.g. Fedora's
++        LicenseRef-Callaway-*) use such refs, so define each one we pass through.
++        """
++        # '+' is not allowed on a LicenseRef (SPDX 2.3 Annex D), but Fedora has the
++        # legacy "LicenseRef-Callaway-LGPLv2+": spell the "or later" into the ID.
++        expression = re.sub(r"(LicenseRef-[A-Za-z0-9.-]+)\+", r"\1-or-later", expression)
++        for ref in re.findall(r"LicenseRef-[A-Za-z0-9.-]+", expression):
++            self._extracted_license_infos.setdefault(
++                ref, spdx2.ExtractedLicensingInfo(f"License identifier {ref} from the RPM License tag",
++                                                  name=ref[len("LicenseRef-"):], license_ref_id=ref))
++        return expression
++
+     def ensure_license_expression(self, license_str: str) -> Union[str, spdx2.ExtractedLicensingInfo]:
+         """
+         Convert a license string to a valid SPDX license expression or wrap it in an ExtractedLicensingInfo object.
+@@ -58,13 +74,14 @@ class SpdxLicenseExpressionCreator:
+         """
+         if license_str.startswith("LicenseRef-"):
+             # The license string is already an SPDX license ref ID.
+-            return license_str
++            return self._define_license_refs(license_str)
+ 
+         if self._spdx_licensing is None:
+             return self._to_extracted_license_info(license_str)
+ 
+         try:
+-            return str(self._spdx_licensing.parse(license_str, validate=True, strict=True))
++            return self._define_license_refs(
++                str(self._spdx_licensing.parse(license_str, validate=True, strict=True)))
+         except ExpressionError:
+             return self._to_extracted_license_info(license_str)
+ 
+@@ -91,6 +108,23 @@ def spdx2_checksum_algorithm(algorithm: sbom_model.ChecksumAlgorithm) -> spdx2.C
+     raise ValueError(f"Unknown checksum algorithm: {algorithm}")
+ 
+ 
++def spdx_license_list_version() -> Optional[str]:
++    """
++    SPDX License List version bundled with license-expression (SPDX 2.3 clause 6.7),
++    i.e. the list that license expressions were validated against.
++    """
++    if get_spdx_licensing is None:
++        return None
++    import license_expression  # pylint: disable=import-outside-toplevel
++    about = os.path.join(os.path.dirname(license_expression.__file__), "data", "license_key_index.json.ABOUT")
++    try:
++        with open(about, encoding="utf-8") as f:
++            m = re.search(r"^spdx_license_list_version:\s*(\d+\.\d+)\s*$", f.read(), re.MULTILINE)
++    except OSError:
++        return None
++    return m.group(1) if m else None
++
++
+ def create_spdx2_document():
+     tool = f"osbuild-{osbuild.__version__}"
+     doc_name = f"sbom-by-{tool}"
+@@ -103,6 +137,7 @@ def create_spdx2_document():
+         document_namespace=f"https://osbuild.org/spdxdocs/{doc_name}-{uuid4()}",
+         creators=[spdx2.Creator(spdx2.CreatorType.TOOL, tool)],
+         created=datetime.now(),
++        license_list_version=spdx_license_list_version(),
+     )
+     doc = spdx2.Document(ci)
+ 
+@@ -140,6 +175,12 @@ def sbom_pkgset_to_spdx2_doc(
+             ]
+         )
+ 
++        # SPDX 2.3 clause 7.5: "Organization: <name>", or NOASSERTION if unknown
++        p.supplier = f"Organization: {pkg.vendor}" if pkg.vendor else spdx2.NoAssertionValue()
++
++        if pkg.filename:
++            p.file_name = pkg.filename
++
+         if pkg.homepage:
+             p.homepage = pkg.homepage
+ 
+diff --git a/osbuild/util/sbom/spdx2/model.py b/osbuild/util/sbom/spdx2/model.py
+index b47f1cf4..da4acbc7 100644
+--- a/osbuild/util/sbom/spdx2/model.py
++++ b/osbuild/util/sbom/spdx2/model.py
+@@ -82,6 +82,7 @@ class CreationInfo(EntityWithSpdxId):
+         creators: List[Creator],
+         created: datetime,
+         data_license: str = "CC0-1.0",
++        license_list_version: Optional[str] = None,
+     ) -> None:
+         super().__init__(spdx_id)
+ 
+@@ -97,14 +98,18 @@ class CreationInfo(EntityWithSpdxId):
+         self.document_namespace = document_namespace
+         self.creators = creators
+         self.created = created
++        self.license_list_version = license_list_version
+ 
+     def to_dict(self):
++        creation_info = {
++            "created": datetime_to_iso8601(self.created),
++            "creators": [str(creator) for creator in self.creators],
++        }
++        if self.license_list_version:
++            creation_info["licenseListVersion"] = self.license_list_version
+         return {
+             "SPDXID": self.spdx_id,
+-            "creationInfo": {
+-                "created": datetime_to_iso8601(self.created),
+-                "creators": [str(creator) for creator in self.creators],
+-            },
++            "creationInfo": creation_info,
+             "dataLicense": self.data_license,
+             "name": self.name,
+             "spdxVersion": self.spdx_version,
+@@ -253,10 +258,11 @@ class ExtractedLicensingInfo():
+     https://spdx.github.io/spdx-spec/v2.3/other-licensing-information-detected/
+     """
+ 
+-    def __init__(self, extracted_text: str, name: Optional[str] = None) -> None:
++    def __init__(self, extracted_text: str, name: Optional[str] = None,
++                 license_ref_id: Optional[str] = None) -> None:
+         self.extracted_text = extracted_text
+         self.name = name
+-        self.license_ref_id = generate_license_id(self.extracted_text, self.name)
++        self.license_ref_id = license_ref_id or generate_license_id(self.extracted_text, self.name)
+ 
+     def __str__(self):
+         return self.license_ref_id
+@@ -290,6 +296,8 @@ class Package(EntityWithSpdxId):
+         description: Optional[str] = None,
+         external_references: Optional[List[ExternalPackageRef]] = None,
+         built_date: Optional[datetime] = None,
++        supplier: Optional[Union[str, NoAssertionValue]] = None,
++        file_name: Optional[str] = None,
+     ) -> None:
+         super().__init__(spdx_id)
+         self.name = name
+@@ -304,6 +312,8 @@ class Package(EntityWithSpdxId):
+         self.description = description
+         self.external_references = external_references or []
+         self.built_date = built_date
++        self.supplier = supplier
++        self.file_name = file_name
+ 
+     def to_dict(self):
+         d = {
+@@ -315,6 +325,10 @@ class Package(EntityWithSpdxId):
+             d["filesAnalyzed"] = self.files_analyzed
+         if self.version:
+             d["versionInfo"] = self.version
++        if self.supplier:
++            d["supplier"] = str(self.supplier)
++        if self.file_name:
++            d["packageFileName"] = self.file_name
+         if self.checksums:
+             d["checksums"] = [checksum.to_dict() for checksum in self.checksums]
+         if self.homepage:
+diff --git a/test/mod/test_util_sbom_spdx.py b/test/mod/test_util_sbom_spdx.py
+index 2742e871..31f14f79 100644
+--- a/test/mod/test_util_sbom_spdx.py
++++ b/test/mod/test_util_sbom_spdx.py
+@@ -27,12 +27,15 @@ def test_spdxlicenseexpressionfactory_license_expression_availability(licensing_
+ 
+         license_expression2 = lf.ensure_license_expression("LicenseRef-123")
+         assert license_expression2 == "LicenseRef-123"
++        # every LicenseRef passed through gets defined (SPDX 2.3 clause 10)
++        assert "LicenseRef-123" in [eli.license_ref_id for eli in lf.extracted_license_infos()]
++        assert lf.ensure_license_expression("LicenseRef-Callaway-LGPLv2+") == "LicenseRef-Callaway-LGPLv2-or-later"
+ 
+         if licensing_available:
+             assert mocked_licensing is not None
+             # The license string should be a SPDX license expression string.
+             assert license_expression == "MIT"
+-            assert len(lf.extracted_license_infos()) == 0
++            assert len(lf.extracted_license_infos()) == 2
+         else:
+             assert mocked_licensing is None
+             # The license string should be wrapped in an ExtractedLicensingInfo,
+@@ -40,7 +43,7 @@ def test_spdxlicenseexpressionfactory_license_expression_availability(licensing_
+             assert isinstance(license_expression, ExtractedLicensingInfo)
+             assert str(license_expression).startswith("LicenseRef-")
+             assert license_expression.extracted_text == "MIT"
+-            assert len(lf.extracted_license_infos()) == 1
++            assert len(lf.extracted_license_infos()) == 3
+ 
+ 
+ @pytest.mark.parametrize("licensing_available", (True, False))
+-- 
+2.47.3
+
