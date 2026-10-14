@@ -1,0 +1,846 @@
+{
+ "doc": {
+  "title": "2026 Minimum Elements for a Software Bill of Materials (SBOM)",
+  "version": "2.1",
+  "date": "2026-07-29",
+  "status": "final (replaces 2.0 draft of 2025-08-22)",
+  "url": "https://www.cisa.gov/sites/default/files/2026-07/2026_cisa_sbom_minimum_elements_508c.pdf",
+  "landing": "https://www.cisa.gov/resources-tools/resources/2026-minimum-elements-software-bill-materials-sbom",
+  "sha256": "b42046c466ea3afcd2110b9b20607896d7172d6aaf66051459a769d0aa7456fc",
+  "local": "data/cisa/2026_cisa_sbom_minimum_elements_508c.pdf",
+  "ids": "ME-DF-M*/ME-DF-C*/ME-PP-* assigned here in document order (the document has no numbered sections)"
+ },
+ "pins": {
+  "sbom-grader": "BorekZnovustvoritel/SBOM-Grader@66e37c8333ac6055a8c34f2578bab0f2e1385087 (rulesets/general.yml, specific.yml; cookbooks generic_build, generic_release)",
+  "mequal": "lucasgarfield/mequal@048d450 + lucasgarfield/mequal-prodsec-policies@778e2f98",
+  "sbom": {
+   "p2": "data/p2.image-os.spdx.json",
+   "p3": "data/p3.image-os.spdx.json",
+   "p3-buildroot": "data/p3.buildroot-build.spdx.json"
+  }
+ },
+ "stats": {
+  "p2": {
+   "n": 511,
+   "creators": [
+    "Tool: osbuild-194"
+   ],
+   "supplier_org": 510,
+   "checksum_sha256": 511,
+   "placeholder_sha": true,
+   "with_purl": 511,
+   "with_cpe": 0,
+   "lic_declared": 510,
+   "root_license": {
+    "licenseDeclared": null,
+    "licenseConcluded": null
+   },
+   "with_version": 511,
+   "rel": {
+    "CONTAINS": 510,
+    "DEPENDS_ON": 2021,
+    "DESCRIBES": 1,
+    "OPTIONAL_DEPENDENCY_OF": 121
+   },
+   "extdocs": [],
+   "build_tool_of": [],
+   "root_key": "$.packages[fedora-44-generic-qcow2-x86_64 44]",
+   "p7zip": "$.packages[7zip 25.01]"
+  },
+  "p3": {
+   "n": 511,
+   "creators": [
+    "Tool: osbuild-194",
+    "Tool: image-builder-87.0.0"
+   ],
+   "supplier_org": 510,
+   "checksum_sha256": 511,
+   "placeholder_sha": true,
+   "with_purl": 511,
+   "with_cpe": 0,
+   "lic_declared": 511,
+   "root_license": {
+    "licenseDeclared": "NOASSERTION",
+    "licenseConcluded": "NOASSERTION"
+   },
+   "with_version": 511,
+   "rel": {
+    "BUILD_TOOL_OF": 1,
+    "CONTAINS": 510,
+    "DEPENDS_ON": 2021,
+    "DESCRIBES": 1,
+    "OPTIONAL_DEPENDENCY_OF": 121
+   },
+   "extdocs": [
+    {
+     "externalDocumentId": "DocumentRef-buildroot-build",
+     "spdxDocument": "https://osbuild.org/spdxdocs/sbom-by-osbuild-194-96ee13d8-5758-47e2-a95c-df92d525593c",
+     "checksum": {
+      "algorithm": "SHA1",
+      "checksumValue": "a42be4b4482c1ea313d1b09e5f40a03cc3d3258a"
+     }
+    }
+   ],
+   "build_tool_of": [
+    {
+     "spdxElementId": "DocumentRef-buildroot-build:SPDXRef-DOCUMENT",
+     "relationshipType": "BUILD_TOOL_OF",
+     "relatedSpdxElement": "SPDXRef-image-root"
+    }
+   ],
+   "root_key": "$.packages[fedora-44-generic-qcow2-x86_64 44]",
+   "p7zip": "$.packages[7zip 25.01]"
+  }
+ },
+ "rows": [
+  {
+   "id": "ME-DF-M1",
+   "name": "SBOM Author",
+   "heading": "SBOM Author (Major Update)",
+   "section": "Data Fields › SBOM Metadata",
+   "page": 8,
+   "quote": "Definition: The name of the entity that creates the SBOM data for the target component. The SBOM Author element contains a string that identifies the entity that generated the SBOM for the target component. This element captures the entity operating the tool to generate the SBOM, not the tool itself. Inputs for this field should use full names and should not use acronyms (unless the official name of the entity that generated the SBOM includes an acronym). The SBOM Author element is distinct from the Component Producer element, which identifies the entity that created the target component. The SBOM Author and the Component Producer field contents may be identical if the same entity created the target component and generated the SBOM. In cases where an entity that did not create the target component generates the SBOM for the target component, the field contents will be different.",
+   "grader": {
+    "status": "partial",
+    "rules": [
+     "Document passes schema validation",
+     "Document passes extra validation"
+    ],
+    "evidence": "spdx-tools requires creationInfo.creators ≥1 entry; a Tool: entry alone passes, an Organization:/Person: author is not required"
+   },
+   "mequal": {
+    "status": "x",
+    "rules": [],
+    "evidence": "no rule reads creationInfo.creators"
+   },
+   "ib": {
+    "p2": {
+     "status": "x",
+     "path": "$.creationInfo.creators",
+     "why": "creators = ['Tool: osbuild-194']: only Tool entries, no Organization:/Person: SBOM author"
+    },
+    "p3": {
+     "status": "x",
+     "path": "$.creationInfo.creators",
+     "why": "creators = ['Tool: osbuild-194', 'Tool: image-builder-87.0.0']: only Tool entries, no Organization:/Person: SBOM author"
+    }
+   }
+  },
+  {
+   "id": "ME-DF-M2",
+   "name": "SBOM Author Signature",
+   "heading": "SBOM Author Signature (New)",
+   "section": "Data Fields › SBOM Metadata",
+   "page": 8,
+   "quote": "Definition: A digital signature attributable to the SBOM author. The SBOM Author Signature element provides assurance that the claimed signatory signed the information and that the information was not modified after signature generation. Digital signatures should use a signature algorithm approved for secure use, according to regulations or recommendations from relevant authorities, such as the U.S. National Institute of Standards and Technology (NIST) Digital Signature Standard (DSS), the International Organization for Standardization (ISO)/International Electrotechnical Commission (IEC) 14888-4:2024, or the European Union Agency for Cybersecurity (ENISA) Agreed Cryptographic Mechanisms.",
+   "grader": {
+    "status": "x",
+    "rules": [],
+    "evidence": "no rule checks signatures"
+   },
+   "mequal": {
+    "status": "x",
+    "rules": [],
+    "evidence": "no rule checks signatures"
+   },
+   "ib": {
+    "p2": {
+     "status": "x",
+     "path": null,
+     "why": "no signature in or alongside the document; image-builder writes an unsigned .spdx.json"
+    },
+    "p3": {
+     "status": "x",
+     "path": null,
+     "why": "no signature in or alongside the document; image-builder writes an unsigned .spdx.json"
+    }
+   }
+  },
+  {
+   "id": "ME-DF-M3",
+   "name": "SBOM Data Format Name",
+   "heading": "SBOM Data Format Name (New)",
+   "section": "Data Fields › SBOM Metadata",
+   "page": 9,
+   "quote": "Definition: The name of the data format used to represent the SBOM data. The SBOM Data Format Name element identifies the data format used to generate and consume the SBOM. See Machine-Processable Data for information on SBOM data formats.",
+   "grader": {
+    "status": "check",
+    "rules": [
+     "Document passes schema validation",
+     "Document passes extra validation"
+    ],
+    "evidence": "spdx-tools parse + validate_full_spdx_document(doc, \"SPDX-2.3\") require spdxVersion = SPDX-2.3"
+   },
+   "mequal": {
+    "status": "check",
+    "rules": [
+     "spdx_sbom_is_spdx_2_3_and_above"
+    ],
+    "evidence": "spdx-2-3-plus.rego reads spdxVersion"
+   },
+   "ib": {
+    "p2": {
+     "status": "check",
+     "path": "$.spdxVersion",
+     "why": "spdxVersion = \"SPDX-2.3\""
+    },
+    "p3": {
+     "status": "check",
+     "path": "$.spdxVersion",
+     "why": "spdxVersion = \"SPDX-2.3\""
+    }
+   }
+  },
+  {
+   "id": "ME-DF-M4",
+   "name": "SBOM Data Format Version",
+   "heading": "SBOM Data Format Version (New)",
+   "section": "Data Fields › SBOM Metadata",
+   "page": 9,
+   "quote": "Definition: Identifier designated by the SBOM data format to specify the version of the data format. The SBOM Data Format Version element identifies the version of the data format indicated in the SBOM Data Format Name element. Versions declared to be deprecated by the organizations maintaining the data format should not be used.",
+   "grader": {
+    "status": "check",
+    "rules": [
+     "Document passes extra validation"
+    ],
+    "evidence": "validate_full_spdx_document(doc, \"SPDX-2.3\")"
+   },
+   "mequal": {
+    "status": "check",
+    "rules": [
+     "spdx_sbom_is_spdx_2_3_and_above"
+    ],
+    "evidence": "version ≥ 2.3"
+   },
+   "ib": {
+    "p2": {
+     "status": "check",
+     "path": "$.spdxVersion",
+     "why": "SPDX-2.3 (current, not deprecated)"
+    },
+    "p3": {
+     "status": "check",
+     "path": "$.spdxVersion",
+     "why": "SPDX-2.3 (current, not deprecated)"
+    }
+   }
+  },
+  {
+   "id": "ME-DF-M5",
+   "name": "SBOM Generation Context",
+   "heading": "SBOM Generation Context (New)",
+   "section": "Data Fields › SBOM Metadata",
+   "page": 9,
+   "quote": "Definition: The relative software lifecycle phase and data available at the time the SBOM author generated the SBOM. The SBOM Generation Context element conveys information about the component data documented in the SBOM. Component data may differ based on the phase of the software lifecycle during which the SBOM was generated. General software lifecycle references such as “before build,” “build,” and “after build,” as well as more specific identifiers, can satisfy this element. For example, an SBOM generated from source code could be identified as “before build,” and binary analysis tools can generate an SBOM “after build.”",
+   "grader": {
+    "status": "x",
+    "rules": [],
+    "evidence": "no rule reads creationInfo.comment"
+   },
+   "mequal": {
+    "status": "check",
+    "rules": [
+     "spdx_creationinfo_sbom_type_exists"
+    ],
+    "evidence": "spdx-sbomtype.rego: creationInfo.comment matches \"SBOM type: <CISA type>\""
+   },
+   "ib": {
+    "p2": {
+     "status": "partial",
+     "path": "$.creationInfo.comment",
+     "why": "\"SBOM type: Build\" is present, but the SBOM is produced at manifest time from the depsolve result, before the image is built; \"before build\" may be the more accurate phase"
+    },
+    "p3": {
+     "status": "partial",
+     "path": "$.creationInfo.comment",
+     "why": "\"SBOM type: Build\" is present, but the SBOM is produced at manifest time from the depsolve result, before the image is built; \"before build\" may be the more accurate phase"
+    }
+   }
+  },
+  {
+   "id": "ME-DF-M6",
+   "name": "SBOM Timestamp",
+   "heading": "SBOM Timestamp (Minor Update)",
+   "section": "Data Fields › SBOM Metadata",
+   "page": 9,
+   "quote": "Definition: Record of the date and time of the most recent update to the SBOM data. The SBOM Timestamp element identifies when the SBOM author last changed the SBOM data, either manually or using a software tool. Each version of an SBOM will have a new timestamp. The content of this field should adhere to RFC 9557.",
+   "grader": {
+    "status": "check",
+    "rules": [
+     "Document passes schema validation",
+     "Document passes extra validation"
+    ],
+    "evidence": "spdx-tools requires creationInfo.created as ISO 8601 datetime"
+   },
+   "mequal": {
+    "status": "x",
+    "rules": [],
+    "evidence": "no rule reads creationInfo.created"
+   },
+   "ib": {
+    "p2": {
+     "status": "check",
+     "path": "$.creationInfo.created",
+     "why": "2026-10-14T18:44:44Z (RFC 3339 / RFC 9557-compatible)"
+    },
+    "p3": {
+     "status": "check",
+     "path": "$.creationInfo.created",
+     "why": "2026-10-14T19:21:08Z (RFC 3339 / RFC 9557-compatible)"
+    }
+   }
+  },
+  {
+   "id": "ME-DF-M7",
+   "name": "SBOM Tool Name",
+   "heading": "SBOM Tool Name (New)",
+   "section": "Data Fields › SBOM Metadata",
+   "page": 9,
+   "quote": "Definition: The name of the tool used by the SBOM author to generate or amend the SBOM. The SBOM Tool Name element contains a string that identifies the software tool that the SBOM author used to generate the SBOM. Inputs for this field should use full names and should not use acronyms (unless the tool’s official name includes an acronym).",
+   "grader": {
+    "status": "x",
+    "rules": [],
+    "evidence": "Tool: creators not required by any rule"
+   },
+   "mequal": {
+    "status": "x",
+    "rules": [],
+    "evidence": "no rule reads creators"
+   },
+   "ib": {
+    "p2": {
+     "status": "partial",
+     "path": "$.creationInfo.creators[Tool: osbuild-194]",
+     "why": "['Tool: osbuild-194']: osbuild named, image-builder (the tool the author ran) not listed; name and version share one string"
+    },
+    "p3": {
+     "status": "check",
+     "path": "$.creationInfo.creators[Tool: image-builder-87.0.0]",
+     "why": "['Tool: osbuild-194', 'Tool: image-builder-87.0.0']: image-builder (the tool run) and osbuild (its pinned depsolver)"
+    }
+   }
+  },
+  {
+   "id": "ME-DF-M8",
+   "name": "SBOM Tool Version",
+   "heading": "SBOM Tool Version (New)",
+   "section": "Data Fields › SBOM Metadata",
+   "page": 10,
+   "quote": "Definition: Identifier for the version of the tool identified in the SBOM Tool Name element. The SBOM Tool Version element captures the tool version and allows an organization to identify a specific code delivery. If no version identifier is available, the SBOM author should indicate that the information is unknown.",
+   "grader": {
+    "status": "x",
+    "rules": [],
+    "evidence": "not checked"
+   },
+   "mequal": {
+    "status": "x",
+    "rules": [],
+    "evidence": "not checked"
+   },
+   "ib": {
+    "p2": {
+     "status": "partial",
+     "path": "$.creationInfo.creators[Tool: osbuild-194]",
+     "why": "version only as the \"-194\" suffix of the osbuild string; no image-builder version"
+    },
+    "p3": {
+     "status": "check",
+     "path": "$.creationInfo.creators[Tool: image-builder-87.0.0]",
+     "why": "\"Tool: image-builder-87.0.0\" from image-builder's own version info (main.version); osbuild version in its own entry"
+    }
+   }
+  },
+  {
+   "id": "ME-DF-M9",
+   "name": "SBOM Version",
+   "heading": "SBOM Version (New)",
+   "section": "Data Fields › SBOM Metadata",
+   "page": 10,
+   "quote": "Definition: Identifier designated by the SBOM author to specify a change in the SBOM document from a previously identified version or to indicate that it is the first version. The SBOM Version element indicates a relationship with earlier iterations of an SBOM and signals that the SBOM author made changes to the previous iteration. The SBOM version is the version of an SBOM for each component-name/component-version pair. The SBOM Version element may use Semantic Versioning; if the SBOM author uses Semantic Versioning, the major version of a published SBOM following these minimum elements should be “1.” SBOM authors should use minor version and patch version to indicate changes to the content of the SBOM elements as appropriate. If using an identifier such as a serial number to differentiate between versions of an SBOM, use of the identifier should conform to relevant standards (for example, RFC 9562 for unique identifiers). SBOM authors should update the version for an SBOM for a given component-name/component-version pair when editing data about the target component.",
+   "grader": {
+    "status": "partial",
+    "rules": [
+     "Document passes schema validation"
+    ],
+    "evidence": "documentNamespace (unique URI) is required; no SBOM version field exists in SPDX 2.3"
+   },
+   "mequal": {
+    "status": "x",
+    "rules": [],
+    "evidence": "not checked"
+   },
+   "ib": {
+    "p2": {
+     "status": "partial",
+     "path": "$.documentNamespace",
+     "why": "namespace carries a fresh UUIDv4 per generation (RFC 9562 identifier), but no version sequence relating it to earlier SBOMs of the same image"
+    },
+    "p3": {
+     "status": "partial",
+     "path": "$.documentNamespace",
+     "why": "namespace carries a fresh UUIDv4 per generation (RFC 9562 identifier), but no version sequence relating it to earlier SBOMs of the same image"
+    }
+   }
+  },
+  {
+   "id": "ME-DF-C1",
+   "name": "Component Producer",
+   "heading": "Component Producer (Major Update)",
+   "section": "Data Fields › Component Data",
+   "page": 10,
+   "quote": "Definition: The name of an entity that creates, defines, and identifies components. The Component Producer element contains a human-readable string that identifies the entity that created or developed the target component. The Component Producer element can enable the identification of a point of contact for software security concerns. Only one organization should be identified as the component producer for a given component. This practice will help distinguish between components of the same name produced by different component producers. Inputs for this field should use full names and should not use acronyms (unless the component producer’s official name includes an acronym). For open source software projects, the Component Producer field remains important. Naming practices may vary depending on how the project develops, distributes, and maintains packages and files. Certain ecosystems provide conventions for naming component producers through package managers. Otherwise, the SBOM author should use the original project or maintaining organization, when available. If there is no clear indication of component producer, the SBOM author should explicitly indicate that the component is of unknown provenance to acknowledge the lack of traceability. The Component Producer element replaces the Supplier Name element from the 2021 SBOM Minimum Elements. Supplier Name has proven ambiguous in practice, particularly around distributors of software. Although reduced by the change to “Component Producer,” some ambiguity will remain until there is a consensus methodology for identifying entities that create software.",
+   "grader": {
+    "status": "check",
+    "rules": [
+     "All packages have a supplier"
+    ],
+    "evidence": "supplier present and non-empty on every package (NOASSERTION passes)"
+   },
+   "mequal": {
+    "status": "x",
+    "rules": [],
+    "evidence": "no rule reads supplier"
+   },
+   "ib": {
+    "p2": {
+     "status": "partial",
+     "path": "$.packages[7zip 25.01].supplier",
+     "why": "510/511 \"Organization: Fedora Project\" (the distributor, not the upstream producer); root package supplier NOASSERTION"
+    },
+    "p3": {
+     "status": "partial",
+     "path": "$.packages[7zip 25.01].supplier",
+     "why": "510/511 \"Organization: Fedora Project\" (the distributor, not the upstream producer); root package supplier NOASSERTION"
+    }
+   }
+  },
+  {
+   "id": "ME-DF-C2",
+   "name": "Component Dependency Relationship",
+   "heading": "Component Dependency Relationship (Minor Update)",
+   "section": "Data Fields › Component Data",
+   "page": 11,
+   "quote": "Definition: The relationship between two components, where one component is necessary for the operation of the other. The Component Dependency Relationship element reflects that a component includes another component. This information specifies the relationship between the target component and one of its subcomponents and supports the capability to build a dependency graph. SBOM data formats may structure information about these subcomponents as SBOM elements embedded in the SBOM. Alternatively, an SBOM document can link to separate SBOM documents for each of the target component’s dependencies.",
+   "grader": {
+    "status": "partial",
+    "rules": [
+     "All packages are referenced in relationships",
+     "Main element is a package"
+    ],
+    "evidence": "each package appears in some relationship (any type); DEPENDS_ON is not required"
+   },
+   "mequal": {
+    "status": "x",
+    "rules": [],
+    "evidence": "ProdSec relationship rules check ANCESTOR_OF / VARIANT_OF / GENERATED_FROM (lineage), not dependencies"
+   },
+   "ib": {
+    "p2": {
+     "status": "check",
+     "path": "$.relationships",
+     "why": "relationships by type: {'CONTAINS': 510, 'DEPENDS_ON': 2021, 'DESCRIBES': 1, 'OPTIONAL_DEPENDENCY_OF': 121}"
+    },
+    "p3": {
+     "status": "check",
+     "path": "$.relationships",
+     "why": "relationships by type: {'BUILD_TOOL_OF': 1, 'CONTAINS': 510, 'DEPENDS_ON': 2021, 'DESCRIBES': 1, 'OPTIONAL_DEPENDENCY_OF': 121}"
+    }
+   }
+  },
+  {
+   "id": "ME-DF-C3",
+   "name": "Component Hash Value",
+   "heading": "Component Hash Value (New)",
+   "section": "Data Fields › Component Data",
+   "page": 11,
+   "quote": "Definition: The output generated from applying a cryptographic hash algorithm to an executable component artifact. The Component Hash Value element contains an American Standard Code for Information Interchange (ASCII), hexadecimal encoded value that is the result of providing the executable component artifact as input to a cryptographic hash algorithm. If the SBOM author does not have access to the executable component artifact, then the SBOM author should indicate the value is unknown.",
+   "grader": {
+    "status": "check",
+    "rules": [
+     "All packages have a checksum",
+     "Document passes extra validation"
+    ],
+    "evidence": "checksums non-empty on every package; value format validated"
+   },
+   "mequal": {
+    "status": "check",
+    "rules": [
+     "spdx_sbom_all_components_contain_checksums_field",
+     "spdx_sbom_all_components_contain_checksums_values"
+    ],
+    "evidence": "lpol3.rego"
+   },
+   "ib": {
+    "p2": {
+     "status": "partial",
+     "path": "$.packages[fedora-44-generic-qcow2-x86_64 44].checksums[SHA256]",
+     "why": "511/511 SHA256; 510 are real RPM file hashes, the image root hash is the documented placeholder (manifest-time, no disk built)"
+    },
+    "p3": {
+     "status": "partial",
+     "path": "$.packages[fedora-44-generic-qcow2-x86_64 44].checksums[SHA256]",
+     "why": "511/511 SHA256; 510 are real RPM file hashes, the image root hash is the documented placeholder (manifest-time, no disk built)"
+    }
+   }
+  },
+  {
+   "id": "ME-DF-C4",
+   "name": "Component Hash Algorithm",
+   "heading": "Component Hash Algorithm (New)",
+   "section": "Data Fields › Component Data",
+   "page": 11,
+   "quote": "Definition: The cryptographic algorithm used to compute the Component Hash Value of the software component. The Component Hash Algorithm element documents the algorithm that produced the Component Hash Value to allow validation of the integrity of the target component. The SBOM author should identify the algorithm using Internet Assigned Numbers Authority (IANA) Hash Function Textual Names. The algorithm should be approved by a relevant authority, such as NIST.",
+   "grader": {
+    "status": "partial",
+    "rules": [
+     "Document passes extra validation"
+    ],
+    "evidence": "algorithm must be a valid SPDX enum value (MD5/SHA1 would also pass)"
+   },
+   "mequal": {
+    "status": "x",
+    "rules": [],
+    "evidence": "algorithm not checked"
+   },
+   "ib": {
+    "p2": {
+     "status": "partial",
+     "path": "$.packages[7zip 25.01].checksums[SHA256].algorithm",
+     "why": "SHA256 on every package (NIST-approved), but written as the SPDX enum \"SHA256\", not the IANA textual name \"sha-256\" the element asks for"
+    },
+    "p3": {
+     "status": "partial",
+     "path": "$.packages[7zip 25.01].checksums[SHA256].algorithm",
+     "why": "SHA256 on every package (NIST-approved), but written as the SPDX enum \"SHA256\", not the IANA textual name \"sha-256\" the element asks for"
+    }
+   }
+  },
+  {
+   "id": "ME-DF-C5",
+   "name": "Component Identifiers",
+   "heading": "Component Identifiers (Major Update)",
+   "section": "Data Fields › Component Data",
+   "page": 12,
+   "quote": "Definition: Identifiers used to identify a component or serve as a look-up key for relevant databases. The Component Identifiers element contains at least one software identifier associated with the target component. Machine-processable, unique software identifiers support automated analysis. This field should use common software identifiers, such as Common Platform Enumeration (CPE) and Package-URL (PURL). This field may also include universally unique identifiers (UUID), organization-specific identifiers, commit hashes, and intrinsic identifiers such as OmniBOR and Software Hash Identifier (SWHID). If there are multiple software identifiers, the SBOM author should include all of them.",
+   "grader": {
+    "status": "check",
+    "rules": [
+     "All packages have at least one externalRef",
+     "RPM packages have an arch qualifier in PURLs"
+    ],
+    "evidence": "every package needs ≥1 externalRef"
+   },
+   "mequal": {
+    "status": "partial",
+    "rules": [
+     "spdx_main_package_has_cpe",
+     "spdx_contains_multipurl_example",
+     "spdx_contains_multicpe_example"
+    ],
+    "evidence": "CPE only on the described package; multi-purl/multi-cpe need one example; no per-package identifier rule"
+   },
+   "ib": {
+    "p2": {
+     "status": "check",
+     "path": "$.packages[7zip 25.01].externalRefs",
+     "why": "purl on 511/511 (two per RPM after patch 2); CPE on 0/511"
+    },
+    "p3": {
+     "status": "check",
+     "path": "$.packages[7zip 25.01].externalRefs",
+     "why": "purl on 511/511 (two per RPM after patch 2); CPE on 0/511"
+    }
+   }
+  },
+  {
+   "id": "ME-DF-C6",
+   "name": "Component License",
+   "heading": "Component License (New)",
+   "section": "Data Fields › Component Data",
+   "page": 12,
+   "quote": "Definition: The identifier(s) for the license(s) under which the software component is available. The Component License element captures the identifiers for the licenses under which the software component is available. The license identifiers should allow an organization receiving the SBOM data to find the full details of the licenses. When possible, the SBOM author should convey this information in a machine-processable fashion, such as by using System Package Data eXchange (SPDX) license identifiers. If no identifier is available, the contents should indicate through other means where the full license details are available, such as via a URL. This field should also include information about the existence of proprietary license conditions. If the SBOM author is not aware of the license information, then the SBOM author should indicate that license information is unknown.",
+   "grader": {
+    "status": "partial",
+    "rules": [
+     "Document passes extra validation",
+     "License list has correct form"
+    ],
+    "evidence": "license expressions validated when present; presence not required"
+   },
+   "mequal": {
+    "status": "x",
+    "rules": [],
+    "evidence": "no license rule"
+   },
+   "ib": {
+    "p2": {
+     "status": "partial",
+     "path": "$.packages[7zip 25.01].licenseDeclared",
+     "why": "licenseDeclared on 510/511; image root package has no license field and no NOASSERTION (unknown not stated)"
+    },
+    "p3": {
+     "status": "check",
+     "path": "$.packages[fedora-44-generic-qcow2-x86_64 44].licenseDeclared",
+     "why": "licenseDeclared on 511/511; image root states NOASSERTION (declared NOASSERTION, concluded NOASSERTION)"
+    }
+   }
+  },
+  {
+   "id": "ME-DF-C7",
+   "name": "Component Name",
+   "heading": "Component Name (Minor Update)",
+   "section": "Data Fields › Component Data",
+   "page": 12,
+   "quote": "Definition: The name assigned by the component producer to a software component. The Component Name element identifies the software component in a human-readable way. The component producer determines the component name. This field is distinct from the Component Identifiers field. Data formats implementing the Component Name element should allow for multiple entries to capture alternate names. Inputs for this field should use full names and should not use acronyms (unless the component’s official name includes an acronym).",
+   "grader": {
+    "status": "check",
+    "rules": [
+     "Document passes schema validation"
+    ],
+    "evidence": "package name is required by the SPDX schema"
+   },
+   "mequal": {
+    "status": "x",
+    "rules": [],
+    "evidence": "not checked"
+   },
+   "ib": {
+    "p2": {
+     "status": "check",
+     "path": "$.packages[7zip 25.01].name",
+     "why": "name on 511/511"
+    },
+    "p3": {
+     "status": "check",
+     "path": "$.packages[7zip 25.01].name",
+     "why": "name on 511/511"
+    }
+   }
+  },
+  {
+   "id": "ME-DF-C8",
+   "name": "Component Version",
+   "heading": "Component Version (Major Update)",
+   "section": "Data Fields › Component Data",
+   "page": 13,
+   "quote": "Definition: Identifier used by the component producer to specify a change in a software component from a previously identified version or to indicate that it is the first version. The Component Version element captures the target component’s version and allows an organization to identify a specific code delivery. If the component producer does not provide a version, then the SBOM author should indicate that the information is unknown.",
+   "grader": {
+    "status": "check",
+    "rules": [
+     "All packages have a versionInfo"
+    ],
+    "evidence": "versionInfo present on every package"
+   },
+   "mequal": {
+    "status": "check",
+    "rules": [
+     "spdx_sbom_all_components_contain_versions"
+    ],
+    "evidence": "lpol2.rego"
+   },
+   "ib": {
+    "p2": {
+     "status": "check",
+     "path": "$.packages[7zip 25.01].versionInfo",
+     "why": "versionInfo on 511/511"
+    },
+    "p3": {
+     "status": "check",
+     "path": "$.packages[7zip 25.01].versionInfo",
+     "why": "versionInfo on 511/511"
+    }
+   }
+  },
+  {
+   "id": "ME-PP-1",
+   "name": "Accommodation of Updates",
+   "heading": "Accommodation of Updates to SBOM Data (Major Update)",
+   "section": "Practices and Processes",
+   "page": 13,
+   "quote": "Organizations should accommodate updates to SBOM data, including corrections. SBOM authors should correct errors promptly. Organizations may consider errors, whether stemming from SBOM author practices or selection of inadequate tools, in organizational risk management decisions.",
+   "grader": {
+    "status": "na",
+    "rules": [],
+    "evidence": "process element; not a document property"
+   },
+   "mequal": {
+    "status": "na",
+    "rules": [],
+    "evidence": "process element; not a document property"
+   },
+   "ib": {
+    "p2": {
+     "status": "na",
+     "path": null,
+     "why": "producer process (correcting and reissuing SBOMs)"
+    },
+    "p3": {
+     "status": "na",
+     "path": null,
+     "why": "producer process (correcting and reissuing SBOMs)"
+    }
+   }
+  },
+  {
+   "id": "ME-PP-2",
+   "name": "Coverage",
+   "heading": "Coverage (Major Update)",
+   "section": "Practices and Processes",
+   "page": 13,
+   "quote": "An SBOM should include information for all components that make up the target software, including transitive dependencies. There is no minimum depth. If there are multiple instances of a software component with differences in metadata, each instance should be listed separately with the appropriate dependency relationship. An SBOM may exclude non-code files; however, it may include security-relevant files such as configuration files. SBOMs should provide a comprehensive listing of the components to facilitate recipients’ risk-based decisions. For example, from a vulnerability management perspective, the recipient of an SBOM should be able to conclude that a newly reported vulnerability does not affect them if the SBOM does not list the component associated with the vulnerability. Linking to other SBOM documents—for example, an SBOM generated for a subcomponent or dependency—can support SBOM authors in meeting the requirements for the Coverage element, provided that the recipient has access to all linked SBOMs.",
+   "grader": {
+    "status": "partial",
+    "rules": [
+     "Number of packages is greater than 1",
+     "All packages are referenced in relationships"
+    ],
+    "evidence": "non-trivial package list; no completeness check"
+   },
+   "mequal": {
+    "status": "partial",
+    "rules": [
+     "spdx_sbom_has_packages_field",
+     "spdx_sbom_packages_field_not_empty",
+     "spdx_sbom_exrefs_used"
+    ],
+    "evidence": "packages present; linked SBOMs encouraged"
+   },
+   "ib": {
+    "p2": {
+     "status": "partial",
+     "path": "$.packages",
+     "why": "510 RPMs + image root; non-RPM content (bootloader/partition layout, generated config) not listed; buildroot SBOM is a separate file with 0 externalDocumentRefs linking it"
+    },
+    "p3": {
+     "status": "partial",
+     "path": "$.externalDocumentRefs",
+     "why": "510 RPMs inline under the image root; build root linked (DocumentRef-buildroot-build, SHA1, BUILD_TOOL_OF); non-RPM content (bootloader/partition layout, generated config) still not listed"
+    }
+   }
+  },
+  {
+   "id": "ME-PP-3",
+   "name": "Distribution and Delivery",
+   "heading": "Distribution and Delivery (Minor Update)",
+   "section": "Practices and Processes",
+   "page": 13,
+   "quote": "SBOMs should be available promptly to those who need them. Access controls may limit the sharing of SBOM data with unauthorized parties but should not prevent information sharing between authorized parties or restrict organizations from integrating SBOM data into trusted security tools. There are multiple ways of sharing SBOM data. For example, an SBOM can accompany installation. Alternatively, an SBOM can be accessible through a version-specific URL, an application programming interface (API) to a database, or a public repository. Any such software service or offering should operate in accordance with the provider’s security policy.",
+   "grader": {
+    "status": "na",
+    "rules": [],
+    "evidence": "process element; not a document property"
+   },
+   "mequal": {
+    "status": "na",
+    "rules": [],
+    "evidence": "process element; not a document property"
+   },
+   "ib": {
+    "p2": {
+     "status": "na",
+     "path": null,
+     "why": "delivery channel / access control, not visible in the document"
+    },
+    "p3": {
+     "status": "na",
+     "path": null,
+     "why": "delivery channel / access control, not visible in the document"
+    }
+   }
+  },
+  {
+   "id": "ME-PP-4",
+   "name": "Explicit Unknowns",
+   "heading": "Explicitly Identifying Unknown Information (Major Update)",
+   "section": "Practices and Processes",
+   "page": 13,
+   "quote": "If information required for any of the data fields is not provided, the SBOM author should explicitly state whether the information is unknown to the SBOM author or whether the SBOM author is withholding the information from the SBOM. The explicit identification of information that is unknown can provide SBOM recipients with useful information about both the target software and the SBOM author. The SBOM author should have a process for recipients to ask about any redacted, security-related information. Organizations may consider an SBOM incomplete if the SBOM author withholds essential component data.",
+   "grader": {
+    "status": "x",
+    "rules": [],
+    "evidence": "not checked"
+   },
+   "mequal": {
+    "status": "x",
+    "rules": [],
+    "evidence": "not checked"
+   },
+   "ib": {
+    "p2": {
+     "status": "partial",
+     "path": "$.packages[fedora-44-generic-qcow2-x86_64 44].supplier",
+     "why": "root supplier/downloadLocation use NOASSERTION, but root license is omitted rather than marked unknown; SPDX 2.3 cannot distinguish unknown from withheld"
+    },
+    "p3": {
+     "status": "partial",
+     "path": "$.packages[fedora-44-generic-qcow2-x86_64 44].licenseDeclared",
+     "why": "root supplier, downloadLocation and licenses use NOASSERTION; SPDX 2.3 cannot distinguish unknown from withheld"
+    }
+   }
+  },
+  {
+   "id": "ME-PP-5",
+   "name": "Frequency",
+   "heading": "Frequency (Minor Update)",
+   "section": "Practices and Processes",
+   "page": 14,
+   "quote": "Each software version or update should have an associated SBOM. When a component producer issues a new build or release, they (or the SBOM author) should also generate a new SBOM to reflect the changes. This includes software builds that integrate updated components or dependencies. When a component producer (or SBOM author) discovers new details about the underlying components or corrects an error in the existing SBOM data, they (or the SBOM author) should issue a revised SBOM.",
+   "grader": {
+    "status": "na",
+    "rules": [],
+    "evidence": "process element; not a document property"
+   },
+   "mequal": {
+    "status": "na",
+    "rules": [],
+    "evidence": "process element; not a document property"
+   },
+   "ib": {
+    "p2": {
+     "status": "na",
+     "path": null,
+     "why": "one SBOM per build is a pipeline property; image-builder does emit one per manifest"
+    },
+    "p3": {
+     "status": "na",
+     "path": null,
+     "why": "one SBOM per build is a pipeline property; image-builder does emit one per manifest"
+    }
+   }
+  },
+  {
+   "id": "ME-PP-6",
+   "name": "Machine-Processable Data",
+   "heading": "Machine-Processable Data (Major Update)",
+   "section": "Practices and Processes",
+   "page": 14,
+   "quote": "Automation support is critical for managing software component data at scale, particularly across organizational boundaries. SBOM implementations should be compatible with each other to support automation due to the volume of data, diverse use cases, and variety of tools involved with SBOMs. The two data formats currently widely used by software ecosystem stakeholders to generate and consume SBOMs are SPDX and CycloneDX. These data formats are a product of open, international processes and are both machine-processable and human-readable. Minimum support for automation means supporting all data formats that are widely used, open source, and compatible with existing data formats. Supported data formats should be reassessed regularly. If a format is broadly incompatible, no longer maintained, or ineffective for SBOM use cases, it should no longer be used. This approach accomplishes the goal of building on existing tools for ease of adoption while supporting future evolution and extensibility. Component producers or SBOM authors may choose their preferred SBOM data format based on factors that may be specific to organizations, industries, or sectors. Organizations should accept any widely used, interoperable, and machine-processable SBOM format. However, organizations should avoid accepting SBOMs for new software generated in deprecated versions of any format to maintain compatibility with SBOM consumption and management tools.",
+   "grader": {
+    "status": "check",
+    "rules": [
+     "Document passes schema validation"
+    ],
+    "evidence": "parses as SPDX 2.3 JSON"
+   },
+   "mequal": {
+    "status": "partial",
+    "rules": [
+     "spdx_sbom_is_spdx_2_3_and_above"
+    ],
+    "evidence": "non-deprecated version"
+   },
+   "ib": {
+    "p2": {
+     "status": "check",
+     "path": "$.spdxVersion",
+     "why": "SPDX 2.3 JSON"
+    },
+    "p3": {
+     "status": "check",
+     "path": "$.spdxVersion",
+     "why": "SPDX 2.3 JSON"
+    }
+   }
+  }
+ ]
+}

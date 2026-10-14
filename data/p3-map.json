@@ -1,0 +1,29 @@
+{
+ "cols": [
+  "CISA row",
+  "commit",
+  "change"
+ ],
+ "rows": [
+  [
+   "ME-DF-M7 / ME-DF-M8 SBOM Tool Name / Version",
+   "63bbc2e70 image-builder: list image-builder as an SBOM creator",
+   "creationInfo.creators += \"Tool: image-builder-<main.version>\""
+  ],
+  [
+   "ME-DF-C6 Component License \u00b7 ME-PP-4",
+   "4e1d3250b image-builder: state NOASSERTION licenses on the SBOM image root",
+   "image root licenseDeclared / licenseConcluded = NOASSERTION"
+  ],
+  [
+   "ME-PP-2 Coverage",
+   "f13cc31b9 image-builder: link the build root SBOM from the image SBOM",
+   "externalDocumentRefs DocumentRef-buildroot-build (SHA1) + BUILD_TOOL_OF image root"
+  ],
+  [
+   "ME-DF-M1 SBOM Author",
+   "\u2014",
+   "deferred"
+  ]
+ ]
+}

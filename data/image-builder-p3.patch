@@ -1,0 +1,379 @@
+From 63bbc2e7053cd51716528a803dfaf3088566c0eb Mon Sep 17 00:00:00 2001
+From: Lucas Garfield <lucas@local>
+Date: Wed, 14 Oct 2026 22:13:12 +0300
+Subject: [PATCH 1/3] image-builder: list image-builder as an SBOM creator
+
+The image SBOM's creationInfo.creators only named osbuild, which writes
+the SPDX document during depsolving. image-builder is the tool the user
+runs and it post-processes that document (image root package, image
+checksum), so add "Tool: image-builder-<version>" next to osbuild.
+
+The version is the one image-builder already reports in
+"image-builder version" (main.version, set at build time by make or
+the RPM spec); no new option is needed.
+---
+ cmd/image-builder/sbom_image.go      | 28 ++++++++++++++++++++++++++++
+ cmd/image-builder/sbom_image_test.go | 16 +++++++++++++++-
+ 2 files changed, 43 insertions(+), 1 deletion(-)
+
+diff --git a/cmd/image-builder/sbom_image.go b/cmd/image-builder/sbom_image.go
+index fded51d43..d7dcc9bfd 100644
+--- a/cmd/image-builder/sbom_image.go
++++ b/cmd/image-builder/sbom_image.go
+@@ -80,9 +80,37 @@ func addImageRoot(content io.Reader, root map[string]any) ([]byte, error) {
+ 	if doc["relationships"], err = json.Marshal(newRels); err != nil {
+ 		return nil, err
+ 	}
++	if err := addCreator(doc, "Tool: image-builder-"+version); err != nil {
++		return nil, err
++	}
+ 	return json.Marshal(doc)
+ }
+ 
++// addCreator lists image-builder next to the tool that wrote the document
++// (osbuild, which image-builder runs for depsolving).
++func addCreator(doc map[string]json.RawMessage, creator string) error {
++	var ci map[string]json.RawMessage
++	if raw, ok := doc["creationInfo"]; ok {
++		if err := json.Unmarshal(raw, &ci); err != nil {
++			return err
++		}
++	} else {
++		ci = map[string]json.RawMessage{}
++	}
++	var creators []string
++	if raw, ok := ci["creators"]; ok {
++		if err := json.Unmarshal(raw, &creators); err != nil {
++			return err
++		}
++	}
++	var err error
++	if ci["creators"], err = json.Marshal(append(creators, creator)); err != nil {
++		return err
++	}
++	doc["creationInfo"], err = json.Marshal(ci)
++	return err
++}
++
+ // setImageRootSHA256 records the sha256 of the built image file on the
+ // image root package of the SBOM at sbomPath.
+ func setImageRootSHA256(sbomPath, imagePath string) error {
+diff --git a/cmd/image-builder/sbom_image_test.go b/cmd/image-builder/sbom_image_test.go
+index 1eff6c60b..9a791139c 100644
+--- a/cmd/image-builder/sbom_image_test.go
++++ b/cmd/image-builder/sbom_image_test.go
+@@ -13,7 +13,7 @@ import (
+ 	"github.com/stretchr/testify/require"
+ )
+ 
+-const testSPDX = `{"SPDXID":"SPDXRef-DOCUMENT","packages":[{"SPDXID":"SPDXRef-a","name":"a"}],
++const testSPDX = `{"SPDXID":"SPDXRef-DOCUMENT","creationInfo":{"creators":["Tool: osbuild-194"]},"packages":[{"SPDXID":"SPDXRef-a","name":"a"}],
+ "relationships":[{"spdxElementId":"SPDXRef-DOCUMENT","relationshipType":"DESCRIBES","relatedSpdxElement":"SPDXRef-a"}]}`
+ 
+ func TestImageRootManifestNoSHABuildSHA(t *testing.T) {
+@@ -52,3 +52,17 @@ func TestImageRootManifestNoSHABuildSHA(t *testing.T) {
+ 	require.NoError(t, json.Unmarshal(doc, &m))
+ 	assert.Equal(t, m, b, "build SBOM differs from manifest SBOM only by the checksum")
+ }
++
++func TestImageRootAddsImageBuilderCreator(t *testing.T) {
++	defer func(v string) { version = v }(version)
++	version = "88.0.0"
++	doc, err := addImageRoot(strings.NewReader(testSPDX), map[string]any{"SPDXID": imageRootSPDXID})
++	require.NoError(t, err)
++	var d struct {
++		CreationInfo struct {
++			Creators []string `json:"creators"`
++		} `json:"creationInfo"`
++	}
++	require.NoError(t, json.Unmarshal(doc, &d))
++	assert.Equal(t, []string{"Tool: osbuild-194", "Tool: image-builder-88.0.0"}, d.CreationInfo.Creators)
++}
+-- 
+2.47.3
+
+
+From 4e1d3250b7a978947d8dd47a7920e9af8496d234 Mon Sep 17 00:00:00 2001
+From: Lucas Garfield <lucas@local>
+Date: Wed, 14 Oct 2026 22:13:29 +0300
+Subject: [PATCH 2/3] image-builder: state NOASSERTION licenses on the SBOM
+ image root
+
+The image root package in the image SBOM had no license fields at all,
+so a reader could not tell whether the license was unknown or simply
+not emitted. The image is an assembly of many separately licensed RPMs
+(each listed with its own licenseDeclared), so no single license can be
+asserted for it: set licenseDeclared and licenseConcluded to NOASSERTION.
+---
+ cmd/image-builder/sbom_image.go      |  2 ++
+ cmd/image-builder/sbom_image_test.go | 13 +++++++++++++
+ 2 files changed, 15 insertions(+)
+
+diff --git a/cmd/image-builder/sbom_image.go b/cmd/image-builder/sbom_image.go
+index d7dcc9bfd..c5d22c558 100644
+--- a/cmd/image-builder/sbom_image.go
++++ b/cmd/image-builder/sbom_image.go
+@@ -38,6 +38,8 @@ func imageRootPackage(img *imagefilter.Result, basename string) map[string]any {
+ 		"packageFileName":  basename + filepath.Ext(img.ImgType.Filename()),
+ 		"downloadLocation": "NOASSERTION",
+ 		"supplier":         "NOASSERTION",
++		"licenseConcluded": "NOASSERTION",
++		"licenseDeclared":  "NOASSERTION",
+ 		"filesAnalyzed":    false,
+ 		"externalRefs": []map[string]string{{
+ 			"referenceCategory": "PACKAGE-MANAGER",
+diff --git a/cmd/image-builder/sbom_image_test.go b/cmd/image-builder/sbom_image_test.go
+index 9a791139c..74b85c6f9 100644
+--- a/cmd/image-builder/sbom_image_test.go
++++ b/cmd/image-builder/sbom_image_test.go
+@@ -11,6 +11,8 @@ import (
+ 
+ 	"github.com/stretchr/testify/assert"
+ 	"github.com/stretchr/testify/require"
++
++	testrepos "github.com/osbuild/image-builder/test/data/repositories"
+ )
+ 
+ const testSPDX = `{"SPDXID":"SPDXRef-DOCUMENT","creationInfo":{"creators":["Tool: osbuild-194"]},"packages":[{"SPDXID":"SPDXRef-a","name":"a"}],
+@@ -66,3 +68,14 @@ func TestImageRootAddsImageBuilderCreator(t *testing.T) {
+ 	require.NoError(t, json.Unmarshal(doc, &d))
+ 	assert.Equal(t, []string{"Tool: osbuild-194", "Tool: image-builder-88.0.0"}, d.CreationInfo.Creators)
+ }
++
++func TestImageRootPackageLicenseNoAssertion(t *testing.T) {
++	restore := MockNewRepoRegistry(testrepos.New)
++	defer restore()
++	img, err := getOneImage("centos-9", "qcow2", "x86_64", nil)
++	require.NoError(t, err)
++
++	root := imageRootPackage(img, "centos-9-qcow2-x86_64")
++	assert.Equal(t, "NOASSERTION", root["licenseDeclared"])
++	assert.Equal(t, "NOASSERTION", root["licenseConcluded"])
++}
+-- 
+2.47.3
+
+
+From f13cc31b976a46701b3eb244bcd86612902d8495 Mon Sep 17 00:00:00 2001
+From: Lucas Garfield <lucas@local>
+Date: Wed, 14 Oct 2026 22:20:29 +0300
+Subject: [PATCH 3/3] image-builder: link the build root SBOM from the image
+ SBOM
+
+"--with-sbom" writes two SPDX documents: the image SBOM (the RPMs
+installed in the image, under the image root package) and the build
+root SBOM (the RPMs of the environment that built the image). Nothing
+connected them, so a consumer of the image SBOM could not find the
+build root.
+
+After manifest generation, add to each image SBOM:
+- an externalDocumentRefs entry per build root SBOM, with its
+  documentNamespace and the SHA1 of the file (the checksum SPDX 2.3
+  requires for external document references), and
+- "DocumentRef-<pipeline>:SPDXRef-DOCUMENT BUILD_TOOL_OF
+  SPDXRef-image-root".
+
+The installed packages stay inline in the image SBOM; the build root is
+referenced, not merged. Build root documents without a namespace cannot
+be referenced and are skipped. "build --with-sbom" later only adds the
+image checksum to the image SBOM, so the build root SHA1 stays valid.
+---
+ cmd/image-builder/main.go            |  9 ++++
+ cmd/image-builder/sbom_image.go      | 78 ++++++++++++++++++++++++++++
+ cmd/image-builder/sbom_image_test.go | 42 +++++++++++++++
+ 3 files changed, 129 insertions(+)
+
+diff --git a/cmd/image-builder/main.go b/cmd/image-builder/main.go
+index 1e97aeb49..063c1cce0 100644
+--- a/cmd/image-builder/main.go
++++ b/cmd/image-builder/main.go
+@@ -675,6 +675,7 @@ func generateManifest(pbar progress.ProgressBar, cmd *cobra.Command, args []stri
+ 	if err != nil {
+ 		return nil, err
+ 	}
++	var buildrootSBOMPaths []string
+ 	if withSBOM {
+ 		sbomDir, err := resolveOutputDir(outputDir, img)
+ 		if err != nil {
+@@ -694,6 +695,9 @@ func generateManifest(pbar progress.ProgressBar, cmd *cobra.Command, args []stri
+ 				content = bytes.NewReader(doc)
+ 				wrapperOpts.imageSBOMPaths = append(wrapperOpts.imageSBOMPaths, filepath.Join(sbomDir, filename))
+ 			}
++			if docType == sbom.StandardTypeSpdx && strings.HasPrefix(filename, sbomBasename+".buildroot-") {
++				buildrootSBOMPaths = append(buildrootSBOMPaths, filepath.Join(sbomDir, filename))
++			}
+ 			return fileWriter(sbomDir, filename, content)
+ 		}
+ 	}
+@@ -745,6 +749,11 @@ func generateManifest(pbar progress.ProgressBar, cmd *cobra.Command, args []stri
+ 	if err != nil {
+ 		return nil, err
+ 	}
++	for _, p := range wrapperOpts.imageSBOMPaths {
++		if err := linkBuildrootSBOMs(p, buildrootSBOMPaths); err != nil {
++			return nil, fmt.Errorf("cannot link build root SBOM from %s: %w", p, err)
++		}
++	}
+ 	var pretty bytes.Buffer
+ 	if err := json.Indent(&pretty, []byte(mf), "", "    "); err != nil {
+ 		return nil, err
+diff --git a/cmd/image-builder/sbom_image.go b/cmd/image-builder/sbom_image.go
+index c5d22c558..8c72293aa 100644
+--- a/cmd/image-builder/sbom_image.go
++++ b/cmd/image-builder/sbom_image.go
+@@ -1,6 +1,7 @@
+ package main
+ 
+ import (
++	"crypto/sha1" // #nosec G505: SPDX 2.3 requires SHA1 for externalDocumentRefs
+ 	"crypto/sha256"
+ 	"encoding/hex"
+ 	"encoding/json"
+@@ -9,6 +10,7 @@ import (
+ 	"net/url"
+ 	"os"
+ 	"path/filepath"
++	"strings"
+ 
+ 	"github.com/osbuild/image-builder/pkg/imagefilter"
+ )
+@@ -161,3 +163,79 @@ func setImageRootSHA256(sbomPath, imagePath string) error {
+ 	// #nosec: G306
+ 	return os.WriteFile(sbomPath, out, 0644)
+ }
++
++type spdxExternalDocumentRef struct {
++	ExternalDocumentID string            `json:"externalDocumentId"`
++	SPDXDocument       string            `json:"spdxDocument"`
++	Checksum           map[string]string `json:"checksum"`
++}
++
++// linkBuildrootSBOMs references each build root SBOM from the image SBOM at
++// imagePath: an externalDocumentRefs entry (namespace and SHA1 of the file,
++// as SPDX 2.3 requires) and "<ref>:SPDXRef-DOCUMENT BUILD_TOOL_OF
++// SPDXRef-image-root". The packages installed in the image stay inline in
++// the image SBOM; the build root is only linked.
++func linkBuildrootSBOMs(imagePath string, buildrootPaths []string) error {
++	if len(buildrootPaths) == 0 {
++		return nil
++	}
++	data, err := os.ReadFile(imagePath)
++	if err != nil {
++		return err
++	}
++	var doc map[string]json.RawMessage
++	if err := json.Unmarshal(data, &doc); err != nil {
++		return err
++	}
++	var refs []spdxExternalDocumentRef
++	var rels []spdxRelationship
++	for key, v := range map[string]any{"externalDocumentRefs": &refs, "relationships": &rels} {
++		if raw, ok := doc[key]; ok {
++			if err := json.Unmarshal(raw, v); err != nil {
++				return err
++			}
++		}
++	}
++	for _, p := range buildrootPaths {
++		br, err := os.ReadFile(p)
++		if err != nil {
++			return err
++		}
++		var brDoc struct {
++			DocumentNamespace string `json:"documentNamespace"`
++		}
++		if err := json.Unmarshal(br, &brDoc); err != nil {
++			return err
++		}
++		if brDoc.DocumentNamespace == "" {
++			// not a referenceable SPDX document; nothing to link
++			continue
++		}
++		// "<name>.buildroot-build.spdx.json" -> "DocumentRef-buildroot-build"
++		parts := strings.Split(filepath.Base(p), ".")
++		if len(parts) < 3 {
++			return fmt.Errorf("unexpected build root SBOM file name %s", p)
++		}
++		id := "DocumentRef-" + parts[len(parts)-3]
++		// #nosec G401
++		sum := sha1.Sum(br)
++		refs = append(refs, spdxExternalDocumentRef{id, brDoc.DocumentNamespace,
++			map[string]string{"algorithm": "SHA1", "checksumValue": hex.EncodeToString(sum[:])}})
++		rels = append(rels, spdxRelationship{id + ":SPDXRef-DOCUMENT", "BUILD_TOOL_OF", imageRootSPDXID})
++	}
++	if len(refs) == 0 {
++		return nil
++	}
++	if doc["externalDocumentRefs"], err = json.Marshal(refs); err != nil {
++		return err
++	}
++	if doc["relationships"], err = json.Marshal(rels); err != nil {
++		return err
++	}
++	out, err := json.Marshal(doc)
++	if err != nil {
++		return err
++	}
++	// #nosec: G306
++	return os.WriteFile(imagePath, out, 0644)
++}
+diff --git a/cmd/image-builder/sbom_image_test.go b/cmd/image-builder/sbom_image_test.go
+index 74b85c6f9..72e5da1b7 100644
+--- a/cmd/image-builder/sbom_image_test.go
++++ b/cmd/image-builder/sbom_image_test.go
+@@ -1,6 +1,7 @@
+ package main
+ 
+ import (
++	"crypto/sha1"
+ 	"crypto/sha256"
+ 	"encoding/hex"
+ 	"encoding/json"
+@@ -79,3 +80,44 @@ func TestImageRootPackageLicenseNoAssertion(t *testing.T) {
+ 	assert.Equal(t, "NOASSERTION", root["licenseDeclared"])
+ 	assert.Equal(t, "NOASSERTION", root["licenseConcluded"])
+ }
++
++func TestLinkBuildrootSBOMs(t *testing.T) {
++	dir := t.TempDir()
++	doc, err := addImageRoot(strings.NewReader(testSPDX), map[string]any{"SPDXID": imageRootSPDXID})
++	require.NoError(t, err)
++	imgPath := filepath.Join(dir, "x.image-os.spdx.json")
++	brPath := filepath.Join(dir, "x.buildroot-build.spdx.json")
++	br := []byte(`{"SPDXID":"SPDXRef-DOCUMENT","documentNamespace":"https://example.com/br-1"}`)
++	require.NoError(t, os.WriteFile(imgPath, doc, 0644))
++	require.NoError(t, os.WriteFile(brPath, br, 0644))
++
++	require.NoError(t, linkBuildrootSBOMs(imgPath, []string{brPath}))
++
++	out, err := os.ReadFile(imgPath)
++	require.NoError(t, err)
++	var d struct {
++		Refs []spdxExternalDocumentRef `json:"externalDocumentRefs"`
++		Rels []spdxRelationship        `json:"relationships"`
++	}
++	require.NoError(t, json.Unmarshal(out, &d))
++	sum := sha1.Sum(br)
++	assert.Equal(t, []spdxExternalDocumentRef{{"DocumentRef-buildroot-build", "https://example.com/br-1",
++		map[string]string{"algorithm": "SHA1", "checksumValue": hex.EncodeToString(sum[:])}}}, d.Refs)
++	assert.Contains(t, d.Rels, spdxRelationship{"DocumentRef-buildroot-build:SPDXRef-DOCUMENT", "BUILD_TOOL_OF", imageRootSPDXID})
++	assert.Contains(t, d.Rels, spdxRelationship{imageRootSPDXID, "CONTAINS", "SPDXRef-a"})
++
++	// build root SBOM without a namespace cannot be referenced: unchanged
++	require.NoError(t, os.WriteFile(imgPath, doc, 0644))
++	require.NoError(t, os.WriteFile(brPath, []byte(`{"SPDXID":"SPDXRef-DOCUMENT"}`), 0644))
++	require.NoError(t, linkBuildrootSBOMs(imgPath, []string{brPath}))
++	same, err := os.ReadFile(imgPath)
++	require.NoError(t, err)
++	assert.Equal(t, doc, same)
++
++	// no build root SBOM: document unchanged
++	require.NoError(t, os.WriteFile(imgPath, doc, 0644))
++	require.NoError(t, linkBuildrootSBOMs(imgPath, nil))
++	same, err = os.ReadFile(imgPath)
++	require.NoError(t, err)
++	assert.Equal(t, doc, same)
++}
+-- 
+2.47.3
+

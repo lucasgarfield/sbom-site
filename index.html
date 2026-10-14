@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<nav id="toolbar"><a href="#grader" data-ch="grader">1 · sbom-grader</a><a href="#mequal" data-ch="mequal">2 · mequal</a><span class="ch-off" data-ch="cisa">3 · CISA 2026</span><span class="ch-off" data-ch="prodsec">4 · ProdSec guidelines</span><span class="ch-off" data-ch="mobster">5 · mobster + Conforma</span><span class="ch-off" data-ch="iso">A · ISO</span><span class="ch-off" data-ch="trustify">B · Trustify</span><span class="ch-off" data-ch="bootc">C · bootc</span></nav>
+<nav id="toolbar"><a href="#grader" data-ch="grader">1 · sbom-grader</a><a href="#mequal" data-ch="mequal">2 · mequal</a><a href="#cisa" data-ch="cisa">3 · CISA 2026</a><span class="ch-off" data-ch="prodsec">4 · ProdSec guidelines</span><span class="ch-off" data-ch="mobster">5 · mobster + Conforma</span><span class="ch-off" data-ch="iso">A · ISO</span><span class="ch-off" data-ch="trustify">B · Trustify</span><span class="ch-off" data-ch="bootc">C · bootc</span></nav>
 <main>
 <template data-ch="grader">
 <section id="s-main">
@@ -119,12 +119,56 @@
   <div class="viewer" data-left="data/p1.image-os.spdx.json" data-right="data/p2.image-os.spdx.json"></div>
 </section>
 </template>
+<template data-ch="cisa">
+<section id="s-c-table">
+  <h2>CISA 2026 SBOM minimum elements</h2>
+  <div class="cisa-pin"></div>
+  <div class="cisa-sum"></div>
+  <div class="cisa-box"></div>
+</section>
+<section id="s-c-patch3">
+  <h2>image-builder patch 3</h2>
+  <div class="table-box" data-src="data/p3-map.json"></div>
+  <div class="bar"><a class="btn" href="data/image-builder-p3.patch" download>image-builder-p3.patch</a></div>
+  <div class="patch" data-src="data/image-builder-p3.patch"></div>
+</section>
+<section id="s-c-grader-p3">
+  <h2>sbom-grader · patch 3</h2>
+  <div class="grade-banner"><span class="g-lbl">sbom-grader · patch 3</span><span class="g-val" data-grade-src="data/grader-p3.html">…</span></div>
+  <div class="bar"><a class="btn" href="data/p3.image-os.spdx.json" download>p3.image-os.spdx.json</a><a class="btn" href="data/p3.buildroot-build.spdx.json" download>p3.buildroot-build.spdx.json</a></div>
+  <details class="gen"><summary>generate</summary><div class="code" data-src="cmd/generate-p3.sh"></div></details>
+  <div class="code" data-src="cmd/grader-p3.sh"></div>
+  <pre class="term" data-src="data/grader-p3.html"></pre>
+</section>
+<section id="s-c-mequal-p3">
+  <h2>mequal · patch 3</h2>
+  <div class="code" data-src="cmd/mequal-p3.sh"></div>
+  <pre class="term" data-src="data/mequal-p3.html"></pre>
+</section>
+<section id="s-c-sbom-p3">
+  <h2>image-builder · patch 3 SBOM</h2>
+  <div class="viewer" data-left="data/p3.image-os.spdx.json"></div>
+</section>
+<section id="s-c-buildroot">
+  <h2>build root SBOM · patch 3 · DocumentRef-buildroot-build</h2>
+  <div class="viewer" data-left="data/p3.buildroot-build.spdx.json"></div>
+</section>
+<section id="s-c-diff">
+  <h2>patch 2 ↔ patch 3</h2>
+  <div class="viewer" data-left="data/p2.image-os.spdx.json" data-right="data/p3.image-os.spdx.json"></div>
+</section>
+<section id="s-c-sbom">
+  <h2>image-builder · patch 2 SBOM</h2>
+  <div class="viewer" data-left="data/p2.image-os.spdx.json"></div>
+</section>
+</template>
 <div id="chapter"></div>
 </main>
 <script src="js/jsonview.js"></script>
 <script src="js/app.js"></script>
 <script src="js/rego.js"></script>
 <script src="js/partb.js"></script>
+<script src="js/cisa.js"></script>
 <script src="js/router.js"></script>
 </body>
 </html>

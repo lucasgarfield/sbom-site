@@ -249,6 +249,12 @@
       for (const x of this.c.querySelectorAll(".jv-flash")) x.classList.remove("jv-flash");
       r.row.classList.add("jv-flash");
     }
+    revealDeep(p) {
+      const segs = p.slice(1).match(/\.[^.\[]+|\[[^\]]*\]/g) || []; let cur = "$";
+      for (const sg of segs) { const n = this.tree.byPath.get(cur); if (!n) break; this.tree.children(n); cur += sg; }
+      if (!this.tree.byPath.get(p)) return false;
+      this.reveal(p); return true;
+    }
     nextChange(dir) {
       if (!this.changeList) { this.changeList = this.tree.changes(); this.ci = -1; }
       if (!this.changeList.length) return null;
