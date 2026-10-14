@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<nav id="toolbar"><a href="#grader" data-ch="grader">1 · sbom-grader</a><a href="#mequal" data-ch="mequal">2 · mequal</a><a href="#cisa" data-ch="cisa">3 · CISA 2026</a><a href="#prodsec" data-ch="prodsec">4 · ProdSec guidelines</a><a href="#konflux" data-ch="konflux">5 · Konflux · Conforma</a><a href="#iso" data-ch="iso">A · ISO</a><span class="ch-off" data-ch="trustify">B · Trustify</span><span class="ch-off" data-ch="bootc">C · bootc</span></nav>
+<nav id="toolbar"><a href="#grader" data-ch="grader">1 · sbom-grader</a><a href="#mequal" data-ch="mequal">2 · mequal</a><a href="#cisa" data-ch="cisa">3 · CISA 2026</a><a href="#prodsec" data-ch="prodsec">4 · ProdSec guidelines</a><a href="#konflux" data-ch="konflux">5 · Konflux · Conforma</a><a href="#iso" data-ch="iso">A · ISO</a><a href="#trustify" data-ch="trustify">B · Trustify</a><span class="ch-off" data-ch="bootc">C · bootc</span></nav>
 <main>
 <template data-ch="grader">
 <section id="s-main">
@@ -285,6 +285,23 @@
 <section id="s-f-sbom">
   <h2>iso.spdx.json</h2>
   <div class="viewer" data-left="data/iso/iso.spdx.json"></div>
+</section>
+</template>
+<template data-ch="trustify">
+<section id="s-g-compare">
+  <h2>Trustify 0.3.5 · main vs patched</h2>
+  <p class="note">Real Red Hat CSAF advisories loaded: the latest RHSA from a package search for glibc, openssl, curl, systemd and sudo (the openssl search returns an rsyslog-openssl RHSA). The control has one glibc purl rewritten to Red Hat form, one release before the RHSA fix.</p>
+  <div class="table-box" data-src="data/trustify/compare.json"></div>
+</section>
+<section id="s-g-run">
+  <h2>run</h2>
+  <div class="code" data-src="cmd/trustify-compare.sh"></div>
+  <pre class="term" data-src="data/trustify/out.html"></pre>
+</section>
+<section id="s-g-osv">
+  <h2>OSV · Fedora</h2>
+  <p class="note">OSV has no Fedora ecosystem.</p>
+  <pre class="term" data-src="data/trustify/osv.html"></pre>
 </section>
 </template>
 <div id="chapter"></div>

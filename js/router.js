@@ -1,6 +1,6 @@
 (() => {
   const host = document.getElementById("chapter"), mounted = {};
-  const mount = { iso: async r => { await window.mountA(r); await window.mountB(r); }, konflux: async r => { await window.mountA(r); await window.mountB(r); }, prodsec: r => window.mountD(r), cisa: r => window.mountC(r), grader: window.mountA, mequal: async r => { await window.mountA(r); await window.mountB(r); } };
+  const mount = { trustify: async r => { await window.mountA(r); await window.mountB(r); }, iso: async r => { await window.mountA(r); await window.mountB(r); }, konflux: async r => { await window.mountA(r); await window.mountB(r); }, prodsec: r => window.mountD(r), cisa: r => window.mountC(r), grader: window.mountA, mequal: async r => { await window.mountA(r); await window.mountB(r); } };
   const valid = () => [...document.querySelectorAll("#toolbar a")].map(a => a.dataset.ch);
   async function show() {
     const ids = valid();

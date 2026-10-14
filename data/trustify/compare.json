@@ -1,0 +1,44 @@
+{
+ "cols": [
+  "SBOM",
+  "purls",
+  "ingest warning",
+  "sbom/{id}/advisory",
+  "analyze: purls with CVEs",
+  "CVEs"
+ ],
+ "rows": [
+  [
+   "main.image-os",
+   "510",
+   "Replacing faulty SPDX license expression with NOASSERTION: Parsing for expression `Parsing for expression `LicenseRef-Callaway-LGPLv2+` fail",
+   "0",
+   "0",
+   "\u2014"
+  ],
+  [
+   "p3.image-os",
+   "1021",
+   "Invalid reference 'DocumentRef-buildroot-build:SPDXRef-DOCUMENT' of relationship 'DocumentRef-buildroot-build:SPDXRef-DOCUMENT' -[BuildToolO",
+   "0",
+   "0",
+   "\u2014"
+  ],
+  [
+   "wrapped",
+   "1023",
+   "Invalid reference 'DocumentRef-buildroot-build:SPDXRef-DOCUMENT' of relationship 'DocumentRef-buildroot-build:SPDXRef-DOCUMENT' -[BuildToolO",
+   "0",
+   "0",
+   "\u2014"
+  ],
+  [
+   "control",
+   "1020",
+   "Invalid reference 'DocumentRef-buildroot-build:SPDXRef-DOCUMENT' of relationship 'DocumentRef-buildroot-build:SPDXRef-DOCUMENT' -[BuildToolO",
+   "0",
+   "1",
+   "CVE-2026-18374, CVE-2026-19542, CVE-2026-77117, CVE-2026-80489"
+  ]
+ ]
+}
