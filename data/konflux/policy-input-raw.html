@@ -1,0 +1,11 @@
+$ jq &#x27;{image.ref, attestations}&#x27; policy-input-raw.json
+{
+  &quot;image.ref&quot;: &quot;localhost:5000/raw/fedora-44-qcow2@sha256:4a97ffc8967b3816735d926893f3af3a1217fd44da73370c2991629cec9c6a13&quot;,
+  &quot;attestations&quot;: [
+    {
+      &quot;predicateType&quot;: &quot;https://spdx.dev/Document&quot;,
+      &quot;predicate.name&quot;: &quot;sbom-by-osbuild-194&quot;,
+      &quot;predicate.packages&quot;: 511
+    }
+  ]
+}

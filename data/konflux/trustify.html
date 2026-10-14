@@ -1,0 +1,52 @@
+$ POST /api/v2/sbom  p3.image-os.spdx.json
+{
+  &quot;id&quot;: &quot;urn:uuid:01a13bfc-5827-7333-ad1f-543a2b634f78&quot;,
+  &quot;document_id&quot;: &quot;https://osbuild.org/spdxdocs/sbom-by-osbuild-194-dc18cc25-5b1f-4289-b3d8-eaccbe7fe9d2&quot;,
+  &quot;warnings&quot;: [
+    &quot;Invalid reference &#x27;DocumentRef-buildroot-build:SPDXRef-DOCUMENT&#x27; of relationship &#x27;DocumentRef-buildroot-build:SPDXRef-DOCUMENT&#x27; -[BuildToolOf]-&gt; &#x27;SPDXRef-image-root&#x27;&quot;
+  ]
+}
+$ GET /api/v2/sbom/{id}
+{
+  &quot;name&quot;: &quot;sbom-by-osbuild-194&quot;,
+  &quot;number_of_packages&quot;: 511,
+  &quot;described_by&quot;: [
+    {
+      &quot;name&quot;: &quot;fedora-44-generic-qcow2-x86_64&quot;,
+      &quot;version&quot;: &quot;44&quot;,
+      &quot;purl&quot;: [
+        &quot;pkg:generic/fedora-44-generic-qcow2-x86_64@44?arch=x86_64&amp;distro=fedora-44&amp;image_type=generic-qcow2&quot;
+      ]
+    }
+  ]
+}
+$ GET /api/v2/sbom/{id}/advisory | length
+0
+
+$ POST /api/v2/sbom  wrapped.spdx.json
+{
+  &quot;id&quot;: &quot;urn:uuid:01a13bfc-59b7-7ce2-89cd-c5e138f2fa67&quot;,
+  &quot;document_id&quot;: &quot;https://konflux-ci.dev/spdxdocs/localhost:5000/wrapped/fedora-44-qcow2@sha256:4a97ffc8967b3816735d926893f3af3a1217fd44da73370c2991629cec9c6a13-d701e093-d463-4738-9072-1cb74aeb4ea8&quot;,
+  &quot;warnings&quot;: [
+    &quot;Invalid reference &#x27;DocumentRef-buildroot-build:SPDXRef-DOCUMENT&#x27; of relationship &#x27;DocumentRef-buildroot-build:SPDXRef-DOCUMENT&#x27; -[BuildToolOf]-&gt; &#x27;SPDXRef-Package-disk.qcow2-0f48a8c6d7bc16add4ef95a43b79cc389a2a20e9d2716709e147d4829b83ddce&#x27;&quot;
+  ]
+}
+$ GET /api/v2/sbom/{id}
+{
+  &quot;name&quot;: &quot;localhost:5000/wrapped/fedora-44-qcow2@sha256:4a97ffc8967b3816735d926893f3af3a1217fd44da73370c2991629cec9c6a13&quot;,
+  &quot;number_of_packages&quot;: 512,
+  &quot;described_by&quot;: [
+    {
+      &quot;name&quot;: &quot;fedora-44-qcow2&quot;,
+      &quot;version&quot;: &quot;p3&quot;,
+      &quot;purl&quot;: [
+        &quot;pkg:oci/fedora-44-qcow2@sha256:4a97ffc8967b3816735d926893f3af3a1217fd44da73370c2991629cec9c6a13?repository_url=localhost:5000/wrapped/fedora-44-qcow2&quot;
+      ]
+    }
+  ]
+}
+$ GET /api/v2/sbom/{id}/advisory | length
+0
+
+$ GET /api/v2/advisory | .total
+0

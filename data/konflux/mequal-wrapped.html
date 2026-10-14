@@ -1,0 +1,595 @@
+<span class="a-b a-c39">{
+  </span><span class="a-b a-c34">&quot;bundles&quot;</span><span class="a-b a-c39">: </span><span class="a-b a-c39">[
+    <span class="a-b a-c39">{
+      </span></span><span class="a-b a-c34">&quot;bundle_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;mequal&quot;</span><span class="a-b a-c39">,
+      </span><span class="a-b a-c34">&quot;bundle_version&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;386a4d0&quot;</span><span class="a-b a-c39">,
+      </span><span class="a-b a-c34">&quot;policies&quot;</span><span class="a-b a-c39">: </span><span class="a-b a-c39">[
+        <span class="a-b a-c39">{
+          </span></span><span class="a-b a-c34">&quot;policy_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SBOM Level grading policy 1. Check if an SBOM is in either SPDX or CycloneDX format&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;LPOL1&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;L0&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_path&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;data.mequal.policies.LPOL1&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SBOM either SPDX or CycloneDX&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;rules&quot;</span><span class="a-b a-c39">: </span><span class="a-b a-c39">[
+            <span class="a-b a-c39">{
+              </span></span><span class="a-b a-c34">&quot;level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;L0&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Check if the SBOM is either SPDX or CycloneDX&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;sbom_is_spdx_or_cdx&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;L0&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;error&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SBOM is SPDX or CycloneDX&quot;</span><span class="a-b a-c39">
+            <span class="a-b a-c39">}</span></span><span class="a-b a-c39">
+          <span class="a-b a-c39">]</span></span><span class="a-b a-c39">
+        <span class="a-b a-c39">}</span></span><span class="a-b a-c39">,
+        <span class="a-b a-c39">{
+          </span></span><span class="a-b a-c34">&quot;policy_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SBOM Level grading policy 2. Check if all packages in the SBOM include a version and a bom-ref, and has components&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;LPOL2&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;L1&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_path&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;data.mequal.policies.cyclonedx.LPOL2&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;error&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SBOMs include a version and a bom-ref, has components&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;rules&quot;</span><span class="a-b a-c39">: </span><span class="a-b a-c39">[
+            <span class="a-b a-c39">{
+              </span></span><span class="a-b a-c34">&quot;level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;L1&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;The CycloneDX SBOM contains components&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;cdx_sbom_has_empty_components_field&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;L1&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;error&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;CDX SBOM has Components&quot;</span><span class="a-b a-c39">
+            <span class="a-b a-c39">}</span></span><span class="a-b a-c39">,
+            <span class="a-b a-c39">{
+              </span></span><span class="a-b a-c34">&quot;level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;L1&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;The CycloneDX SBOM contains components&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;cdx_sbom_has_no_components_field&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;L1&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;error&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;CDX SBOM has Components&quot;</span><span class="a-b a-c39">
+            <span class="a-b a-c39">}</span></span><span class="a-b a-c39">,
+            <span class="a-b a-c39">{
+              </span></span><span class="a-b a-c34">&quot;level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;L1&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;The CycloneDX SBOM top component contains a version field&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;cdx_sbom_has_top_component_version&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;L1&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;error&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;CDX SBOM top component has version&quot;</span><span class="a-b a-c39">
+            <span class="a-b a-c39">}</span></span><span class="a-b a-c39">,
+            <span class="a-b a-c39">{
+              </span></span><span class="a-b a-c34">&quot;level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;L1&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;The CycloneDX SBOM components all have versions. Checks all components including nested ones.&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;cdx_sbom_all_components_contain_versions&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;L1&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;error&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;CDX SBOM Components all have versions&quot;</span><span class="a-b a-c39">
+            <span class="a-b a-c39">}</span></span><span class="a-b a-c39">,
+            <span class="a-b a-c39">{
+              </span></span><span class="a-b a-c34">&quot;level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;L1&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;The CycloneDX SBOM components all have bom-ref fields. Checks all components including nested ones.&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;cdx_sbom_all_components_have_bomref_field&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;L1&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;error&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;CDX SBOM Components all have bom-ref field&quot;</span><span class="a-b a-c39">
+            <span class="a-b a-c39">}</span></span><span class="a-b a-c39">,
+            <span class="a-b a-c39">{
+              </span></span><span class="a-b a-c34">&quot;level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;L1&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;The CycloneDX SBOM components all have valid bom-ref values. Checks all components including nested ones.&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;cdx_sbom_all_components_have_valid_bomref_value&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;L1&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;error&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;CDX SBOM Components all have VALID bom-ref values&quot;</span><span class="a-b a-c39">
+            <span class="a-b a-c39">}</span></span><span class="a-b a-c39">
+          <span class="a-b a-c39">]</span></span><span class="a-b a-c39">
+        <span class="a-b a-c39">}</span></span><span class="a-b a-c39">,
+        <span class="a-b a-c39">{
+          </span></span><span class="a-b a-c34">&quot;policy_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Check if all packages in the CycloneDX SBOM include checksums&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;LPOL3&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;L1&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_path&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;data.mequal.policies.cyclonedx.LPOL3&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;error&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SBOM includes checksums&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;rules&quot;</span><span class="a-b a-c39">: </span><span class="a-b a-c39">[
+            <span class="a-b a-c39">{
+              </span></span><span class="a-b a-c34">&quot;level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;L1&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;The CycloneDX SBOM components all have hashes field. Checks all components including nested ones.&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;cdx_sbom_all_components_contain_hashes_field&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;L1&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;error&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;CDX SBOM all components have hashes field&quot;</span><span class="a-b a-c39">
+            <span class="a-b a-c39">}</span></span><span class="a-b a-c39">,
+            <span class="a-b a-c39">{
+              </span></span><span class="a-b a-c34">&quot;level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;L1&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;The CycloneDX SBOM components all have values in their hashes field. Checks all components including nested ones.&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;cdx_sbom_all_components_contain_hash_values&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;L1&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;error&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;CDX SBOM all components have values in their hashes field&quot;</span><span class="a-b a-c39">
+            <span class="a-b a-c39">}</span></span><span class="a-b a-c39">
+          <span class="a-b a-c39">]</span></span><span class="a-b a-c39">
+        <span class="a-b a-c39">}</span></span><span class="a-b a-c39">,
+        <span class="a-b a-c39">{
+          </span></span><span class="a-b a-c34">&quot;policy_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Check if all packages in the SBOM include a version&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;LPOL2&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;L1&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_path&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;data.mequal.policies.spdx.LPOL2&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;error&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;All packages in the SBOM include a version&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;rules&quot;</span><span class="a-b a-c39">: </span><span class="a-b a-c39">[
+            <span class="a-b a-c39">{
+              </span></span><span class="a-b a-c34">&quot;level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;L1&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;The SPDX SBOM has a packages field.&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;spdx_sbom_has_packages_field&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;L1&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;error&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SPDX SBOM has a packages field&quot;</span><span class="a-b a-c39">
+            <span class="a-b a-c39">}</span></span><span class="a-b a-c39">,
+            <span class="a-b a-c39">{
+              </span></span><span class="a-b a-c34">&quot;level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;L1&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;The SPDX SBOM has a non-empty packages field.&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;spdx_sbom_packages_field_not_empty&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;L1&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;error&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SPDX SBOM packages field not empty&quot;</span><span class="a-b a-c39">
+            <span class="a-b a-c39">}</span></span><span class="a-b a-c39">,
+            <span class="a-b a-c39">{
+              </span></span><span class="a-b a-c34">&quot;level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;L1&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;The SPDX SBOM components all have versions.&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;spdx_sbom_all_components_contain_versions&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;L1&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;error&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SPDX SBOM Components all have versions&quot;</span><span class="a-b a-c39">
+            <span class="a-b a-c39">}</span></span><span class="a-b a-c39">
+          <span class="a-b a-c39">]</span></span><span class="a-b a-c39">
+        <span class="a-b a-c39">}</span></span><span class="a-b a-c39">,
+        <span class="a-b a-c39">{
+          </span></span><span class="a-b a-c34">&quot;policy_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Check if all packages in the SPDX SBOM include checksums&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;LPOL3&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;L1&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_path&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;data.mequal.policies.spdx.LPOL3&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;error&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SBOM includes checksums&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;rules&quot;</span><span class="a-b a-c39">: </span><span class="a-b a-c39">[
+            <span class="a-b a-c39">{
+              </span></span><span class="a-b a-c34">&quot;level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;L1&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;The SPDX SBOM components all have checksums field.&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;spdx_sbom_all_components_contain_checksums_field&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;L1&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;error&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SPDX SBOM all components have checksums field&quot;</span><span class="a-b a-c39">
+            <span class="a-b a-c39">}</span></span><span class="a-b a-c39">,
+            <span class="a-b a-c39">{
+              </span></span><span class="a-b a-c34">&quot;rule_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;The SPDX SBOM components all have checksums values. Only checks flat list&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;spdx_sbom_all_components_contain_checksums_values&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;error&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SPDX SBOM all components have checksums values&quot;</span><span class="a-b a-c39">
+            <span class="a-b a-c39">}</span></span><span class="a-b a-c39">
+          <span class="a-b a-c39">]</span></span><span class="a-b a-c39">
+        <span class="a-b a-c39">}</span></span><span class="a-b a-c39">
+      <span class="a-b a-c39">]</span></span><span class="a-b a-c39">,
+      </span><span class="a-b a-c34">&quot;source&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;https://github.com/sbomer-project/mequal&quot;</span><span class="a-b a-c39">
+    <span class="a-b a-c39">}</span></span><span class="a-b a-c39">,
+    <span class="a-b a-c39">{
+      </span></span><span class="a-b a-c34">&quot;bundle_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;prodsec&quot;</span><span class="a-b a-c39">,
+      </span><span class="a-b a-c34">&quot;bundle_version&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;386a4d0&quot;</span><span class="a-b a-c39">,
+      </span><span class="a-b a-c34">&quot;policies&quot;</span><span class="a-b a-c39">: </span><span class="a-b a-c39">[
+        <span class="a-b a-c39">{
+          </span></span><span class="a-b a-c34">&quot;policy_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Teams who are generating am SBOM will benefit from using CycloneDX version 1.6 and above in order to access key features that make it much easier to represent certain information, such as multiple CPEs and PURLs. This policy gives informational feedback on the advantages of using version CycloneDX 1.6 and above.&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;CDX_1_6_PLUS&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_path&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;data.prodsec.policies.cyclonedx.CDX_1_6_PLUS&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;tip&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Teams should use CycloneDX 1.6 and above to use key features&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;rules&quot;</span><span class="a-b a-c39">: </span><span class="a-b a-c39">[
+            <span class="a-b a-c39">{
+              </span></span><span class="a-b a-c34">&quot;rule_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SBOM is CycloneDX 1.6 and above in order to ensure support of potentially important features.&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;cdx_sbom_is_cdx_1_6_and_above&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;tip&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SBOM is CycloneDX 1.6 and Above&quot;</span><span class="a-b a-c39">
+            <span class="a-b a-c39">}</span></span><span class="a-b a-c39">
+          <span class="a-b a-c39">]</span></span><span class="a-b a-c39">
+        <span class="a-b a-c39">}</span></span><span class="a-b a-c39">,
+        <span class="a-b a-c39">{
+          </span></span><span class="a-b a-c34">&quot;policy_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Using the pedigree.ancestors field of a component inside of a CycloneDX SBOM, teams can denote the upstream of a component in the SBOMs they generate. Supported by Trustify.&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;CDX_ANCESTORS&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_path&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;data.prodsec.policies.cyclonedx.CDX_ANCESTORS&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;tip&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;CycloneDX SBOM Uses Ancestors Field&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;rules&quot;</span><span class="a-b a-c39">: </span><span class="a-b a-c39">[
+            <span class="a-b a-c39">{
+              </span></span><span class="a-b a-c34">&quot;rule_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;In a given CycloneDX SBOM, there are components where the pedigree.ancestors relationship is utilized.&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;cdx_ancestors_field_is_used&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;tip&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Ancestors Field is Used in CycloneDX SBOM&quot;</span><span class="a-b a-c39">
+            <span class="a-b a-c39">}</span></span><span class="a-b a-c39">
+          <span class="a-b a-c39">]</span></span><span class="a-b a-c39">
+        <span class="a-b a-c39">}</span></span><span class="a-b a-c39">,
+        <span class="a-b a-c39">{
+          </span></span><span class="a-b a-c34">&quot;policy_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;An SBOM can have a CPE field that ties it a product.&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;CDX_CPE&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_path&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;data.prodsec.policies.cyclonedx.CDX_CPE&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;tip&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;CycloneDX SBOM has a Main CPE&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;rules&quot;</span><span class="a-b a-c39">: </span><span class="a-b a-c39">[
+            <span class="a-b a-c39">{
+              </span></span><span class="a-b a-c34">&quot;rule_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;The main component of a CycloneDX SBOM has a CPE.&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;cdx_main_component_has_cpe&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;tip&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;CycloneDX SBOM Has CPE&quot;</span><span class="a-b a-c39">
+            <span class="a-b a-c39">}</span></span><span class="a-b a-c39">
+          <span class="a-b a-c39">]</span></span><span class="a-b a-c39">
+        <span class="a-b a-c39">}</span></span><span class="a-b a-c39">,
+        <span class="a-b a-c39">{
+          </span></span><span class="a-b a-c34">&quot;policy_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;When teams produce an SBOM for their product, they will most likely NOT be putting all transitive layers into a single SBOM. This policy would ensure that the references to external SBOMs made are defined using the correct fields and are syntactically correct. Making sure that these references are correctly written is crucial for the relationships to accurately make it into TPA.&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;CDX_EXTERNALREFS&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_path&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;data.prodsec.policies.cyclonedx.CDX_EXTERNALREFS&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;error&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;CycloneDX SBOM Makes Valid External References to other SBOMs&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;rules&quot;</span><span class="a-b a-c39">: </span><span class="a-b a-c39">[
+            <span class="a-b a-c39">{
+              </span></span><span class="a-b a-c34">&quot;rule_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Given an SBOM, ensure that all Bomlink external references to other SBOMs are valid in format.&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;cdx_all_sbom_exrefs_valid_bomlink&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;error&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;All Bomlink SBOM References are Valid&quot;</span><span class="a-b a-c39">
+            <span class="a-b a-c39">}</span></span><span class="a-b a-c39">,
+            <span class="a-b a-c39">{
+              </span></span><span class="a-b a-c34">&quot;rule_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Given an SBOM, ensure that all SBOM external references to other SBOMs done using the bom uri field are non-empty in format.&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;cdx_all_sbom_exrefs_nonempty_bomuri&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;error&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;All Bom uri SBOM References Have Non-empty URL Fields&quot;</span><span class="a-b a-c39">
+            <span class="a-b a-c39">}</span></span><span class="a-b a-c39">,
+            <span class="a-b a-c39">{
+              </span></span><span class="a-b a-c34">&quot;rule_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Given an SBOM, there have been external references identified.&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;cdx_sbom_exrefs_used&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;tip&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;External SBOM References Used&quot;</span><span class="a-b a-c39">
+            <span class="a-b a-c39">}</span></span><span class="a-b a-c39">
+          <span class="a-b a-c39">]</span></span><span class="a-b a-c39">
+        <span class="a-b a-c39">}</span></span><span class="a-b a-c39">,
+        <span class="a-b a-c39">{
+          </span></span><span class="a-b a-c34">&quot;policy_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;ProdSec use-cases policy 1. Check if top component is duplicated into the components array in a CycloneDX SBOM.&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;CDX_MAINCOMPONENTDUP&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_path&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;data.prodsec.policies.cyclonedx.CDX_MAINCOMPONENTDUP&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;error&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;CDX_MAINCOMPONENTDUP&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;rules&quot;</span><span class="a-b a-c39">: </span><span class="a-b a-c39">[
+            <span class="a-b a-c39">{
+              </span></span><span class="a-b a-c34">&quot;rule_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Check if the .metadata.component has been duplicated into the components[] array&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;cdx_top_purl_in_components&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;error&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Has top purl in components&quot;</span><span class="a-b a-c39">
+            <span class="a-b a-c39">}</span></span><span class="a-b a-c39">
+          <span class="a-b a-c39">]</span></span><span class="a-b a-c39">
+        <span class="a-b a-c39">}</span></span><span class="a-b a-c39">,
+        <span class="a-b a-c39">{
+          </span></span><span class="a-b a-c34">&quot;policy_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;A CycloneDX SBOM that is version 1.6 and above has the ability to represent multiple CPEs using the metadata.component.cpe field for the main CPE, and the metadata.component.evidence.identity field for its aliases.&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;CDX_MULTICPE&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_path&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;data.prodsec.policies.cyclonedx.CDX_MULTICPE&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;tip&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;CycloneDX SBOM Contains Multiple CPEs&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;rules&quot;</span><span class="a-b a-c39">: </span><span class="a-b a-c39">[
+            <span class="a-b a-c39">{
+              </span></span><span class="a-b a-c34">&quot;rule_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;A given SBOM has a component within it that makes use of the evidence.identity field to define additional CPEs.&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;cdx_contains_multicpe_example&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;tip&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;CycloneDX SBOM Uses Multi-CPE&quot;</span><span class="a-b a-c39">
+            <span class="a-b a-c39">}</span></span><span class="a-b a-c39">
+          <span class="a-b a-c39">]</span></span><span class="a-b a-c39">
+        <span class="a-b a-c39">}</span></span><span class="a-b a-c39">,
+        <span class="a-b a-c39">{
+          </span></span><span class="a-b a-c34">&quot;policy_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;A CycloneDX SBOM that is version 1.6 and above has the ability to represent multiple PURLs using .purl field for the main PURL, and the .evidence.identity field for its aliases.&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;CDX_MULTIPURL&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_path&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;data.prodsec.policies.cyclonedx.CDX_MULTIPURL&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;tip&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;CycloneDX SBOM Contains Multiple PURLs&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;rules&quot;</span><span class="a-b a-c39">: </span><span class="a-b a-c39">[
+            <span class="a-b a-c39">{
+              </span></span><span class="a-b a-c34">&quot;rule_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;A given SBOM has a component within it that makes use of the evidence.identity field to define additional PURLs.&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;cdx_contains_multipurl_example&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;tip&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;CycloneDX SBOM Uses Multi-PURL&quot;</span><span class="a-b a-c39">
+            <span class="a-b a-c39">}</span></span><span class="a-b a-c39">
+          <span class="a-b a-c39">]</span></span><span class="a-b a-c39">
+        <span class="a-b a-c39">}</span></span><span class="a-b a-c39">,
+        <span class="a-b a-c39">{
+          </span></span><span class="a-b a-c34">&quot;policy_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Using the dependencies section of a CycloneDX SBOM, the provides field can be used to specify what specification a certain component implements, or additionally can represent source-to-binary relationships.&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;CDX_PROVIDES&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_path&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;data.prodsec.policies.cyclonedx.CDX_PROVIDES&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;tip&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;CycloneDX SBOM Uses Provides Field&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;rules&quot;</span><span class="a-b a-c39">: </span><span class="a-b a-c39">[
+            <span class="a-b a-c39">{
+              </span></span><span class="a-b a-c34">&quot;rule_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;In a given CycloneDX SBOM, the provides relationship is utilized.&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;cdx_provides_field_is_used&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;tip&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Provides Field is Used in CycloneDX SBOM&quot;</span><span class="a-b a-c39">
+            <span class="a-b a-c39">}</span></span><span class="a-b a-c39">
+          <span class="a-b a-c39">]</span></span><span class="a-b a-c39">
+        <span class="a-b a-c39">}</span></span><span class="a-b a-c39">,
+        <span class="a-b a-c39">{
+          </span></span><span class="a-b a-c34">&quot;policy_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Teams who are generating an SBOM should define the type of SBOM it is. This can be done using the .metadata.lifecycles field. This policy ensures that different policies can be applied to different SBOM types. This also gives Mequal the option the opportunity to do SBOM evaluation in specific specialized contexts in the future.&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;CDX_SBOMTYPE&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_path&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;data.prodsec.policies.cyclonedx.CDX_SBOMTYPE&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;warning&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Specify the SBOM Type in CycloneDX&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;rules&quot;</span><span class="a-b a-c39">: </span><span class="a-b a-c39">[
+            <span class="a-b a-c39">{
+              </span></span><span class="a-b a-c34">&quot;rule_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;In a CycloneDX SBOM, the .metadata.lifecycles field exists.&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;cdx_metadata_lifecycles_exists&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;warning&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;CycloneDX Metadata.lifecycles Field Exists&quot;</span><span class="a-b a-c39">
+            <span class="a-b a-c39">}</span></span><span class="a-b a-c39">
+          <span class="a-b a-c39">]</span></span><span class="a-b a-c39">
+        <span class="a-b a-c39">}</span></span><span class="a-b a-c39">,
+        <span class="a-b a-c39">{
+          </span></span><span class="a-b a-c34">&quot;policy_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Using the pedigree.variants field of a component inside of a CycloneDX SBOM, teams can represent the relationship of the image index container to their respective architectural variants in the CycloneDX SBOMs they generate. Supported by Trustify.&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;CDX_VARIANTS&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_path&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;data.prodsec.policies.cyclonedx.CDX_VARIANTS&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;tip&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;CycloneDX SBOM Uses Variants Field&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;rules&quot;</span><span class="a-b a-c39">: </span><span class="a-b a-c39">[
+            <span class="a-b a-c39">{
+              </span></span><span class="a-b a-c34">&quot;rule_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;In a given CycloneDX SBOM, there are components where the pedigree.variants relationship is utilized.&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;cdx_variants_field_is_used&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;tip&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Variants Field is Used in CycloneDX SBOM&quot;</span><span class="a-b a-c39">
+            <span class="a-b a-c39">}</span></span><span class="a-b a-c39">
+          <span class="a-b a-c39">]</span></span><span class="a-b a-c39">
+        <span class="a-b a-c39">}</span></span><span class="a-b a-c39">,
+        <span class="a-b a-c39">{
+          </span></span><span class="a-b a-c34">&quot;policy_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SPDX counterpart of CDX_1_6_PLUS. SPDX 2.3 is the newest 2.x version and the one the Red Hat SBOM guide and Trustify target.&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SPDX_2_3_PLUS&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_path&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;data.prodsec.policies.spdx.SPDX_2_3_PLUS&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;tip&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Teams should use SPDX 2.3 and above to use key features&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;rules&quot;</span><span class="a-b a-c39">: </span><span class="a-b a-c39">[
+            <span class="a-b a-c39">{
+              </span></span><span class="a-b a-c34">&quot;rule_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SBOM is SPDX 2.3 and above in order to ensure support of potentially important features.&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;spdx_sbom_is_spdx_2_3_and_above&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;tip&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SBOM is SPDX 2.3 and Above&quot;</span><span class="a-b a-c39">
+            <span class="a-b a-c39">}</span></span><span class="a-b a-c39">
+          <span class="a-b a-c39">]</span></span><span class="a-b a-c39">
+        <span class="a-b a-c39">}</span></span><span class="a-b a-c39">,
+        <span class="a-b a-c39">{
+          </span></span><span class="a-b a-c34">&quot;policy_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SPDX counterpart of CDX_ANCESTORS. CycloneDX nests the upstream of a component in pedigree.ancestors; SPDX 2.3 expresses the same with ANCESTOR_OF / DESCENDANT_OF relationships.&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SPDX_ANCESTORS&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_path&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;data.prodsec.policies.spdx.SPDX_ANCESTORS&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;tip&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SPDX SBOM Uses Ancestor Relationships&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;rules&quot;</span><span class="a-b a-c39">: </span><span class="a-b a-c39">[
+            <span class="a-b a-c39">{
+              </span></span><span class="a-b a-c34">&quot;rule_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;In a given SPDX SBOM, there are ANCESTOR_OF or DESCENDANT_OF relationships.&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;spdx_ancestor_relationships_are_used&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;tip&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Ancestor Relationships are Used in SPDX SBOM&quot;</span><span class="a-b a-c39">
+            <span class="a-b a-c39">}</span></span><span class="a-b a-c39">
+          <span class="a-b a-c39">]</span></span><span class="a-b a-c39">
+        <span class="a-b a-c39">}</span></span><span class="a-b a-c39">,
+        <span class="a-b a-c39">{
+          </span></span><span class="a-b a-c34">&quot;policy_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SPDX counterpart of CDX_CPE. SPDX has no .metadata.component.cpe; a CPE is a SECURITY externalRef (cpe22Type / cpe23Type) on the described package.&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SPDX_CPE&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_path&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;data.prodsec.policies.spdx.SPDX_CPE&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;tip&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SPDX SBOM has a Main CPE&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;rules&quot;</span><span class="a-b a-c39">: </span><span class="a-b a-c39">[
+            <span class="a-b a-c39">{
+              </span></span><span class="a-b a-c34">&quot;rule_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;A package the SPDX document describes has a CPE externalRef.&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;spdx_main_package_has_cpe&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;tip&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SPDX SBOM Has CPE&quot;</span><span class="a-b a-c39">
+            <span class="a-b a-c39">}</span></span><span class="a-b a-c39">
+          <span class="a-b a-c39">]</span></span><span class="a-b a-c39">
+        <span class="a-b a-c39">}</span></span><span class="a-b a-c39">,
+        <span class="a-b a-c39">{
+          </span></span><span class="a-b a-c34">&quot;policy_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SPDX counterpart of CDX_EXTERNALREFS. CycloneDX references other SBOMs from components (Bomlink urn:cdx: or a bom URL); SPDX 2.3 declares them once in externalDocumentRefs (DocumentRef- ID, spdxDocument URI, SHA1 checksum).&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SPDX_EXTERNALREFS&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_path&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;data.prodsec.policies.spdx.SPDX_EXTERNALREFS&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;error&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SPDX SBOM Makes Valid External References to other SBOMs&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;rules&quot;</span><span class="a-b a-c39">: </span><span class="a-b a-c39">[
+            <span class="a-b a-c39">{
+              </span></span><span class="a-b a-c34">&quot;rule_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Given an SBOM, ensure that every externalDocumentRefs entry has a valid DocumentRef- ID and a SHA1 checksum.&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;spdx_all_sbom_exrefs_valid_documentref&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;error&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;All External Document References are Valid&quot;</span><span class="a-b a-c39">
+            <span class="a-b a-c39">}</span></span><span class="a-b a-c39">,
+            <span class="a-b a-c39">{
+              </span></span><span class="a-b a-c34">&quot;rule_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Given an SBOM, ensure that every externalDocumentRefs entry has a non-empty spdxDocument URI.&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;spdx_all_sbom_exrefs_nonempty_spdxdocument&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;error&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;All External Document References Have Non-empty spdxDocument Fields&quot;</span><span class="a-b a-c39">
+            <span class="a-b a-c39">}</span></span><span class="a-b a-c39">,
+            <span class="a-b a-c39">{
+              </span></span><span class="a-b a-c34">&quot;rule_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Given an SBOM, there have been external document references identified.&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;spdx_sbom_exrefs_used&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;tip&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;External SBOM References Used&quot;</span><span class="a-b a-c39">
+            <span class="a-b a-c39">}</span></span><span class="a-b a-c39">
+          <span class="a-b a-c39">]</span></span><span class="a-b a-c39">
+        <span class="a-b a-c39">}</span></span><span class="a-b a-c39">,
+        <span class="a-b a-c39">{
+          </span></span><span class="a-b a-c34">&quot;policy_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SPDX counterpart of CDX_MAINCOMPONENTDUP. SPDX has no separate .metadata.component to duplicate; the described package must itself be present in packages[].&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SPDX_MAINPACKAGE&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_path&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;data.prodsec.policies.spdx.SPDX_MAINPACKAGE&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;error&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SPDX_MAINPACKAGE&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;rules&quot;</span><span class="a-b a-c39">: </span><span class="a-b a-c39">[
+            <span class="a-b a-c39">{
+              </span></span><span class="a-b a-c34">&quot;rule_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Every SPDX ID the document describes is a package in packages[].&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;spdx_described_package_in_packages&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;error&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Described package is in packages&quot;</span><span class="a-b a-c39">
+            <span class="a-b a-c39">}</span></span><span class="a-b a-c39">
+          <span class="a-b a-c39">]</span></span><span class="a-b a-c39">
+        <span class="a-b a-c39">}</span></span><span class="a-b a-c39">,
+        <span class="a-b a-c39">{
+          </span></span><span class="a-b a-c34">&quot;policy_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SPDX counterpart of CDX_MULTICPE. CycloneDX 1.6 lists CPE aliases in metadata.component.evidence.identity; SPDX lists every CPE as its own externalRef on the described package.&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SPDX_MULTICPE&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_path&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;data.prodsec.policies.spdx.SPDX_MULTICPE&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;tip&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SPDX SBOM Contains Multiple CPEs&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;rules&quot;</span><span class="a-b a-c39">: </span><span class="a-b a-c39">[
+            <span class="a-b a-c39">{
+              </span></span><span class="a-b a-c34">&quot;rule_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;A package the SPDX document describes has more than one CPE externalRef.&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;spdx_contains_multicpe_example&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;tip&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SPDX SBOM Uses Multi-CPE&quot;</span><span class="a-b a-c39">
+            <span class="a-b a-c39">}</span></span><span class="a-b a-c39">
+          <span class="a-b a-c39">]</span></span><span class="a-b a-c39">
+        <span class="a-b a-c39">}</span></span><span class="a-b a-c39">,
+        <span class="a-b a-c39">{
+          </span></span><span class="a-b a-c34">&quot;policy_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SPDX counterpart of CDX_MULTIPURL. CycloneDX 1.6 lists PURL aliases in .evidence.identity; SPDX lists every PURL as its own externalRef.&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SPDX_MULTIPURL&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_path&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;data.prodsec.policies.spdx.SPDX_MULTIPURL&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;tip&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SPDX SBOM Contains Multiple PURLs&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;rules&quot;</span><span class="a-b a-c39">: </span><span class="a-b a-c39">[
+            <span class="a-b a-c39">{
+              </span></span><span class="a-b a-c34">&quot;rule_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;A given SBOM has a package with more than one purl externalRef.&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;spdx_contains_multipurl_example&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;tip&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SPDX SBOM Uses Multi-PURL&quot;</span><span class="a-b a-c39">
+            <span class="a-b a-c39">}</span></span><span class="a-b a-c39">
+          <span class="a-b a-c39">]</span></span><span class="a-b a-c39">
+        <span class="a-b a-c39">}</span></span><span class="a-b a-c39">,
+        <span class="a-b a-c39">{
+          </span></span><span class="a-b a-c34">&quot;policy_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SPDX counterpart of CDX_PROVIDES for its Trustify use, source-to-binary links, which SPDX 2.3 expresses with GENERATED_FROM / GENERATES relationships.&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SPDX_PROVIDES&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_path&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;data.prodsec.policies.spdx.SPDX_PROVIDES&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;tip&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SPDX SBOM Uses Source-to-Binary Relationships&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;rules&quot;</span><span class="a-b a-c39">: </span><span class="a-b a-c39">[
+            <span class="a-b a-c39">{
+              </span></span><span class="a-b a-c34">&quot;rule_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;In a given SPDX SBOM, there are GENERATED_FROM or GENERATES relationships.&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;spdx_generated_from_relationships_are_used&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;tip&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Source-to-Binary Relationships are Used in SPDX SBOM&quot;</span><span class="a-b a-c39">
+            <span class="a-b a-c39">}</span></span><span class="a-b a-c39">
+          <span class="a-b a-c39">]</span></span><span class="a-b a-c39">
+        <span class="a-b a-c39">}</span></span><span class="a-b a-c39">,
+        <span class="a-b a-c39">{
+          </span></span><span class="a-b a-c34">&quot;policy_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SPDX counterpart of CDX_SBOMTYPE. SPDX 2.3 has no field for the SBOM type (CycloneDX .metadata.lifecycles; SPDX 3.0 software_sbomType), so this checks creationInfo.comment for \&quot;SBOM type: &lt;CISA type&gt;\&quot;.&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SPDX_SBOMTYPE&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_path&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;data.prodsec.policies.spdx.SPDX_SBOMTYPE&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;warning&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Specify the SBOM Type in SPDX&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;rules&quot;</span><span class="a-b a-c39">: </span><span class="a-b a-c39">[
+            <span class="a-b a-c39">{
+              </span></span><span class="a-b a-c34">&quot;rule_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;In an SPDX SBOM, creationInfo.comment contains \&quot;SBOM type:\&quot; followed by a CISA SBOM type (design, source, build, analyzed, deployed, runtime).&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;spdx_creationinfo_sbom_type_exists&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;warning&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SPDX creationInfo.comment Declares the SBOM Type&quot;</span><span class="a-b a-c39">
+            <span class="a-b a-c39">}</span></span><span class="a-b a-c39">
+          <span class="a-b a-c39">]</span></span><span class="a-b a-c39">
+        <span class="a-b a-c39">}</span></span><span class="a-b a-c39">,
+        <span class="a-b a-c39">{
+          </span></span><span class="a-b a-c34">&quot;policy_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SPDX counterpart of CDX_VARIANTS. CycloneDX nests architecture variants in pedigree.variants; SPDX 2.3 expresses the same with VARIANT_OF relationships.&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SPDX_VARIANTS&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_path&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;data.prodsec.policies.spdx.SPDX_VARIANTS&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;tip&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;policy_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SPDX SBOM Uses Variant Relationships&quot;</span><span class="a-b a-c39">,
+          </span><span class="a-b a-c34">&quot;rules&quot;</span><span class="a-b a-c39">: </span><span class="a-b a-c39">[
+            <span class="a-b a-c39">{
+              </span></span><span class="a-b a-c34">&quot;rule_description&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;In a given SPDX SBOM, there are VARIANT_OF relationships.&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;spdx_variant_relationships_are_used&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;tip&quot;</span><span class="a-b a-c39">,
+              </span><span class="a-b a-c34">&quot;rule_title&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Variant Relationships are Used in SPDX SBOM&quot;</span><span class="a-b a-c39">
+            <span class="a-b a-c39">}</span></span><span class="a-b a-c39">
+          <span class="a-b a-c39">]</span></span><span class="a-b a-c39">
+        <span class="a-b a-c39">}</span></span><span class="a-b a-c39">
+      <span class="a-b a-c39">]</span></span><span class="a-b a-c39">,
+      </span><span class="a-b a-c34">&quot;source&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;https://github.com/project-ncl/mequal-prodsec-policies&quot;</span><span class="a-b a-c39">
+    <span class="a-b a-c39">}</span></span><span class="a-b a-c39">
+  <span class="a-b a-c39">]</span></span><span class="a-b a-c39">,
+  </span><span class="a-b a-c34">&quot;evaluation&quot;</span><span class="a-b a-c39">: </span><span class="a-b a-c39">{
+    </span><span class="a-b a-c34">&quot;rules&quot;</span><span class="a-b a-c39">: </span><span class="a-b a-c39">[
+      <span class="a-b a-c39">{
+        </span></span><span class="a-b a-c34">&quot;bundle_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;prodsec&quot;</span><span class="a-b a-c39">,
+        </span><span class="a-b a-c34">&quot;extra&quot;</span><span class="a-b a-c39">: </span><span class="a-b a-c39">{}</span><span class="a-b a-c39">,
+        </span><span class="a-b a-c34">&quot;message&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;TIP == In this SBOM, ANCESTOR_OF / DESCENDANT_OF relationships have not been utilized. They can denote the upstream of a package.&quot;</span><span class="a-b a-c39">,
+        </span><span class="a-b a-c34">&quot;policy_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SPDX_ANCESTORS&quot;</span><span class="a-b a-c39">,
+        </span><span class="a-b a-c34">&quot;policy_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+        </span><span class="a-b a-c34">&quot;policy_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;tip&quot;</span><span class="a-b a-c39">,
+        </span><span class="a-b a-c34">&quot;rule_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;spdx_ancestor_relationships_are_used&quot;</span><span class="a-b a-c39">,
+        </span><span class="a-b a-c34">&quot;rule_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+        </span><span class="a-b a-c34">&quot;rule_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;tip&quot;</span><span class="a-b a-c39">
+      <span class="a-b a-c39">}</span></span><span class="a-b a-c39">,
+      <span class="a-b a-c39">{
+        </span></span><span class="a-b a-c34">&quot;bundle_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;prodsec&quot;</span><span class="a-b a-c39">,
+        </span><span class="a-b a-c34">&quot;extra&quot;</span><span class="a-b a-c39">: </span><span class="a-b a-c39">{}</span><span class="a-b a-c39">,
+        </span><span class="a-b a-c34">&quot;message&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;TIP == If this a product-level SBOM, it is advised to define a CPE externalRef (cpe22Type or cpe23Type) on the described package to directly tie it to that product. If this is a component-level SBOM please disregard this tip.&quot;</span><span class="a-b a-c39">,
+        </span><span class="a-b a-c34">&quot;policy_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SPDX_CPE&quot;</span><span class="a-b a-c39">,
+        </span><span class="a-b a-c34">&quot;policy_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+        </span><span class="a-b a-c34">&quot;policy_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;tip&quot;</span><span class="a-b a-c39">,
+        </span><span class="a-b a-c34">&quot;rule_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;spdx_main_package_has_cpe&quot;</span><span class="a-b a-c39">,
+        </span><span class="a-b a-c34">&quot;rule_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+        </span><span class="a-b a-c34">&quot;rule_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;tip&quot;</span><span class="a-b a-c39">
+      <span class="a-b a-c39">}</span></span><span class="a-b a-c39">,
+      <span class="a-b a-c39">{
+        </span></span><span class="a-b a-c34">&quot;bundle_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;prodsec&quot;</span><span class="a-b a-c39">,
+        </span><span class="a-b a-c34">&quot;extra&quot;</span><span class="a-b a-c39">: </span><span class="a-b a-c39">{}</span><span class="a-b a-c39">,
+        </span><span class="a-b a-c34">&quot;message&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;TIP == In this SBOM, GENERATED_FROM / GENERATES relationships have not been utilized. If the SBOM is to be ingested by Trustify, they specify source-to-binary relationships.&quot;</span><span class="a-b a-c39">,
+        </span><span class="a-b a-c34">&quot;policy_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SPDX_PROVIDES&quot;</span><span class="a-b a-c39">,
+        </span><span class="a-b a-c34">&quot;policy_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+        </span><span class="a-b a-c34">&quot;policy_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;tip&quot;</span><span class="a-b a-c39">,
+        </span><span class="a-b a-c34">&quot;rule_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;spdx_generated_from_relationships_are_used&quot;</span><span class="a-b a-c39">,
+        </span><span class="a-b a-c34">&quot;rule_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+        </span><span class="a-b a-c34">&quot;rule_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;tip&quot;</span><span class="a-b a-c39">
+      <span class="a-b a-c39">}</span></span><span class="a-b a-c39">,
+      <span class="a-b a-c39">{
+        </span></span><span class="a-b a-c34">&quot;bundle_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;prodsec&quot;</span><span class="a-b a-c39">,
+        </span><span class="a-b a-c34">&quot;extra&quot;</span><span class="a-b a-c39">: </span><span class="a-b a-c39">{}</span><span class="a-b a-c39">,
+        </span><span class="a-b a-c34">&quot;message&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;TIP == In this SBOM, VARIANT_OF relationships have not been utilized. They can represent the relationship of an image index to its architecture variants.&quot;</span><span class="a-b a-c39">,
+        </span><span class="a-b a-c34">&quot;policy_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;SPDX_VARIANTS&quot;</span><span class="a-b a-c39">,
+        </span><span class="a-b a-c34">&quot;policy_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+        </span><span class="a-b a-c34">&quot;policy_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;tip&quot;</span><span class="a-b a-c39">,
+        </span><span class="a-b a-c34">&quot;rule_id&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;spdx_variant_relationships_are_used&quot;</span><span class="a-b a-c39">,
+        </span><span class="a-b a-c34">&quot;rule_level&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;Undefined&quot;</span><span class="a-b a-c39">,
+        </span><span class="a-b a-c34">&quot;rule_severity&quot;</span><span class="a-b a-c39">: </span><span class="a-c32">&quot;tip&quot;</span><span class="a-b a-c39">
+      <span class="a-b a-c39">}</span></span><span class="a-b a-c39">
+    <span class="a-b a-c39">]</span></span><span class="a-b a-c39">
+  <span class="a-b a-c39">}</span></span><span class="a-b a-c39">
+<span class="a-b a-c39">}</span></span>

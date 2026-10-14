@@ -1,0 +1,16 @@
+# conforma/config redhat sources, pinned; only sbom_spdx.matches_image (collection @redhat_security)
+name: redhat · sbom_spdx.matches_image
+sources:
+  - name: Default
+    policy:
+      - github.com/conforma/policy//policy/lib?ref=cecfaed639e800c95e5bcc445e993ebba2e99d0d
+      - github.com/conforma/policy//policy/release?ref=cecfaed639e800c95e5bcc445e993ebba2e99d0d
+    ruleData:
+      signing_identities:
+        sbom:
+          public_key: |
+            COSIGN_PUB
+          ignore_rekor: true
+    config:
+      include:
+        - sbom_spdx.matches_image

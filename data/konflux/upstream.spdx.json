@@ -1,0 +1,72 @@
+{
+    "SPDXID": "SPDXRef-DOCUMENT",
+    "creationInfo": {
+        "created": "2026-10-14T19:49:36Z",
+        "creators": [
+            "Organization: Red Hat",
+            "Tool: Konflux CI",
+            "Tool: Mobster-2.3.0"
+        ]
+    },
+    "dataLicense": "CC0-1.0",
+    "name": "localhost:5000/wrapped/fedora-44-qcow2@sha256:4a97ffc8967b3816735d926893f3af3a1217fd44da73370c2991629cec9c6a13",
+    "spdxVersion": "SPDX-2.3",
+    "documentNamespace": "https://konflux-ci.dev/spdxdocs/localhost:5000/wrapped/fedora-44-qcow2@sha256:4a97ffc8967b3816735d926893f3af3a1217fd44da73370c2991629cec9c6a13-25126f01-4aef-4aa4-9252-dba612cd8d41",
+    "packages": [
+        {
+            "SPDXID": "SPDXRef-image-fedora-44-qcow2-1569aeaeac323302b9b8c4d20815205e6cb26a61172d59342c237cd5eaa49993",
+            "checksums": [
+                {
+                    "algorithm": "SHA256",
+                    "checksumValue": "4a97ffc8967b3816735d926893f3af3a1217fd44da73370c2991629cec9c6a13"
+                }
+            ],
+            "downloadLocation": "NOASSERTION",
+            "externalRefs": [
+                {
+                    "referenceCategory": "PACKAGE_MANAGER",
+                    "referenceLocator": "pkg:oci/fedora-44-qcow2@sha256:4a97ffc8967b3816735d926893f3af3a1217fd44da73370c2991629cec9c6a13?repository_url=localhost:5000/wrapped/fedora-44-qcow2",
+                    "referenceType": "purl"
+                }
+            ],
+            "filesAnalyzed": false,
+            "licenseDeclared": "NOASSERTION",
+            "name": "fedora-44-qcow2",
+            "supplier": "Organization: Red Hat",
+            "versionInfo": "p3"
+        },
+        {
+            "SPDXID": "SPDXRef-Package-disk.qcow2-0f48a8c6d7bc16add4ef95a43b79cc389a2a20e9d2716709e147d4829b83ddce",
+            "checksums": [
+                {
+                    "algorithm": "SHA256",
+                    "checksumValue": "2fd6e4e40ea7de68a712872a374f4d2d125339027c6233b0c0424e1e84e38643"
+                }
+            ],
+            "downloadLocation": "https://example.com/fedora-44.qcow2",
+            "externalRefs": [
+                {
+                    "referenceCategory": "PACKAGE_MANAGER",
+                    "referenceLocator": "pkg:generic/disk.qcow2?checksum=sha256:2fd6e4e40ea7de68a712872a374f4d2d125339027c6233b0c0424e1e84e38643&download_url=https://example.com/fedora-44.qcow2",
+                    "referenceType": "purl"
+                }
+            ],
+            "filesAnalyzed": false,
+            "licenseDeclared": "NOASSERTION",
+            "name": "disk.qcow2",
+            "supplier": "Organization: Red Hat"
+        }
+    ],
+    "relationships": [
+        {
+            "spdxElementId": "SPDXRef-DOCUMENT",
+            "relatedSpdxElement": "SPDXRef-image-fedora-44-qcow2-1569aeaeac323302b9b8c4d20815205e6cb26a61172d59342c237cd5eaa49993",
+            "relationshipType": "DESCRIBES"
+        },
+        {
+            "spdxElementId": "SPDXRef-image-fedora-44-qcow2-1569aeaeac323302b9b8c4d20815205e6cb26a61172d59342c237cd5eaa49993",
+            "relatedSpdxElement": "SPDXRef-Package-disk.qcow2-0f48a8c6d7bc16add4ef95a43b79cc389a2a20e9d2716709e147d4829b83ddce",
+            "relationshipType": "CONTAINS"
+        }
+    ]
+}

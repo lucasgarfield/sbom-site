@@ -1,0 +1,27 @@
+Success: true
+Result: SUCCESS
+Violations: 0, Warnings: 0, Successes: 4
+Component: Unnamed
+ImageRef: localhost:5000/raw/fedora-44-qcow2@sha256:4a97ffc8967b3816735d926893f3af3a1217fd44da73370c2991629cec9c6a13
+
+Results:
+✓ [Success] builtin.attestation.signature_check
+  ImageRef: localhost:5000/raw/fedora-44-qcow2@sha256:4a97ffc8967b3816735d926893f3af3a1217fd44da73370c2991629cec9c6a13
+  Title: Attestation signature check passed
+  Description: The attestation signature matches available signing materials.
+
+✓ [Success] builtin.attestation.syntax_check
+  ImageRef: localhost:5000/raw/fedora-44-qcow2@sha256:4a97ffc8967b3816735d926893f3af3a1217fd44da73370c2991629cec9c6a13
+  Title: Attestation syntax check passed
+  Description: The attestation has correct syntax.
+
+✓ [Success] builtin.image.signature_check
+  ImageRef: localhost:5000/raw/fedora-44-qcow2@sha256:4a97ffc8967b3816735d926893f3af3a1217fd44da73370c2991629cec9c6a13
+  Title: Image signature check passed
+  Description: The image signature matches available signing materials.
+
+✓ [Success] sbom_spdx.matches_image
+  ImageRef: localhost:5000/raw/fedora-44-qcow2@sha256:4a97ffc8967b3816735d926893f3af3a1217fd44da73370c2991629cec9c6a13
+  Title: Matches image
+  Description: Check the SPDX SBOM targets the image being validated.
+

@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<nav id="toolbar"><a href="#grader" data-ch="grader">1 · sbom-grader</a><a href="#mequal" data-ch="mequal">2 · mequal</a><a href="#cisa" data-ch="cisa">3 · CISA 2026</a><a href="#prodsec" data-ch="prodsec">4 · ProdSec guidelines</a><span class="ch-off" data-ch="mobster">5 · mobster + Conforma</span><span class="ch-off" data-ch="iso">A · ISO</span><span class="ch-off" data-ch="trustify">B · Trustify</span><span class="ch-off" data-ch="bootc">C · bootc</span></nav>
+<nav id="toolbar"><a href="#grader" data-ch="grader">1 · sbom-grader</a><a href="#mequal" data-ch="mequal">2 · mequal</a><a href="#cisa" data-ch="cisa">3 · CISA 2026</a><a href="#prodsec" data-ch="prodsec">4 · ProdSec guidelines</a><a href="#konflux" data-ch="konflux">5 · Konflux · Conforma</a><span class="ch-off" data-ch="iso">A · ISO</span><span class="ch-off" data-ch="trustify">B · Trustify</span><span class="ch-off" data-ch="bootc">C · bootc</span></nav>
 <main>
 <template data-ch="grader">
 <section id="s-main">
@@ -186,6 +186,74 @@
 <section id="s-d-sbom">
   <h2>image-builder · patch 3 SBOM</h2>
   <div class="viewer" data-left="data/p3.image-os.spdx.json"></div>
+</section>
+</template>
+<template data-ch="konflux">
+<section id="s-e-policy">
+  <h2>policy · sbom_spdx.matches_image</h2>
+  <p class="note">Rule from <a href="https://github.com/conforma/policy/blob/cecfaed639e800c95e5bcc445e993ebba2e99d0d/policy/release/sbom_spdx/sbom_spdx.rego#L160-L179">conforma/policy sbom_spdx.rego</a>, collection <code>@redhat_security</code>. <a href="https://github.com/conforma/config/blob/49f7bb9e77204347882040a7f0a424fac35ca665/redhat/policy.yaml#L40-L41">conforma/config redhat</a> includes <code>@redhat</code>; this policy includes only this rule.</p>
+  <div class="code" data-src="cmd/konflux-policy.yaml"></div>
+  <div class="code" data-src="data/konflux/rule-matches_image.rego"></div>
+  <div class="code" data-src="data/konflux/lib-image-parse.rego"></div>
+</section>
+<section id="s-e-push">
+  <h2>push · sign · attest</h2>
+  <p class="note"><code>disk.qcow2</code> is placeholder bytes, not a disk image. Its sha256 is the SBOM root checksum (jq step in <code>cmd/generate-p3.sh</code>).</p>
+  <div class="code" data-src="cmd/konflux-1-push.sh"></div>
+  <div class="code" data-src="cmd/konflux-2-sign.sh"></div>
+</section>
+<section id="s-e-raw">
+  <h2>ec · raw image-builder SBOM</h2>
+  <div class="code" data-src="cmd/konflux-3-ec-raw.sh"></div>
+  <pre class="term" data-src="data/konflux/ec-raw.html"></pre>
+  <p class="note">Vacuous pass: the SBOM is found (below), but <code>name</code> = <code>sbom-by-osbuild-194</code> has no <code>/</code>, so <code>image.parse</code> is undefined and the deny rule never fires.</p>
+  <pre class="term" data-src="data/konflux/policy-input-raw.html"></pre>
+</section>
+<section id="s-e-control">
+  <h2>ec · control: name = repo@&lt;file sha256&gt;</h2>
+  <p class="note">The raw SBOM knows the file sha256, not the OCI manifest digest.</p>
+  <div class="code" data-src="cmd/konflux-3b-control.sh"></div>
+  <pre class="term" data-src="data/konflux/ec-control.html"></pre>
+</section>
+<section id="s-e-mobster">
+  <h2>mobster · upstream vs fork</h2>
+  <div class="code" data-src="cmd/konflux-4-mobster.sh"></div>
+  <pre class="term" data-src="data/konflux/mobster.html"></pre>
+  <div class="bar"><a class="btn" href="https://github.com/lucasgarfield/mobster/tree/oci-artifact-from-sbom">lucasgarfield/mobster · oci-artifact-from-sbom</a><a class="btn" href="https://github.com/lucasgarfield/mobster/pull/1">PR #1 (fork)</a><a class="btn" href="data/konflux/mobster-fork.patch" download>mobster-fork.patch</a></div>
+  <div class="patch" data-src="data/konflux/mobster-fork.patch"></div>
+</section>
+<section id="s-e-wrapped">
+  <h2>ec · wrapped SBOM</h2>
+  <div class="code" data-src="cmd/konflux-5-ec-wrapped.sh"></div>
+  <pre class="term" data-src="data/konflux/ec-wrapped.html"></pre>
+</section>
+<section id="s-e-grader">
+  <h2>sbom-grader · wrapped</h2>
+  <div class="grade-banner"><span class="g-lbl">sbom-grader · wrapped</span><span class="g-val" data-grade-src="data/konflux/grader-wrapped.html">…</span></div>
+  <p class="note">raw (patch 3): A. wrapped: B, because the <code>pkg:oci</code> purl from mobster has no <code>tag</code> qualifier.</p>
+  <div class="code" data-src="cmd/grader-wrapped.sh"></div>
+  <pre class="term" data-src="data/konflux/grader-wrapped.html"></pre>
+</section>
+<section id="s-e-mequal">
+  <h2>mequal · wrapped</h2>
+  <p class="note">Same 4 tips as patch 3. No errors or warnings.</p>
+  <div class="code" data-src="cmd/mequal-wrapped.sh"></div>
+  <pre class="term" data-src="data/konflux/mequal-wrapped.html"></pre>
+</section>
+<section id="s-e-trustify">
+  <h2>Trustify 0.3.5 · ingest</h2>
+  <p class="note">No advisories loaded, so 0 advisories means no data, not no vulnerabilities.</p>
+  <div class="code" data-src="cmd/konflux-6-trustify.sh"></div>
+  <pre class="term" data-src="data/konflux/trustify.html"></pre>
+</section>
+<section id="s-e-diff">
+  <h2>raw ↔ wrapped</h2>
+  <div class="bar"><a class="btn" href="data/konflux/wrapped.spdx.json" download>wrapped.spdx.json</a><a class="btn" href="data/konflux/upstream.spdx.json" download>upstream.spdx.json</a></div>
+  <div class="viewer" data-left="data/p3.image-os.spdx.json" data-right="data/konflux/wrapped.spdx.json"></div>
+</section>
+<section id="s-e-upstream">
+  <h2>upstream mobster SBOM (no content)</h2>
+  <div class="viewer" data-left="data/konflux/upstream.spdx.json"></div>
 </section>
 </template>
 <div id="chapter"></div>

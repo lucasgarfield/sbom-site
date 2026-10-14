@@ -1,0 +1,34 @@
+Pushing signature to: localhost:5000/control/fedora-44-qcow2
+Using payload from: control.spdx.json
+Success: false
+Result: FAILURE
+Violations: 1, Warnings: 0, Successes: 3
+Component: Unnamed
+ImageRef: localhost:5000/control/fedora-44-qcow2@sha256:c1d907fb72a39b590b529d2bf9d052f7728c66f857fd9a1822b9dff712099ceb
+
+Results:
+✕ [Violation] sbom_spdx.matches_image
+  ImageRef: localhost:5000/control/fedora-44-qcow2@sha256:c1d907fb72a39b590b529d2bf9d052f7728c66f857fd9a1822b9dff712099ceb
+  Reason: Image digest in the SBOM, &quot;sha256:2fd6e4e40ea7de68a712872a374f4d2d125339027c6233b0c0424e1e84e38643&quot;, is not as expected,
+  &quot;sha256:c1d907fb72a39b590b529d2bf9d052f7728c66f857fd9a1822b9dff712099ceb&quot;
+  Title: Matches image
+  Description: Check the SPDX SBOM targets the image being validated. To exclude this rule add &quot;sbom_spdx.matches_image&quot; to the
+  `exclude` section of the policy configuration.
+  Solution: The SPDX SBOM associated with the image describes a different image. Verify the integrity of the build system.
+
+✓ [Success] builtin.attestation.signature_check
+  ImageRef: localhost:5000/control/fedora-44-qcow2@sha256:c1d907fb72a39b590b529d2bf9d052f7728c66f857fd9a1822b9dff712099ceb
+  Title: Attestation signature check passed
+  Description: The attestation signature matches available signing materials.
+
+✓ [Success] builtin.attestation.syntax_check
+  ImageRef: localhost:5000/control/fedora-44-qcow2@sha256:c1d907fb72a39b590b529d2bf9d052f7728c66f857fd9a1822b9dff712099ceb
+  Title: Attestation syntax check passed
+  Description: The attestation has correct syntax.
+
+✓ [Success] builtin.image.signature_check
+  ImageRef: localhost:5000/control/fedora-44-qcow2@sha256:c1d907fb72a39b590b529d2bf9d052f7728c66f857fd9a1822b9dff712099ceb
+  Title: Image signature check passed
+  Description: The image signature matches available signing materials.
+
+Error: success criteria not met
