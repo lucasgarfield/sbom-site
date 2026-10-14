@@ -1,0 +1,39 @@
+{
+ "cols": [
+  "SBOM",
+  "packages",
+  "root name",
+  "root purl",
+  "sbom-grader"
+ ],
+ "rows": [
+  [
+   "anaconda-tree",
+   "1080",
+   "fedora-44-minimal-installer-x86_64",
+   "pkg:generic/fedora-44-minimal-installer-x86_64@44?arch=x86_64&distro=fedora-44&image_type=minimal-installer",
+   "B"
+  ],
+  [
+   "os",
+   "636",
+   "fedora-44-minimal-installer-x86_64",
+   "pkg:generic/fedora-44-minimal-installer-x86_64@44?arch=x86_64&distro=fedora-44&image_type=minimal-installer",
+   "B"
+  ],
+  [
+   "iso (merged)",
+   "1117",
+   "fedora-44-minimal-installer-x86_64",
+   "pkg:generic/fedora-44-minimal-installer-x86_64@44?arch=x86_64&distro=fedora-44&image_type=minimal-installer",
+   "B"
+  ],
+  [
+   "shared SPDXIDs (anaconda-tree \u2229 os)",
+   "601",
+   "",
+   "",
+   ""
+  ]
+ ]
+}

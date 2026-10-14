@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<nav id="toolbar"><a href="#grader" data-ch="grader">1 · sbom-grader</a><a href="#mequal" data-ch="mequal">2 · mequal</a><a href="#cisa" data-ch="cisa">3 · CISA 2026</a><a href="#prodsec" data-ch="prodsec">4 · ProdSec guidelines</a><a href="#konflux" data-ch="konflux">5 · Konflux · Conforma</a><span class="ch-off" data-ch="iso">A · ISO</span><span class="ch-off" data-ch="trustify">B · Trustify</span><span class="ch-off" data-ch="bootc">C · bootc</span></nav>
+<nav id="toolbar"><a href="#grader" data-ch="grader">1 · sbom-grader</a><a href="#mequal" data-ch="mequal">2 · mequal</a><a href="#cisa" data-ch="cisa">3 · CISA 2026</a><a href="#prodsec" data-ch="prodsec">4 · ProdSec guidelines</a><a href="#konflux" data-ch="konflux">5 · Konflux · Conforma</a><a href="#iso" data-ch="iso">A · ISO</a><span class="ch-off" data-ch="trustify">B · Trustify</span><span class="ch-off" data-ch="bootc">C · bootc</span></nav>
 <main>
 <template data-ch="grader">
 <section id="s-main">
@@ -254,6 +254,37 @@
 <section id="s-e-upstream">
   <h2>upstream mobster SBOM (no content)</h2>
   <div class="viewer" data-left="data/konflux/upstream.spdx.json"></div>
+</section>
+</template>
+<template data-ch="iso">
+<section id="s-f-inputs">
+  <h2>ISO · two package SBOMs, one root</h2>
+  <p class="note">The anaconda-tree (installer runtime) and os (installed payload) SBOMs have the same root name and purl.</p>
+  <details class="gen"><summary>generate</summary><div class="code" data-src="cmd/generate-iso.sh"></div></details>
+  <div class="bar"><a class="btn" href="data/iso/fedora-44-minimal-installer-x86_64.image-anaconda-tree.spdx.json" download>image-anaconda-tree.spdx.json</a><a class="btn" href="data/iso/fedora-44-minimal-installer-x86_64.image-os.spdx.json" download>image-os.spdx.json</a><a class="btn" href="data/iso/fedora-44-minimal-installer-x86_64.buildroot-build.spdx.json" download>buildroot-build.spdx.json</a></div>
+  <div class="table-box" data-src="data/iso/iso-inputs.json"></div>
+</section>
+<section id="s-f-merge">
+  <h2>merge · iso-merge.sh</h2>
+  <p class="note">Prototype in jq. ISO root (FILE) CONTAINS two OPERATING-SYSTEM trees; packages deduplicated by SPDXID. No ISO is built: the root sha256 is a placeholder.</p>
+  <div class="code" data-src="cmd/iso-merge.sh"></div>
+  <div class="bar"><a class="btn" href="data/iso/iso.spdx.json" download>iso.spdx.json</a></div>
+</section>
+<section id="s-f-grader">
+  <h2>sbom-grader · iso.spdx.json</h2>
+  <div class="grade-banner"><span class="g-lbl">sbom-grader · ISO merged</span><span class="g-val" data-grade-src="data/iso/grader-iso.html">…</span></div>
+  <p class="note">The only failure: the two tree packages have no checksums, because they are logical trees, not files.</p>
+  <div class="code" data-src="cmd/grader-iso.sh"></div>
+  <pre class="term" data-src="data/iso/grader-iso.html"></pre>
+</section>
+<section id="s-f-mequal">
+  <h2>mequal · iso.spdx.json</h2>
+  <div class="code" data-src="cmd/mequal-iso.sh"></div>
+  <pre class="term" data-src="data/iso/mequal-iso.html"></pre>
+</section>
+<section id="s-f-sbom">
+  <h2>iso.spdx.json</h2>
+  <div class="viewer" data-left="data/iso/iso.spdx.json"></div>
 </section>
 </template>
 <div id="chapter"></div>
