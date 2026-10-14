@@ -1,0 +1,541 @@
+From 61b7f932e0973c26dae87abc3568d022ef86ba0a Mon Sep 17 00:00:00 2001
+From: Lucas Garfield <lucas@local>
+Date: Wed, 14 Oct 2026 23:08:57 +0300
+Subject: [PATCH 1/2] image-builder: link bootc container SBOMs from the
+ registry (prototype)
+
+With --with-sbom and --bootc-ref, look up the SPDX SBOM published for the
+bootc container (and the installer payload container) at the resolved
+digest: OCI referrers first, then the cosign "<alg>-<hex>.sbom" tag,
+platform manifest digest before index digest. The fetched SBOMs are written
+next to the image SBOM and referenced as external documents; the image root
+CONTAINS each root they describe.
+
+--bootc-ref-sbom and --bootc-payload-ref-sbom override the lookup with a
+file or a registry ref.
+---
+ cmd/image-builder/cmd.go             |   2 +
+ cmd/image-builder/main.go            |  64 +++++++
+ cmd/image-builder/sbom_bootc.go      | 262 +++++++++++++++++++++++++++
+ cmd/image-builder/sbom_bootc_test.go | 117 ++++++++++++
+ 4 files changed, 445 insertions(+)
+ create mode 100644 cmd/image-builder/sbom_bootc.go
+ create mode 100644 cmd/image-builder/sbom_bootc_test.go
+
+diff --git a/cmd/image-builder/cmd.go b/cmd/image-builder/cmd.go
+index f9b4adcce..f14f10bc6 100644
+--- a/cmd/image-builder/cmd.go
++++ b/cmd/image-builder/cmd.go
+@@ -230,6 +230,8 @@ func setupManifestCmd() (*cobra.Command, error) {
+ 	manifestCmd.Flags().String("bootc-default-fs", "", `default filesystem to use for the bootc install (e.g. ext4)`)
+ 	manifestCmd.Flags().Bool("bootc-no-default-kernel-args", false, `don't use the default kernel arguments`)
+ 	manifestCmd.Flags().Bool("bootc-pull-container", false, `pull bootc container from remote location instead of using it from local container storage`)
++	manifestCmd.Flags().String("bootc-ref-sbom", "", `SPDX SBOM of --bootc-ref: file or registry ref (default: SBOM attached to the resolved digest)`)
++	manifestCmd.Flags().String("bootc-payload-ref-sbom", "", `SPDX SBOM of --bootc-installer-payload-ref: file or registry ref (default: SBOM attached to the resolved digest)`)
+ 	var imageSize datasizes.Size
+ 	manifestCmd.Flags().TextVar(&imageSize, "image-size", imageSize, `override the default image size (e.g. 1 GiB)`)
+ 	manifestCmd.Flags().Bool("use-librepo", true, `use librepo to download packages (disable if you use old versions of osbuild)`)
+diff --git a/cmd/image-builder/main.go b/cmd/image-builder/main.go
+index 063c1cce0..14e138cb2 100644
+--- a/cmd/image-builder/main.go
++++ b/cmd/image-builder/main.go
+@@ -754,6 +754,11 @@ func generateManifest(pbar progress.ProgressBar, cmd *cobra.Command, args []stri
+ 			return nil, fmt.Errorf("cannot link build root SBOM from %s: %w", p, err)
+ 		}
+ 	}
++	if withSBOM && bootcRef != "" {
++		if err := addBootcSBOMs(cmd, img, outputDir, outputFilename, bootcRef, bootcInstallerPayloadRef, wrapperOpts); err != nil {
++			return nil, err
++		}
++	}
+ 	var pretty bytes.Buffer
+ 	if err := json.Indent(&pretty, []byte(mf), "", "    "); err != nil {
+ 		return nil, err
+@@ -1052,3 +1057,62 @@ func main() {
+ 		log.Fatalf("error: %s\n", err)
+ 	}
+ }
++
++// addBootcSBOMs links the SBOMs of the bootc container (and installer
++// payload container) from the image SBOM, creating the image SBOM if the
++// manifest produced none. A container without a published SBOM is reported
++// and skipped; an explicit --bootc-*-sbom that cannot be read is an error.
++func addBootcSBOMs(cmd *cobra.Command, img *imagefilter.Result, outputDir, outputFilename, bootcRef, payloadRef string, wrapperOpts *cmdManifestWrapperOptions) error {
++	refOverride, err := cmd.Flags().GetString("bootc-ref-sbom")
++	if err != nil {
++		return err
++	}
++	payloadOverride, err := cmd.Flags().GetString("bootc-payload-ref-sbom")
++	if err != nil {
++		return err
++	}
++	arch := img.ImgType.Arch().Name()
++	var sboms []*bootcSBOM
++	for _, c := range []struct{ role, ref, override string }{
++		{"bootc-ref", bootcRef, refOverride},
++		{"bootc-payload-ref", payloadRef, payloadOverride},
++	} {
++		if c.ref == "" && c.override == "" {
++			continue
++		}
++		s, err := fetchBootcSBOM(c.role, c.ref, arch, c.override)
++		if err != nil {
++			if c.override != "" {
++				return err
++			}
++			fmt.Fprintf(os.Stderr, "WARNING: %s: %v\n", c.role, err)
++			continue
++		}
++		fmt.Fprintf(os.Stderr, "%s SBOM: %s\n", c.role, s.source)
++		sboms = append(sboms, s)
++	}
++	if len(sboms) == 0 {
++		return nil
++	}
++	if len(wrapperOpts.imageSBOMPaths) == 0 {
++		dir, err := resolveOutputDir(outputDir, img)
++		if err != nil {
++			return err
++		}
++		base, err := basenameFor(img, outputFilename)
++		if err != nil {
++			return err
++		}
++		p := filepath.Join(dir, base+".image-os.spdx.json")
++		if err := newBootcImageSBOM(p, imageRootPackage(img, base)); err != nil {
++			return err
++		}
++		wrapperOpts.imageSBOMPaths = append(wrapperOpts.imageSBOMPaths, p)
++	}
++	for _, p := range wrapperOpts.imageSBOMPaths {
++		if err := linkBootcSBOMs(p, sboms); err != nil {
++			return fmt.Errorf("cannot link bootc SBOMs from %s: %w", p, err)
++		}
++	}
++	return nil
++}
+diff --git a/cmd/image-builder/sbom_bootc.go b/cmd/image-builder/sbom_bootc.go
+new file mode 100644
+index 000000000..237e389f6
+--- /dev/null
++++ b/cmd/image-builder/sbom_bootc.go
+@@ -0,0 +1,262 @@
++package main
++
++import (
++	"crypto/sha1" // #nosec G505: SPDX 2.3 requires SHA1 for externalDocumentRefs
++	"encoding/hex"
++	"encoding/json"
++	"fmt"
++	"io"
++	"os"
++	"path/filepath"
++	"strings"
++	"time"
++
++	"github.com/google/go-containerregistry/pkg/authn"
++	"github.com/google/go-containerregistry/pkg/name"
++	v1 "github.com/google/go-containerregistry/pkg/v1"
++	"github.com/google/go-containerregistry/pkg/v1/remote"
++	"github.com/google/uuid"
++)
++
++// A bootc image is built from a container; its packages are described by the
++// SBOM published for that container, not by an image-builder depsolve. The
++// image SBOM therefore references the container SBOM (and, for installers,
++// the payload container SBOM) as external SPDX documents.
++
++// bootcSBOM is an SPDX document fetched for a bootc container ref.
++type bootcSBOM struct {
++	// "bootc-ref" or "bootc-payload-ref"
++	role   string
++	data   []byte
++	source string
++}
++
++var spdxMediaTypes = map[string]bool{
++	"application/spdx+json": true,
++	"text/spdx+json":        true,
++}
++
++func goArch(a string) string {
++	switch a {
++	case "x86_64":
++		return "amd64"
++	case "aarch64":
++		return "arm64"
++	}
++	return a
++}
++
++func remoteOpts(arch string) []remote.Option {
++	return []remote.Option{
++		remote.WithAuthFromKeychain(authn.DefaultKeychain),
++		remote.WithPlatform(v1.Platform{OS: "linux", Architecture: goArch(arch)}),
++	}
++}
++
++// fetchBootcSBOM returns the SPDX SBOM for the container ref. With an
++// override, the SBOM is read from that file, or from that registry ref if no
++// such file exists. Without one, the SBOM attached to the resolved digest is
++// used: OCI referrers first, then the cosign "<alg>-<hex>.sbom" tag; the
++// platform manifest digest is tried before the index digest.
++func fetchBootcSBOM(role, ref, arch, override string) (*bootcSBOM, error) {
++	if override != "" {
++		if data, err := os.ReadFile(override); err == nil {
++			return checkSPDX(&bootcSBOM{role, data, "file " + override})
++		} else if !os.IsNotExist(err) {
++			return nil, err
++		}
++		r, err := name.ParseReference(override)
++		if err != nil {
++			return nil, fmt.Errorf("--%s-sbom %q is neither a file nor an image reference: %w", role, override, err)
++		}
++		data, err := spdxLayer(r, remoteOpts(arch))
++		if err != nil {
++			return nil, fmt.Errorf("--%s-sbom %s: %w", role, override, err)
++		}
++		return checkSPDX(&bootcSBOM{role, data, override})
++	}
++
++	r, err := name.ParseReference(ref)
++	if err != nil {
++		return nil, err
++	}
++	opts := remoteOpts(arch)
++	desc, err := remote.Get(r, opts...)
++	if err != nil {
++		return nil, err
++	}
++	type cand struct {
++		digest v1.Hash
++		what   string
++	}
++	var cands []cand
++	if desc.MediaType.IsIndex() {
++		img, err := desc.Image()
++		if err != nil {
++			return nil, err
++		}
++		d, err := img.Digest()
++		if err != nil {
++			return nil, err
++		}
++		cands = append(cands, cand{d, "linux/" + goArch(arch) + " manifest"}, cand{desc.Digest, "index"})
++	} else {
++		cands = append(cands, cand{desc.Digest, "manifest"})
++	}
++	var tried []string
++	for _, c := range cands {
++		at := r.Context().Digest(c.digest.String())
++		if idx, err := remote.Referrers(at, opts...); err == nil {
++			im, err := idx.IndexManifest()
++			if err == nil {
++				for _, m := range im.Manifests {
++					if !spdxMediaTypes[m.ArtifactType] {
++						continue
++					}
++					data, err := spdxLayer(r.Context().Digest(m.Digest.String()), opts)
++					if err == nil {
++						return checkSPDX(&bootcSBOM{role, data, fmt.Sprintf("%s (OCI referrer of %s %s)", r.Context().Digest(m.Digest.String()), c.what, c.digest)})
++					}
++				}
++			}
++		}
++		tried = append(tried, "referrers of "+at.String())
++		tag := r.Context().Tag(fmt.Sprintf("%s-%s.sbom", c.digest.Algorithm, c.digest.Hex))
++		if data, err := spdxLayer(tag, opts); err == nil {
++			return checkSPDX(&bootcSBOM{role, data, fmt.Sprintf("%s (cosign tag of %s %s)", tag, c.what, c.digest)})
++		}
++		tried = append(tried, tag.String())
++	}
++	return nil, fmt.Errorf("no SPDX SBOM found for %s (tried %s)", ref, strings.Join(tried, ", "))
++}
++
++// spdxLayer returns the first SPDX layer of the artifact at r.
++func spdxLayer(r name.Reference, opts []remote.Option) ([]byte, error) {
++	img, err := remote.Image(r, opts...)
++	if err != nil {
++		return nil, err
++	}
++	layers, err := img.Layers()
++	if err != nil {
++		return nil, err
++	}
++	for _, l := range layers {
++		mt, err := l.MediaType()
++		if err != nil || !spdxMediaTypes[string(mt)] {
++			continue
++		}
++		rc, err := l.Uncompressed()
++		if err != nil {
++			return nil, err
++		}
++		defer rc.Close()
++		return io.ReadAll(rc)
++	}
++	return nil, fmt.Errorf("no SPDX layer in %s", r)
++}
++
++type spdxDocHead struct {
++	SPDXVersion       string             `json:"spdxVersion"`
++	DocumentNamespace string             `json:"documentNamespace"`
++	DocumentDescribes []string           `json:"documentDescribes"`
++	Relationships     []spdxRelationship `json:"relationships"`
++}
++
++func (d spdxDocHead) roots() []string {
++	roots := append([]string{}, d.DocumentDescribes...)
++	for _, r := range d.Relationships {
++		if r.SpdxElementID == "SPDXRef-DOCUMENT" && r.RelationshipType == "DESCRIBES" {
++			roots = append(roots, r.RelatedSpdxElement)
++		}
++	}
++	return roots
++}
++
++func checkSPDX(s *bootcSBOM) (*bootcSBOM, error) {
++	var h spdxDocHead
++	if err := json.Unmarshal(s.data, &h); err != nil {
++		return nil, fmt.Errorf("%s: not an SPDX JSON document: %w", s.source, err)
++	}
++	if !strings.HasPrefix(h.SPDXVersion, "SPDX-2.") || h.DocumentNamespace == "" || len(h.roots()) == 0 {
++		return nil, fmt.Errorf("%s: not a referenceable SPDX 2.x document (version, namespace or DESCRIBES missing)", s.source)
++	}
++	return s, nil
++}
++
++// newBootcImageSBOM writes an image SBOM with only the image root package,
++// for image types whose manifest has no package SBOM of its own.
++func newBootcImageSBOM(path string, root map[string]any) error {
++	doc := map[string]any{
++		"spdxVersion":       "SPDX-2.3",
++		"dataLicense":       "CC0-1.0",
++		"SPDXID":            "SPDXRef-DOCUMENT",
++		"name":              root["name"],
++		"documentNamespace": fmt.Sprintf("https://osbuild.org/spdxdocs/image-builder-%s-%s", root["name"], uuid.New()),
++		"creationInfo": map[string]any{
++			"created":  time.Now().UTC().Format(time.RFC3339),
++			"creators": []string{"Tool: image-builder-" + version},
++		},
++		"packages":      []any{root},
++		"relationships": []spdxRelationship{{"SPDXRef-DOCUMENT", "DESCRIBES", imageRootSPDXID}},
++	}
++	out, err := json.Marshal(doc)
++	if err != nil {
++		return err
++	}
++	// #nosec: G306
++	return os.WriteFile(path, out, 0644)
++}
++
++// linkBootcSBOMs writes each fetched SBOM next to the image SBOM as
++// "<basename>.<role>.spdx.json" and references it from the image SBOM:
++// the image root CONTAINS each root the fetched document DESCRIBES.
++func linkBootcSBOMs(imagePath string, sboms []*bootcSBOM) error {
++	data, err := os.ReadFile(imagePath)
++	if err != nil {
++		return err
++	}
++	var doc map[string]json.RawMessage
++	if err := json.Unmarshal(data, &doc); err != nil {
++		return err
++	}
++	var refs []spdxExternalDocumentRef
++	var rels []spdxRelationship
++	for key, v := range map[string]any{"externalDocumentRefs": &refs, "relationships": &rels} {
++		if raw, ok := doc[key]; ok {
++			if err := json.Unmarshal(raw, v); err != nil {
++				return err
++			}
++		}
++	}
++	base := strings.SplitN(filepath.Base(imagePath), ".", 2)[0]
++	for _, s := range sboms {
++		var h spdxDocHead
++		if err := json.Unmarshal(s.data, &h); err != nil {
++			return err
++		}
++		// #nosec: G306
++		if err := os.WriteFile(filepath.Join(filepath.Dir(imagePath), base+"."+s.role+".spdx.json"), s.data, 0644); err != nil {
++			return err
++		}
++		id := "DocumentRef-" + s.role
++		// #nosec G401
++		sum := sha1.Sum(s.data)
++		refs = append(refs, spdxExternalDocumentRef{id, h.DocumentNamespace,
++			map[string]string{"algorithm": "SHA1", "checksumValue": hex.EncodeToString(sum[:])}})
++		for _, root := range h.roots() {
++			rels = append(rels, spdxRelationship{imageRootSPDXID, "CONTAINS", id + ":" + root})
++		}
++	}
++	if doc["externalDocumentRefs"], err = json.Marshal(refs); err != nil {
++		return err
++	}
++	if doc["relationships"], err = json.Marshal(rels); err != nil {
++		return err
++	}
++	out, err := json.Marshal(doc)
++	if err != nil {
++		return err
++	}
++	// #nosec: G306
++	return os.WriteFile(imagePath, out, 0644)
++}
+diff --git a/cmd/image-builder/sbom_bootc_test.go b/cmd/image-builder/sbom_bootc_test.go
+new file mode 100644
+index 000000000..ef8a4672b
+--- /dev/null
++++ b/cmd/image-builder/sbom_bootc_test.go
+@@ -0,0 +1,117 @@
++package main
++
++import (
++	"encoding/json"
++	"net/http/httptest"
++	"os"
++	"path/filepath"
++	"strings"
++	"testing"
++
++	"github.com/google/go-containerregistry/pkg/name"
++	"github.com/google/go-containerregistry/pkg/registry"
++	v1 "github.com/google/go-containerregistry/pkg/v1"
++	"github.com/google/go-containerregistry/pkg/v1/empty"
++	"github.com/google/go-containerregistry/pkg/v1/mutate"
++	"github.com/google/go-containerregistry/pkg/v1/random"
++	"github.com/google/go-containerregistry/pkg/v1/remote"
++	"github.com/google/go-containerregistry/pkg/v1/static"
++	"github.com/google/go-containerregistry/pkg/v1/types"
++	"github.com/stretchr/testify/assert"
++	"github.com/stretchr/testify/require"
++)
++
++const bootcTestSPDX = `{"spdxVersion":"SPDX-2.3","SPDXID":"SPDXRef-DOCUMENT","name":"c","documentNamespace":"https://example.com/c",
++"packages":[{"SPDXID":"SPDXRef-image","name":"c"}],
++"relationships":[{"spdxElementId":"SPDXRef-DOCUMENT","relationshipType":"DESCRIBES","relatedSpdxElement":"SPDXRef-image"}]}`
++
++func sbomArtifact(t *testing.T) v1.Image {
++	img, err := mutate.AppendLayers(empty.Image, static.NewLayer([]byte(bootcTestSPDX), "text/spdx+json"))
++	require.NoError(t, err)
++	return img
++}
++
++// pushContainer pushes a one-arch index and returns the repo ref and the
++// platform manifest digest.
++func pushContainer(t *testing.T, host string) (string, v1.Hash) {
++	img, err := random.Image(64, 1)
++	require.NoError(t, err)
++	img, err = mutate.ConfigFile(img, &v1.ConfigFile{OS: "linux", Architecture: "amd64"})
++	require.NoError(t, err)
++	idx := mutate.AppendManifests(empty.Index, mutate.IndexAddendum{Add: img,
++		Descriptor: v1.Descriptor{Platform: &v1.Platform{OS: "linux", Architecture: "amd64"}}})
++	ref := host + "/bootc/os:latest"
++	r, err := name.ParseReference(ref)
++	require.NoError(t, err)
++	require.NoError(t, remote.WriteIndex(r, idx))
++	d, err := img.Digest()
++	require.NoError(t, err)
++	return ref, d
++}
++
++func TestFetchBootcSBOMCosignTag(t *testing.T) {
++	srv := httptest.NewServer(registry.New())
++	defer srv.Close()
++	host := strings.TrimPrefix(srv.URL, "http://")
++	ref, d := pushContainer(t, host)
++	tag, err := name.ParseReference(host + "/bootc/os:sha256-" + d.Hex + ".sbom")
++	require.NoError(t, err)
++	require.NoError(t, remote.Write(tag, sbomArtifact(t)))
++
++	s, err := fetchBootcSBOM("bootc-ref", ref, "x86_64", "")
++	require.NoError(t, err)
++	assert.Contains(t, s.source, "cosign tag of linux/amd64 manifest")
++	assert.JSONEq(t, bootcTestSPDX, string(s.data))
++}
++
++func TestFetchBootcSBOMReferrer(t *testing.T) {
++	srv := httptest.NewServer(registry.New())
++	defer srv.Close()
++	host := strings.TrimPrefix(srv.URL, "http://")
++	ref, d := pushContainer(t, host)
++	art := mutate.ConfigMediaType(sbomArtifact(t), types.MediaType("application/spdx+json"))
++	art = mutate.Subject(art, v1.Descriptor{MediaType: types.OCIManifestSchema1, Digest: d, Size: 1}).(v1.Image)
++	ad, err := art.Digest()
++	require.NoError(t, err)
++	r, err := name.ParseReference(host + "/bootc/os@" + ad.String())
++	require.NoError(t, err)
++	require.NoError(t, remote.Write(r, art))
++
++	s, err := fetchBootcSBOM("bootc-ref", ref, "x86_64", "")
++	require.NoError(t, err)
++	assert.Contains(t, s.source, "OCI referrer of linux/amd64 manifest")
++}
++
++func TestFetchBootcSBOMMissing(t *testing.T) {
++	srv := httptest.NewServer(registry.New())
++	defer srv.Close()
++	ref, _ := pushContainer(t, strings.TrimPrefix(srv.URL, "http://"))
++	_, err := fetchBootcSBOM("bootc-ref", ref, "x86_64", "")
++	assert.ErrorContains(t, err, "no SPDX SBOM found")
++}
++
++func TestFetchBootcSBOMOverrideFileAndLink(t *testing.T) {
++	dir := t.TempDir()
++	f := filepath.Join(dir, "c.spdx.json")
++	require.NoError(t, os.WriteFile(f, []byte(bootcTestSPDX), 0644))
++	s, err := fetchBootcSBOM("bootc-payload-ref", "", "x86_64", f)
++	require.NoError(t, err)
++	assert.Equal(t, "file "+f, s.source)
++
++	img := filepath.Join(dir, "disk.image-os.spdx.json")
++	require.NoError(t, newBootcImageSBOM(img, map[string]any{"SPDXID": imageRootSPDXID, "name": "disk"}))
++	require.NoError(t, linkBootcSBOMs(img, []*bootcSBOM{s}))
++	var doc struct {
++		Refs []spdxExternalDocumentRef `json:"externalDocumentRefs"`
++		Rels []spdxRelationship        `json:"relationships"`
++	}
++	data, err := os.ReadFile(img)
++	require.NoError(t, err)
++	require.NoError(t, json.Unmarshal(data, &doc))
++	assert.Equal(t, "https://example.com/c", doc.Refs[0].SPDXDocument)
++	assert.Contains(t, doc.Rels, spdxRelationship{imageRootSPDXID, "CONTAINS", "DocumentRef-bootc-payload-ref:SPDXRef-image"})
++	assert.FileExists(t, filepath.Join(dir, "disk.bootc-payload-ref.spdx.json"))
++
++	_, err = fetchBootcSBOM("bootc-ref", "", "x86_64", "not a ref!")
++	assert.ErrorContains(t, err, "neither a file nor an image reference")
++}
+-- 
+2.47.3
+
+
+From b50d9cc8af637b034a39cf7560d2a92cf39db965 Mon Sep 17 00:00:00 2001
+From: Lucas Garfield <lucas@local>
+Date: Wed, 14 Oct 2026 23:13:47 +0300
+Subject: [PATCH 2/2] image-builder: declare SBOM type and license list version
+ on the bootc image SBOM
+
+---
+ cmd/image-builder/sbom_bootc.go | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/cmd/image-builder/sbom_bootc.go b/cmd/image-builder/sbom_bootc.go
+index 237e389f6..14dbb6a25 100644
+--- a/cmd/image-builder/sbom_bootc.go
++++ b/cmd/image-builder/sbom_bootc.go
+@@ -193,8 +193,10 @@ func newBootcImageSBOM(path string, root map[string]any) error {
+ 		"name":              root["name"],
+ 		"documentNamespace": fmt.Sprintf("https://osbuild.org/spdxdocs/image-builder-%s-%s", root["name"], uuid.New()),
+ 		"creationInfo": map[string]any{
+-			"created":  time.Now().UTC().Format(time.RFC3339),
+-			"creators": []string{"Tool: image-builder-" + version},
++			"comment":            "SBOM type: Build",
++			"created":            time.Now().UTC().Format(time.RFC3339),
++			"creators":           []string{"Tool: image-builder-" + version},
++			"licenseListVersion": "3.27",
+ 		},
+ 		"packages":      []any{root},
+ 		"relationships": []spdxRelationship{{"SPDXRef-DOCUMENT", "DESCRIBES", imageRootSPDXID}},
+-- 
+2.47.3
+

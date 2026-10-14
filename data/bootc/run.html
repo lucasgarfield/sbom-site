@@ -1,0 +1,22 @@
+$ image-builder manifest qcow2 --bootc-ref quay.io/coreos-devel/fedora-coreos:rawhide --with-sbom   # registry lookup
+bootc-ref SBOM: quay.io/coreos-devel/fedora-coreos:sha256-789b90d268bc67524b9caf10064b7fe00cf072dbbfbf703c82e463fbfb138103.sbom (cosign tag of linux/amd64 manifest sha256:789b90d268bc67524b9caf10064b7fe00cf072dbbfbf703c82e463fbfb138103)
+$ … --bootc-ref-sbom quay.io/coreos-devel/fedora-coreos:sha256-&lt;index&gt;.sbom   # override: registry ref
+bootc-ref SBOM: quay.io/coreos-devel/fedora-coreos:sha256-fbfd9b149c6c2520507c06a9cc9def94927744aabc171a56fdda8587b6526509.sbom
+$ image-builder manifest bootc-installer --bootc-ref quay.io/coreos-devel/fedora-coreos:rawhide --bootc-installer-payload-ref quay.io/coreos-devel/fedora-coreos:rawhide --bootc-payload-ref-sbom a/*.bootc-ref.spdx.json   # override: file
+bootc-ref SBOM: quay.io/coreos-devel/fedora-coreos:sha256-789b90d268bc67524b9caf10064b7fe00cf072dbbfbf703c82e463fbfb138103.sbom (cosign tag of linux/amd64 manifest sha256:789b90d268bc67524b9caf10064b7fe00cf072dbbfbf703c82e463fbfb138103)
+bootc-payload-ref SBOM: file a/bootc-fedora-44-qcow2-x86_64.bootc-ref.spdx.json
+a:
+bootc-fedora-44-qcow2-x86_64.bootc-ref.spdx.json
+bootc-fedora-44-qcow2-x86_64.image-os.spdx.json
+manifest.json
+
+b:
+bootc-fedora-44-qcow2-x86_64.bootc-ref.spdx.json
+bootc-fedora-44-qcow2-x86_64.image-os.spdx.json
+manifest.json
+
+c:
+bootc-fedora-44-bootc-installer-x86_64.bootc-payload-ref.spdx.json
+bootc-fedora-44-bootc-installer-x86_64.bootc-ref.spdx.json
+bootc-fedora-44-bootc-installer-x86_64.image-os.spdx.json
+manifest.json

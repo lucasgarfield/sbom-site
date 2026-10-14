@@ -1,0 +1,8 @@
+$ POST /api/v2/sbom  bootc.image-os.spdx.json
+{&quot;warnings&quot;:[&quot;Invalid reference &#x27;DocumentRef-bootc-ref:SPDXRef-image-fedora-coreos-testing-devel-03591e04c83c1db98cef05736fce6776738cc02bbb9aedab50c84e7a0bab79b6&#x27; of relationship &#x27;SPDXRef-image-root&#x27; -[Contains]-&gt; &#x27;DocumentRef-bootc-ref:SPDXRef-image-fedora-coreos-testing-devel-03591e04c83c1db98cef05736fce6776738cc02bbb9aedab50c84e7a0bab79b6&#x27;&quot;]}
+$ GET /api/v2/sbom/{id} | .number_of_packages
+1
+$ POST /api/v2/sbom  bootc-fedora-44-qcow2-x86_64.bootc-ref.spdx.json
+{&quot;warnings&quot;:null}
+$ GET /api/v2/sbom/{id} | .number_of_packages
+1599

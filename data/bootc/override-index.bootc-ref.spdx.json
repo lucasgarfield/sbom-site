@@ -1,0 +1,154 @@
+{
+    "SPDXID": "SPDXRef-DOCUMENT",
+    "creationInfo": {
+        "created": "2026-09-15T14:09:58Z",
+        "creators": [
+            "Organization: Red Hat",
+            "Tool: Konflux CI",
+            "Tool: Mobster-1.2.1"
+        ]
+    },
+    "dataLicense": "CC0-1.0",
+    "name": "quay.io/konflux-fedora/coreos-tenant/fedora-coreos-testing-devel@sha256:fbfd9b149c6c2520507c06a9cc9def94927744aabc171a56fdda8587b6526509",
+    "spdxVersion": "SPDX-2.3",
+    "documentNamespace": "https://konflux-ci.dev/spdxdocs/quay.io/konflux-fedora/coreos-tenant/fedora-coreos-testing-devel@sha256:fbfd9b149c6c2520507c06a9cc9def94927744aabc171a56fdda8587b6526509-44909f11-a8d2-4c38-b17b-bae6246d23ad",
+    "packages": [
+        {
+            "SPDXID": "SPDXRef-image-index",
+            "checksums": [
+                {
+                    "algorithm": "SHA256",
+                    "checksumValue": "fbfd9b149c6c2520507c06a9cc9def94927744aabc171a56fdda8587b6526509"
+                }
+            ],
+            "downloadLocation": "NOASSERTION",
+            "externalRefs": [
+                {
+                    "referenceCategory": "PACKAGE_MANAGER",
+                    "referenceLocator": "pkg:oci/fedora-coreos-testing-devel@sha256:fbfd9b149c6c2520507c06a9cc9def94927744aabc171a56fdda8587b6526509?repository_url=quay.io/konflux-fedora/coreos-tenant/fedora-coreos-testing-devel",
+                    "referenceType": "purl"
+                }
+            ],
+            "filesAnalyzed": false,
+            "licenseDeclared": "NOASSERTION",
+            "name": "fedora-coreos-testing-devel",
+            "supplier": "Organization: Red Hat",
+            "versionInfo": "e4d574740aff32cc460e9b269644e2b0905fedb9"
+        },
+        {
+            "SPDXID": "SPDXRef-image-fedora-coreos-testing-devel-03591e04c83c1db98cef05736fce6776738cc02bbb9aedab50c84e7a0bab79b6",
+            "checksums": [
+                {
+                    "algorithm": "SHA256",
+                    "checksumValue": "789b90d268bc67524b9caf10064b7fe00cf072dbbfbf703c82e463fbfb138103"
+                }
+            ],
+            "downloadLocation": "NOASSERTION",
+            "externalRefs": [
+                {
+                    "referenceCategory": "PACKAGE_MANAGER",
+                    "referenceLocator": "pkg:oci/fedora-coreos-testing-devel@sha256:789b90d268bc67524b9caf10064b7fe00cf072dbbfbf703c82e463fbfb138103?arch=amd64&repository_url=quay.io/konflux-fedora/coreos-tenant/fedora-coreos-testing-devel",
+                    "referenceType": "purl"
+                }
+            ],
+            "filesAnalyzed": false,
+            "licenseDeclared": "NOASSERTION",
+            "name": "fedora-coreos-testing-devel_amd64",
+            "supplier": "Organization: Red Hat",
+            "versionInfo": "e4d574740aff32cc460e9b269644e2b0905fedb9"
+        },
+        {
+            "SPDXID": "SPDXRef-image-fedora-coreos-testing-devel-8abb54cb8af2a8f8391658eb9df24fd8045c4d502548ac08b5400c8bdfe98e1a",
+            "checksums": [
+                {
+                    "algorithm": "SHA256",
+                    "checksumValue": "134d8bfd6cf0c80ec568b8001008d90b189eed5d47875552785408e3dc2eddfa"
+                }
+            ],
+            "downloadLocation": "NOASSERTION",
+            "externalRefs": [
+                {
+                    "referenceCategory": "PACKAGE_MANAGER",
+                    "referenceLocator": "pkg:oci/fedora-coreos-testing-devel@sha256:134d8bfd6cf0c80ec568b8001008d90b189eed5d47875552785408e3dc2eddfa?arch=arm64&repository_url=quay.io/konflux-fedora/coreos-tenant/fedora-coreos-testing-devel",
+                    "referenceType": "purl"
+                }
+            ],
+            "filesAnalyzed": false,
+            "licenseDeclared": "NOASSERTION",
+            "name": "fedora-coreos-testing-devel_arm64",
+            "supplier": "Organization: Red Hat",
+            "versionInfo": "e4d574740aff32cc460e9b269644e2b0905fedb9"
+        },
+        {
+            "SPDXID": "SPDXRef-image-fedora-coreos-testing-devel-a23e976c8dce80be479c4f06e5ec204339d19d849716a4cfe41f16bbb794fbbf",
+            "checksums": [
+                {
+                    "algorithm": "SHA256",
+                    "checksumValue": "ffbe66742f781786c8427dd16c4e302eab69aeab5fc2a2309c820031a7c2b952"
+                }
+            ],
+            "downloadLocation": "NOASSERTION",
+            "externalRefs": [
+                {
+                    "referenceCategory": "PACKAGE_MANAGER",
+                    "referenceLocator": "pkg:oci/fedora-coreos-testing-devel@sha256:ffbe66742f781786c8427dd16c4e302eab69aeab5fc2a2309c820031a7c2b952?arch=s390x&repository_url=quay.io/konflux-fedora/coreos-tenant/fedora-coreos-testing-devel",
+                    "referenceType": "purl"
+                }
+            ],
+            "filesAnalyzed": false,
+            "licenseDeclared": "NOASSERTION",
+            "name": "fedora-coreos-testing-devel_s390x",
+            "supplier": "Organization: Red Hat",
+            "versionInfo": "e4d574740aff32cc460e9b269644e2b0905fedb9"
+        },
+        {
+            "SPDXID": "SPDXRef-image-fedora-coreos-testing-devel-60447980c904d18a1708f66dfdf225f16a14921115a537de88aa49115bf2c34b",
+            "checksums": [
+                {
+                    "algorithm": "SHA256",
+                    "checksumValue": "e96a001807353b9c6d85ff0e0e61c0695dcc40abf9f3355351e0609c79b5b3af"
+                }
+            ],
+            "downloadLocation": "NOASSERTION",
+            "externalRefs": [
+                {
+                    "referenceCategory": "PACKAGE_MANAGER",
+                    "referenceLocator": "pkg:oci/fedora-coreos-testing-devel@sha256:e96a001807353b9c6d85ff0e0e61c0695dcc40abf9f3355351e0609c79b5b3af?arch=ppc64le&repository_url=quay.io/konflux-fedora/coreos-tenant/fedora-coreos-testing-devel",
+                    "referenceType": "purl"
+                }
+            ],
+            "filesAnalyzed": false,
+            "licenseDeclared": "NOASSERTION",
+            "name": "fedora-coreos-testing-devel_ppc64le",
+            "supplier": "Organization: Red Hat",
+            "versionInfo": "e4d574740aff32cc460e9b269644e2b0905fedb9"
+        }
+    ],
+    "relationships": [
+        {
+            "spdxElementId": "SPDXRef-DOCUMENT",
+            "relatedSpdxElement": "SPDXRef-image-index",
+            "relationshipType": "DESCRIBES"
+        },
+        {
+            "spdxElementId": "SPDXRef-image-fedora-coreos-testing-devel-03591e04c83c1db98cef05736fce6776738cc02bbb9aedab50c84e7a0bab79b6",
+            "relatedSpdxElement": "SPDXRef-image-index",
+            "relationshipType": "VARIANT_OF"
+        },
+        {
+            "spdxElementId": "SPDXRef-image-fedora-coreos-testing-devel-8abb54cb8af2a8f8391658eb9df24fd8045c4d502548ac08b5400c8bdfe98e1a",
+            "relatedSpdxElement": "SPDXRef-image-index",
+            "relationshipType": "VARIANT_OF"
+        },
+        {
+            "spdxElementId": "SPDXRef-image-fedora-coreos-testing-devel-a23e976c8dce80be479c4f06e5ec204339d19d849716a4cfe41f16bbb794fbbf",
+            "relatedSpdxElement": "SPDXRef-image-index",
+            "relationshipType": "VARIANT_OF"
+        },
+        {
+            "spdxElementId": "SPDXRef-image-fedora-coreos-testing-devel-60447980c904d18a1708f66dfdf225f16a14921115a537de88aa49115bf2c34b",
+            "relatedSpdxElement": "SPDXRef-image-index",
+            "relationshipType": "VARIANT_OF"
+        }
+    ]
+}

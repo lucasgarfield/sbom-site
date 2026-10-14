@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<nav id="toolbar"><a href="#grader" data-ch="grader">1 · sbom-grader</a><a href="#mequal" data-ch="mequal">2 · mequal</a><a href="#cisa" data-ch="cisa">3 · CISA 2026</a><a href="#prodsec" data-ch="prodsec">4 · ProdSec guidelines</a><a href="#konflux" data-ch="konflux">5 · Konflux · Conforma</a><a href="#iso" data-ch="iso">A · ISO</a><a href="#trustify" data-ch="trustify">B · Trustify</a><span class="ch-off" data-ch="bootc">C · bootc</span></nav>
+<nav id="toolbar"><a href="#grader" data-ch="grader">1 · sbom-grader</a><a href="#mequal" data-ch="mequal">2 · mequal</a><a href="#cisa" data-ch="cisa">3 · CISA 2026</a><a href="#prodsec" data-ch="prodsec">4 · ProdSec guidelines</a><a href="#konflux" data-ch="konflux">5 · Konflux · Conforma</a><a href="#iso" data-ch="iso">A · ISO</a><a href="#trustify" data-ch="trustify">B · Trustify</a><a href="#bootc" data-ch="bootc">C · bootc</a></nav>
 <main>
 <template data-ch="grader">
 <section id="s-main">
@@ -302,6 +302,51 @@
   <h2>OSV · Fedora</h2>
   <p class="note">OSV has no Fedora ecosystem.</p>
   <pre class="term" data-src="data/trustify/osv.html"></pre>
+</section>
+</template>
+<template data-ch="bootc">
+<section id="s-h-registry">
+  <h2>registry · quay.io/coreos-devel/fedora-coreos:rawhide</h2>
+  <div class="code" data-src="cmd/bootc-0-registry.sh"></div>
+  <pre class="term" data-src="data/bootc/registry.html"></pre>
+  <p class="note">The index referrers have no SPDX artifactType, so the prototype ignores them.</p>
+</section>
+<section id="s-h-patch">
+  <h2>image-builder · bootc SBOM prototype</h2>
+  <p class="note">Local branch <code>bootc-registry-sbom</code> on patch 3 (61b7f932e, b50d9cc8a). Lookup order: OCI referrers, then cosign <code>.sbom</code> tag; platform digest before index digest. <code>--bootc-ref-sbom</code> / <code>--bootc-payload-ref-sbom</code> take a file or a registry ref. Unit tests: 4 new, pass. Full suite: same 17 pre-existing failures as the base.</p>
+  <div class="bar"><a class="btn" href="data/image-builder-bootc-sbom.patch" download>image-builder-bootc-sbom.patch</a></div>
+  <div class="patch" data-src="data/image-builder-bootc-sbom.patch"></div>
+</section>
+<section id="s-h-run">
+  <h2>manifest · lookup and overrides</h2>
+  <div class="code" data-src="cmd/bootc-manifest.sh"></div>
+  <pre class="term" data-src="data/bootc/run.html"></pre>
+</section>
+<section id="s-h-grader">
+  <h2>sbom-grader · bootc qcow2 image SBOM</h2>
+  <div class="grade-banner"><span class="g-lbl">sbom-grader · bootc image SBOM</span><span class="g-val" data-grade-src="data/bootc/grader.html">…</span></div>
+  <p class="note">The image SBOM has one package; the container packages are in the referenced document.</p>
+  <div class="code" data-src="cmd/bootc-grade.sh"></div>
+  <pre class="term" data-src="data/bootc/grader.html"></pre>
+  <pre class="term" data-src="data/bootc/mequal.html"></pre>
+</section>
+<section id="s-h-trustify">
+  <h2>Trustify · cross-document CONTAINS</h2>
+  <div class="code" data-src="cmd/bootc-trustify.sh"></div>
+  <pre class="term" data-src="data/bootc/trustify.html"></pre>
+</section>
+<section id="s-h-sbom">
+  <h2>bootc qcow2 image SBOM</h2>
+  <div class="viewer" data-left="data/bootc/bootc.image-os.spdx.json"></div>
+</section>
+<section id="s-h-installer">
+  <h2>bootc-installer image SBOM · bootc-ref + bootc-payload-ref</h2>
+  <div class="viewer" data-left="data/bootc/bootc-fedora-44-bootc-installer-x86_64.image-os.spdx.json"></div>
+</section>
+<section id="s-h-container">
+  <h2>container SBOM from the registry (amd64 .sbom tag)</h2>
+  <div class="bar"><a class="btn" href="data/bootc/bootc-fedora-44-qcow2-x86_64.bootc-ref.spdx.json" download>bootc-ref.spdx.json</a><a class="btn" href="data/bootc/override-index.bootc-ref.spdx.json" download>index .sbom (override run)</a></div>
+  <div class="viewer" data-left="data/bootc/bootc-fedora-44-qcow2-x86_64.bootc-ref.spdx.json"></div>
 </section>
 </template>
 <div id="chapter"></div>

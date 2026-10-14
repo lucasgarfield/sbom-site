@@ -1,0 +1,10 @@
+index sha256:fbfd9b149c6c2520507c06a9cc9def94927744aabc171a56fdda8587b6526509
+amd64 sha256:789b90d268bc67524b9caf10064b7fe00cf072dbbfbf703c82e463fbfb138103
+$ skopeo inspect --raw docker://quay.io/coreos-devel/fedora-coreos:sha256-fbfd9b149c6c2520507c06a9cc9def94927744aabc171a56fdda8587b6526509.sbom
+{&quot;layers&quot;:[{&quot;mediaType&quot;:&quot;text/spdx+json&quot;,&quot;size&quot;:7412}]}
+$ oras discover quay.io/coreos-devel/fedora-coreos@sha256:fbfd9b149c6c2520507c06a9cc9def94927744aabc171a56fdda8587b6526509   # OCI referrers
+[&quot;application/vnd.oci.image.manifest.v1+json&quot;,&quot;application/vnd.oci.image.manifest.v1+json&quot;,&quot;application/vnd.oci.image.manifest.v1+json&quot;,&quot;application/vnd.oci.image.manifest.v1+json&quot;]
+$ skopeo inspect --raw docker://quay.io/coreos-devel/fedora-coreos:sha256-789b90d268bc67524b9caf10064b7fe00cf072dbbfbf703c82e463fbfb138103.sbom
+{&quot;layers&quot;:[{&quot;mediaType&quot;:&quot;text/spdx+json&quot;,&quot;size&quot;:2222742}]}
+$ oras discover quay.io/coreos-devel/fedora-coreos@sha256:789b90d268bc67524b9caf10064b7fe00cf072dbbfbf703c82e463fbfb138103   # OCI referrers
+[]
