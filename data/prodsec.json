@@ -1,0 +1,613 @@
+{
+ "pin": {
+  "repo": "RedHatProductSecurity/security-data-guidelines",
+  "sha": "c61b2152440b990e7af15820129efc8a9b963fa5",
+  "date": "2026-09-10"
+ },
+ "rows": [
+  {
+   "id": "PS-D1",
+   "area": "document",
+   "src": {
+    "file": "docs/sbom.md",
+    "line": 169,
+    "text": "\"spdxVersion\": \"SPDX-2.3\",// (1)!",
+    "url": "https://github.com/RedHatProductSecurity/security-data-guidelines/blob/c61b2152440b990e7af15820129efc8a9b963fa5/docs/sbom.md#L169"
+   },
+   "container": "SPDX-2.3",
+   "disk": "same",
+   "applies": "yes",
+   "p3": "check",
+   "path": "$.spdxVersion",
+   "note": "SPDX-2.3"
+  },
+  {
+   "id": "PS-D2",
+   "area": "document",
+   "src": {
+    "file": "docs/sbom.md",
+    "line": 170,
+    "text": "\"dataLicense\": \"CC0-1.0\",// (2)!",
+    "url": "https://github.com/RedHatProductSecurity/security-data-guidelines/blob/c61b2152440b990e7af15820129efc8a9b963fa5/docs/sbom.md#L170"
+   },
+   "container": "CC0-1.0",
+   "disk": "same",
+   "applies": "yes",
+   "p3": "check",
+   "path": "$.dataLicense",
+   "note": "CC0-1.0"
+  },
+  {
+   "id": "PS-D3",
+   "area": "document",
+   "src": {
+    "file": "docs/sbom.md",
+    "line": 194,
+    "text": "4. UTC timestamps must use the `YYYY-MM-DDThh:mm:ssZ` format.",
+    "url": "https://github.com/RedHatProductSecurity/security-data-guidelines/blob/c61b2152440b990e7af15820129efc8a9b963fa5/docs/sbom.md#L194"
+   },
+   "container": "YYYY-MM-DDThh:mm:ssZ",
+   "disk": "same",
+   "applies": "yes",
+   "p3": "check",
+   "path": "$.creationInfo.created",
+   "note": "2026-10-14T19:21:08Z"
+  },
+  {
+   "id": "PS-D4",
+   "area": "document",
+   "src": {
+    "file": "docs/sbom.md",
+    "line": 205,
+    "text": "the UTC timezone. The `creators` field must identify the tool and its version that was used to generate the SBOM",
+    "url": "https://github.com/RedHatProductSecurity/security-data-guidelines/blob/c61b2152440b990e7af15820129efc8a9b963fa5/docs/sbom.md#L205"
+   },
+   "container": "Tool: <name> <version>",
+   "disk": "same",
+   "applies": "yes",
+   "p3": "check",
+   "path": "$.creationInfo.creators",
+   "note": "Tool: osbuild-194, Tool: image-builder-87.0.0"
+  },
+  {
+   "id": "PS-D5",
+   "area": "document",
+   "src": {
+    "file": "docs/sbom.md",
+    "line": 196,
+    "text": "5. creationInfo / creators includes the \"Organization: Red Hat\" value.",
+    "url": "https://github.com/RedHatProductSecurity/security-data-guidelines/blob/c61b2152440b990e7af15820129efc8a9b963fa5/docs/sbom.md#L196"
+   },
+   "container": "Organization: Red Hat",
+   "disk": "set by the publisher (Red Hat build / Konflux), not by upstream image-builder",
+   "applies": "publisher",
+   "p3": "x",
+   "path": "$.creationInfo.creators",
+   "note": "deferred: no Organization hardcoded in image-builder"
+  },
+  {
+   "id": "PS-D6",
+   "area": "document",
+   "src": {
+    "file": "docs/sbom.md",
+    "line": 221,
+    "text": "- A URI that is namespaced to a generic Red Hat location: `https://www.redhat.com/[DocumentID].spdx.json`.",
+    "url": "https://github.com/RedHatProductSecurity/security-data-guidelines/blob/c61b2152440b990e7af15820129efc8a9b963fa5/docs/sbom.md#L221"
+   },
+   "container": "https://www.redhat.com/<id>.spdx.json",
+   "disk": "publisher namespace",
+   "applies": "publisher",
+   "p3": "partial",
+   "path": "$.documentNamespace",
+   "note": "https://osbuild.org/spdxdocs/sbom-by-osbuild-194-dc18cc25-5b1f-4289-b3d8-eaccbe7fe9d2"
+  },
+  {
+   "id": "PS-D7",
+   "area": "document",
+   "src": {
+    "file": "docs/sbom.md",
+    "line": 211,
+    "text": "product, a container image, or a specific package. The name should contain a descriptive value for that given",
+    "url": "https://github.com/RedHatProductSecurity/security-data-guidelines/blob/c61b2152440b990e7af15820129efc8a9b963fa5/docs/sbom.md#L211"
+   },
+   "container": "artifact name + version",
+   "disk": "image name + version",
+   "applies": "yes",
+   "p3": "partial",
+   "path": "$.name",
+   "note": "\"sbom-by-osbuild-194\": tool name, not the image"
+  },
+  {
+   "id": "PS-D8",
+   "area": "document",
+   "src": {
+    "file": "docs/sbom.md",
+    "line": 232,
+    "text": "content type. The `files` field is currently unused and will thus either not be present at all, or set to an empty",
+    "url": "https://github.com/RedHatProductSecurity/security-data-guidelines/blob/c61b2152440b990e7af15820129efc8a9b963fa5/docs/sbom.md#L232"
+   },
+   "container": "files absent or []",
+   "disk": "same",
+   "applies": "yes",
+   "p3": "check",
+   "path": "$",
+   "note": "no files key"
+  },
+  {
+   "id": "PS-P1",
+   "area": "package",
+   "src": {
+    "file": "docs/sbom.md",
+    "line": 286,
+    "text": ":   At least one of the references must include a Package URL (purl) unless the object is describing a product.",
+    "url": "https://github.com/RedHatProductSecurity/security-data-guidelines/blob/c61b2152440b990e7af15820129efc8a9b963fa5/docs/sbom.md#L286"
+   },
+   "container": "≥1 purl per package",
+   "disk": "same",
+   "applies": "yes",
+   "p3": "check",
+   "path": "$.packages[7zip 25.01].externalRefs",
+   "note": "purl on 511/511"
+  },
+  {
+   "id": "PS-P2",
+   "area": "package",
+   "src": {
+    "file": "docs/sbom.md",
+    "line": 343,
+    "text": "they should only ever differ in their qualifier values, not the main components such as package type, name, or",
+    "url": "https://github.com/RedHatProductSecurity/security-data-guidelines/blob/c61b2152440b990e7af15820129efc8a9b963fa5/docs/sbom.md#L343"
+   },
+   "container": "multiple purls differ only in qualifiers",
+   "disk": "same",
+   "applies": "yes",
+   "p3": "check",
+   "path": "$.packages[7zip 25.01].externalRefs",
+   "note": "alias drops repository_url only"
+  },
+  {
+   "id": "PS-P3",
+   "area": "package",
+   "src": {
+    "file": "docs/sbom.md",
+    "line": 264,
+    "text": "2. The value `Organization: Red Hat` must be used for all components that are distributed by Red Hat.",
+    "url": "https://github.com/RedHatProductSecurity/security-data-guidelines/blob/c61b2152440b990e7af15820129efc8a9b963fa5/docs/sbom.md#L264"
+   },
+   "container": "supplier Organization: Red Hat",
+   "disk": "supplier = distributor of the RPM",
+   "applies": "yes",
+   "p3": "check",
+   "path": "$.packages[7zip 25.01].supplier",
+   "note": "Organization: Fedora Project (Fedora RPMs)"
+  },
+  {
+   "id": "PS-R1",
+   "area": "rpm",
+   "src": {
+    "file": "docs/sbom.md",
+    "line": 546,
+    "text": ":   Minimally, the list of checksums must include the SHA256 checksum of the RPM file or source archive itself.",
+    "url": "https://github.com/RedHatProductSecurity/security-data-guidelines/blob/c61b2152440b990e7af15820129efc8a9b963fa5/docs/sbom.md#L546"
+   },
+   "container": "SHA256 of RPM file",
+   "disk": "same",
+   "applies": "yes",
+   "p3": "check",
+   "path": "$.packages[7zip 25.01].checksums[SHA256]",
+   "note": "510/510 RPMs"
+  },
+  {
+   "id": "PS-R2",
+   "area": "rpm",
+   "src": {
+    "file": "docs/sbom.md",
+    "line": 536,
+    "text": ":   For binary RPM packages, `downloadLocation` is `NOASSERTION`. The RPM file is identified by its purl and",
+    "url": "https://github.com/RedHatProductSecurity/security-data-guidelines/blob/c61b2152440b990e7af15820129efc8a9b963fa5/docs/sbom.md#L536"
+   },
+   "container": "NOASSERTION",
+   "disk": "same",
+   "applies": "yes",
+   "p3": "x",
+   "path": "$.packages[7zip 25.01].downloadLocation",
+   "note": "mirror URL of the depsolve run"
+  },
+  {
+   "id": "PS-R3",
+   "area": "rpm",
+   "src": {
+    "file": "docs/purl.md",
+    "line": 68,
+    "text": "Red Hat purls use a `repository_id` qualifier that identifies the repository from which the package can be",
+    "url": "https://github.com/RedHatProductSecurity/security-data-guidelines/blob/c61b2152440b990e7af15820129efc8a9b963fa5/docs/purl.md#L68"
+   },
+   "container": "pkg:rpm/redhat/…?arch=…&repository_id=…",
+   "disk": "repository_id of the image's repo config",
+   "applies": "yes",
+   "p3": "partial",
+   "path": "$.packages[7zip 25.01].externalRefs",
+   "note": "repository_url + bare alias; no repository_id"
+  },
+  {
+   "id": "PS-R4",
+   "area": "rpm",
+   "src": {
+    "file": "docs/purl.md",
+    "line": 39,
+    "text": "The namespace value of `redhat` signifies this as an RPM package produced and distributed by Red Hat. This value",
+    "url": "https://github.com/RedHatProductSecurity/security-data-guidelines/blob/c61b2152440b990e7af15820129efc8a9b963fa5/docs/purl.md#L39"
+   },
+   "container": "namespace redhat",
+   "disk": "namespace of the distributor",
+   "applies": "yes",
+   "p3": "partial",
+   "path": "$.packages[7zip 25.01].externalRefs",
+   "note": "pkg:rpm/fedora%20project/… (vendor string, not a short namespace)"
+  },
+  {
+   "id": "PS-R5",
+   "area": "rpm",
+   "src": {
+    "file": "docs/sbom.md",
+    "line": 529,
+    "text": "\"comment\": \"sigmd5: 4cc665dd3173c8952184293588f9ee46\"",
+    "url": "https://github.com/RedHatProductSecurity/security-data-guidelines/blob/c61b2152440b990e7af15820129efc8a9b963fa5/docs/sbom.md#L529"
+   },
+   "container": "annotation sigmd5",
+   "disk": "same",
+   "applies": "yes",
+   "p3": "x",
+   "path": "$.packages[7zip 25.01]",
+   "note": "no annotations"
+  },
+  {
+   "id": "PS-R6",
+   "area": "rpm",
+   "src": {
+    "file": "docs/sbom.md",
+    "line": 565,
+    "text": "\"relationshipType\": \"GENERATED_FROM\",",
+    "url": "https://github.com/RedHatProductSecurity/security-data-guidelines/blob/c61b2152440b990e7af15820129efc8a9b963fa5/docs/sbom.md#L565"
+   },
+   "container": "RPM GENERATED_FROM SRPM",
+   "disk": "same",
+   "applies": "yes",
+   "p3": "x",
+   "path": "$.relationships",
+   "note": "no SRPM packages (sourceInfo only)"
+  },
+  {
+   "id": "PS-R7",
+   "area": "rpm",
+   "src": {
+    "file": "docs/sbom.md",
+    "line": 570,
+    "text": "SRPMs are also linked to one or more upstream sources that were used to build the downstream RPMs. An upstream",
+    "url": "https://github.com/RedHatProductSecurity/security-data-guidelines/blob/c61b2152440b990e7af15820129efc8a9b963fa5/docs/sbom.md#L570"
+   },
+   "container": "SRPM CONTAINS Source0 (upstream)",
+   "disk": "belongs in the RPM's own SBOM",
+   "applies": "no",
+   "p3": "na",
+   "path": null,
+   "note": "image SBOM links RPMs by purl"
+  },
+  {
+   "id": "PS-C1",
+   "area": "image",
+   "src": {
+    "file": "docs/sbom.md",
+    "line": 311,
+    "text": "\"licenseDeclared\": \"NOASSERTION\",",
+    "url": "https://github.com/RedHatProductSecurity/security-data-guidelines/blob/c61b2152440b990e7af15820129efc8a9b963fa5/docs/sbom.md#L311"
+   },
+   "container": "image licenseDeclared NOASSERTION",
+   "disk": "image root licenseDeclared NOASSERTION",
+   "applies": "yes",
+   "p3": "check",
+   "path": "$.packages[fedora-44-generic-qcow2-x86_64 44].licenseDeclared",
+   "note": "patch 3"
+  },
+  {
+   "id": "PS-C2",
+   "area": "image",
+   "src": {
+    "file": "docs/sbom.md",
+    "line": 351,
+    "text": ":   The `downloadlocation` will never be set; container images don't have their own VCS repos. The location from",
+    "url": "https://github.com/RedHatProductSecurity/security-data-guidelines/blob/c61b2152440b990e7af15820129efc8a9b963fa5/docs/sbom.md#L351"
+   },
+   "container": "downloadLocation NOASSERTION",
+   "disk": "same",
+   "applies": "yes",
+   "p3": "check",
+   "path": "$.packages[fedora-44-generic-qcow2-x86_64 44].downloadLocation",
+   "note": "NOASSERTION"
+  },
+  {
+   "id": "PS-C3",
+   "area": "image",
+   "src": {
+    "file": "docs/sbom.md",
+    "line": 337,
+    "text": ":   The checksum value for a container image refers to the image digest value as defined in the",
+    "url": "https://github.com/RedHatProductSecurity/security-data-guidelines/blob/c61b2152440b990e7af15820129efc8a9b963fa5/docs/sbom.md#L337"
+   },
+   "container": "checksum = OCI digest",
+   "disk": "checksum = SHA256 of the disk file",
+   "applies": "adapted",
+   "p3": "partial",
+   "path": "$.packages[fedora-44-generic-qcow2-x86_64 44].checksums[SHA256]",
+   "note": "build: real sha256; manifest: none (placeholder here)"
+  },
+  {
+   "id": "PS-C4",
+   "area": "image",
+   "src": {
+    "file": "docs/purl.md",
+    "line": 119,
+    "text": "pkg:oci/ubi@sha256:8bca3b1be5750aeb94ef1351aa22636a54112f595d11a4d5c777890b80dfd387?arch=amd64&repository_url=registry.redhat.io/ubi9/ubi&tag=9.3-1610",
+    "url": "https://github.com/RedHatProductSecurity/security-data-guidelines/blob/c61b2152440b990e7af15820129efc8a9b963fa5/docs/purl.md#L119"
+   },
+   "container": "pkg:oci/<name>@sha256:<digest>?arch&repository_url&tag",
+   "disk": "no purl type for disk images; pkg:generic with checksum, or pkg:oci once pushed as an OCI artifact",
+   "applies": "adapted",
+   "p3": "partial",
+   "path": "$.packages[fedora-44-generic-qcow2-x86_64 44].externalRefs",
+   "note": "pkg:generic/fedora-44-generic-qcow2-x86_64@44?arch=x86_64&distro=fedora-44&image_type=generic-qcow2"
+  },
+  {
+   "id": "PS-C5",
+   "area": "image",
+   "src": {
+    "file": "docs/sbom.md",
+    "line": 354,
+    "text": "An SBOM should contain representation of both an",
+    "url": "https://github.com/RedHatProductSecurity/security-data-guidelines/blob/c61b2152440b990e7af15820129efc8a9b963fa5/docs/sbom.md#L354"
+   },
+   "container": "index + per-arch image, VARIANT_OF",
+   "disk": "one disk per arch; no index unless published as a multi-arch OCI artifact",
+   "applies": "adapted",
+   "p3": "na",
+   "path": null,
+   "note": "single-arch build"
+  },
+  {
+   "id": "PS-C6",
+   "area": "image",
+   "src": {
+    "file": "docs/sbom.md",
+    "line": 377,
+    "text": "An SBOM that represent a container image must also list out all the components included in that image, and create",
+    "url": "https://github.com/RedHatProductSecurity/security-data-guidelines/blob/c61b2152440b990e7af15820129efc8a9b963fa5/docs/sbom.md#L377"
+   },
+   "container": "image CONTAINS each component",
+   "disk": "image root CONTAINS each RPM",
+   "applies": "yes",
+   "p3": "check",
+   "path": "$.relationships",
+   "note": "510 CONTAINS"
+  },
+  {
+   "id": "PS-C7",
+   "area": "image",
+   "src": {
+    "file": "docs/sbom.md",
+    "line": 390,
+    "text": "A container image SBOM must also list its parent container image and any container images that were used in the",
+    "url": "https://github.com/RedHatProductSecurity/security-data-guidelines/blob/c61b2152440b990e7af15820129efc8a9b963fa5/docs/sbom.md#L390"
+   },
+   "container": "build-stage images BUILD_TOOL_OF image",
+   "disk": "build root BUILD_TOOL_OF image root",
+   "applies": "yes",
+   "p3": "check",
+   "path": "$.externalDocumentRefs",
+   "note": "DocumentRef-buildroot-build (patch 3)"
+  },
+  {
+   "id": "PS-C8",
+   "area": "image",
+   "src": {
+    "file": "docs/sbom.md",
+    "line": 433,
+    "text": "\"relationshipType\": \"DESCENDANT_OF\",",
+    "url": "https://github.com/RedHatProductSecurity/security-data-guidelines/blob/c61b2152440b990e7af15820129efc8a9b963fa5/docs/sbom.md#L433"
+   },
+   "container": "image DESCENDANT_OF parent image",
+   "disk": "bootc disk DESCENDANT_OF bootc container; package-based: none",
+   "applies": "bootc",
+   "p3": "na",
+   "path": null,
+   "note": "package-based qcow2: no parent"
+  },
+  {
+   "id": "PS-C9",
+   "area": "image",
+   "src": {
+    "file": "docs/sbom.md",
+    "line": 438,
+    "text": "Container Images are also linked to one or more upstream sources that were used to build them. An upstream source can be represented by a package object using the following data:",
+    "url": "https://github.com/RedHatProductSecurity/security-data-guidelines/blob/c61b2152440b990e7af15820129efc8a9b963fa5/docs/sbom.md#L438"
+   },
+   "container": "Source-origin + DEPENDS_ON",
+   "disk": "blueprint / image definitions commit",
+   "applies": "adapted",
+   "p3": "x",
+   "path": null,
+   "note": "not recorded"
+  },
+  {
+   "id": "PS-C10",
+   "area": "release",
+   "src": {
+    "file": "docs/sbom.md",
+    "line": 78,
+    "text": "For component-level _Release-time_ SBOMs (for example, container images), the package that represents the component may include product CPE(s) in its externalRefs with referenceCategory `SECURITY` and referenceType `cpe22Type` (and the CPE string in referenceLocator), so the component is explicitly associated with the Red Hat product(s) it is released as part of.",
+    "url": "https://github.com/RedHatProductSecurity/security-data-guidelines/blob/c61b2152440b990e7af15820129efc8a9b963fa5/docs/sbom.md#L78"
+   },
+   "container": "release purl repository_url/tag + product CPE",
+   "disk": "added at release (Konflux/mobster)",
+   "applies": "publisher",
+   "p3": "na",
+   "path": null,
+   "note": "chapter 5"
+  },
+  {
+   "id": "PS-C11",
+   "area": "build",
+   "src": {
+    "file": "docs/sbom.md",
+    "line": 27,
+    "text": "end user. Any software dependencies that are used strictly during the build process must be listed as well, but",
+    "url": "https://github.com/RedHatProductSecurity/security-data-guidelines/blob/c61b2152440b990e7af15820129efc8a9b963fa5/docs/sbom.md#L27"
+   },
+   "container": "build deps listed separately",
+   "disk": "build root SBOM, linked",
+   "applies": "yes",
+   "p3": "check",
+   "path": "$.externalDocumentRefs",
+   "note": "patch 3"
+  },
+  {
+   "id": "PS-V1",
+   "area": "validation",
+   "src": {
+    "file": "docs/sbom.md",
+    "line": 924,
+    "text": "To validate an SBOM against the guidelines in this document, use",
+    "url": "https://github.com/RedHatProductSecurity/security-data-guidelines/blob/c61b2152440b990e7af15820129efc8a9b963fa5/docs/sbom.md#L924"
+   },
+   "container": "SBOM-Grader",
+   "disk": "same",
+   "applies": "yes",
+   "p3": "check",
+   "path": null,
+   "note": "grade A"
+  }
+ ],
+ "diffs": {
+  "cols": [
+   "topic",
+   "disk image",
+   "container (guidelines)"
+  ],
+  "rows": [
+   [
+    "disk images, ISOs, bootc",
+    "no section, no examples, no purl type",
+    "container image: sbom.md#container-image, purl.md#identifying-container-images"
+   ],
+   [
+    "bootc",
+    "no playbook: bootc container SBOM, payload containers, disk SBOM relationship undefined",
+    "container parent: DESCENDANT_OF"
+   ],
+   [
+    "artifact identity",
+    "disk file sha256; no registry digest unless pushed as OCI artifact",
+    "OCI digest = checksum = purl version"
+   ],
+   [
+    "producer",
+    "image-builder is upstream and used outside Red Hat",
+    "Organization: Red Hat set by Red Hat tooling"
+   ],
+   [
+    "RPM repos",
+    "repo config of the build (mirrors, repository_url)",
+    "repository_id of CDN repos"
+   ],
+   [
+    "generation time",
+    "manifest time (before the disk exists)",
+    "build time (image digest known)"
+   ]
+  ]
+ },
+ "merge": {
+  "cols": [
+   "",
+   "image-builder merges",
+   "mobster merges"
+  ],
+  "rows": [
+   [
+    "inputs",
+    "bootc container SBOM + payload SBOMs fetched by digest at build",
+    "SBOMs from Konflux attestations / registry"
+   ],
+   [
+    "output outside Konflux",
+    "complete SBOM from image-builder alone",
+    "image-builder SBOM without bootc/payload content"
+   ],
+   [
+    "needs registry access at build",
+    "yes (already pulls the containers)",
+    "no (in image-builder)"
+   ],
+   [
+    "single implementation",
+    "image-builder (all callers)",
+    "mobster (Konflux only)"
+   ],
+   [
+    "Konflux release metadata",
+    "added later by mobster",
+    "added by mobster"
+   ],
+   [
+    "preference",
+    "Lucas",
+    ""
+   ]
+  ]
+ },
+ "deltas": {
+  "cols": [
+   "field",
+   "patch 3",
+   "proposal",
+   "rows"
+  ],
+  "rows": [
+   [
+    "name",
+    "sbom-by-osbuild-194",
+    "<image name>-<version>",
+    "PS-D7"
+   ],
+   [
+    "image root purl",
+    "pkg:generic/fedora-44-generic-qcow2-x86_64@44?arch=x86_64&distro=fedora-44&image_type=generic-qcow2",
+    "pkg:generic/<name>@<version>?arch=…&checksum=sha256:<disk sha256>",
+    "PS-C4"
+   ],
+   [
+    "RPM downloadLocation",
+    "mirror URL",
+    "NOASSERTION",
+    "PS-R2"
+   ],
+   [
+    "RPM purl",
+    "pkg:rpm/fedora%20project/…?arch&repository_url",
+    "pkg:rpm/fedora/…?arch&repository_id=<repo id>",
+    "PS-R3 PS-R4"
+   ],
+   [
+    "bootc",
+    "—",
+    "DESCENDANT_OF bootc container (pkg:oci digest) + DocumentRef-bootc",
+    "PS-C8"
+   ],
+   [
+    "Organization",
+    "—",
+    "— (publisher adds at release)",
+    "PS-D5"
+   ]
+  ]
+ }
+}

@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<nav id="toolbar"><a href="#grader" data-ch="grader">1 · sbom-grader</a><a href="#mequal" data-ch="mequal">2 · mequal</a><a href="#cisa" data-ch="cisa">3 · CISA 2026</a><span class="ch-off" data-ch="prodsec">4 · ProdSec guidelines</span><span class="ch-off" data-ch="mobster">5 · mobster + Conforma</span><span class="ch-off" data-ch="iso">A · ISO</span><span class="ch-off" data-ch="trustify">B · Trustify</span><span class="ch-off" data-ch="bootc">C · bootc</span></nav>
+<nav id="toolbar"><a href="#grader" data-ch="grader">1 · sbom-grader</a><a href="#mequal" data-ch="mequal">2 · mequal</a><a href="#cisa" data-ch="cisa">3 · CISA 2026</a><a href="#prodsec" data-ch="prodsec">4 · ProdSec guidelines</a><span class="ch-off" data-ch="mobster">5 · mobster + Conforma</span><span class="ch-off" data-ch="iso">A · ISO</span><span class="ch-off" data-ch="trustify">B · Trustify</span><span class="ch-off" data-ch="bootc">C · bootc</span></nav>
 <main>
 <template data-ch="grader">
 <section id="s-main">
@@ -162,6 +162,32 @@
   <div class="viewer" data-left="data/p2.image-os.spdx.json"></div>
 </section>
 </template>
+<template data-ch="prodsec">
+<section id="s-d-table">
+  <h2>Red Hat ProdSec SBOM guidelines · disk images</h2>
+  <div class="cisa-pin ps-pin"></div>
+  <div class="cisa-sum ps-sum"></div>
+  <div class="ps-box"></div>
+</section>
+<section id="s-d-diffs">
+  <h2>disk image ≠ container</h2>
+  <div class="ps-diffs"></div>
+</section>
+<section id="s-d-proposal">
+  <h2>proposal · disk image SBOM (excerpt)</h2>
+  <div class="bar"><a class="btn" href="data/prodsec-proposal.json" download>prodsec-proposal.json</a></div>
+  <div class="ps-deltas"></div>
+  <div class="viewer" data-left="data/prodsec-proposal.json"></div>
+</section>
+<section id="s-d-merge">
+  <h2>bootc + payload SBOMs · who merges</h2>
+  <div class="ps-merge"></div>
+</section>
+<section id="s-d-sbom">
+  <h2>image-builder · patch 3 SBOM</h2>
+  <div class="viewer" data-left="data/p3.image-os.spdx.json"></div>
+</section>
+</template>
 <div id="chapter"></div>
 </main>
 <script src="js/jsonview.js"></script>
@@ -169,6 +195,7 @@
 <script src="js/rego.js"></script>
 <script src="js/partb.js"></script>
 <script src="js/cisa.js"></script>
+<script src="js/prodsec.js"></script>
 <script src="js/router.js"></script>
 </body>
 </html>

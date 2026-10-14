@@ -1,0 +1,132 @@
+{
+ "spdxVersion": "SPDX-2.3",
+ "dataLicense": "CC0-1.0",
+ "SPDXID": "SPDXRef-DOCUMENT",
+ "name": "fedora-44-generic-qcow2-x86_64-44",
+ "documentNamespace": "https://<publisher>/fedora-44-generic-qcow2-x86_64-<uuid>.spdx.json",
+ "creationInfo": {
+  "created": "2026-10-14T19:21:08Z",
+  "creators": [
+   "Tool: osbuild-194",
+   "Tool: image-builder-87.0.0"
+  ],
+  "comment": "SBOM type: Build"
+ },
+ "externalDocumentRefs": [
+  {
+   "externalDocumentId": "DocumentRef-buildroot-build",
+   "spdxDocument": "https://osbuild.org/spdxdocs/sbom-by-osbuild-194-96ee13d8-5758-47e2-a95c-df92d525593c",
+   "checksum": {
+    "algorithm": "SHA1",
+    "checksumValue": "a42be4b4482c1ea313d1b09e5f40a03cc3d3258a"
+   }
+  },
+  {
+   "externalDocumentId": "DocumentRef-bootc",
+   "spdxDocument": "<bootc container SBOM namespace>",
+   "checksum": {
+    "algorithm": "SHA1",
+    "checksumValue": "<sha1>"
+   }
+  }
+ ],
+ "packages": [
+  {
+   "SPDXID": "SPDXRef-image-root",
+   "downloadLocation": "NOASSERTION",
+   "externalRefs": [
+    {
+     "referenceCategory": "PACKAGE-MANAGER",
+     "referenceType": "purl",
+     "referenceLocator": "pkg:generic/fedora-44-generic-qcow2-x86_64@44?arch=x86_64&checksum=sha256:2fd6e4e40ea7de68a712872a374f4d2d125339027c6233b0c0424e1e84e38643"
+    }
+   ],
+   "filesAnalyzed": false,
+   "licenseConcluded": "NOASSERTION",
+   "licenseDeclared": "NOASSERTION",
+   "name": "fedora-44-generic-qcow2-x86_64",
+   "packageFileName": "fedora-44-generic-qcow2-x86_64.qcow2",
+   "supplier": "NOASSERTION",
+   "versionInfo": "44",
+   "checksums": [
+    {
+     "algorithm": "SHA256",
+     "checksumValue": "2fd6e4e40ea7de68a712872a374f4d2d125339027c6233b0c0424e1e84e38643"
+    }
+   ]
+  },
+  {
+   "SPDXID": "SPDXRef-7f93b9ec-1efa-36df-8764-74f3d4555851",
+   "name": "7zip",
+   "downloadLocation": "NOASSERTION",
+   "filesAnalyzed": false,
+   "versionInfo": "25.01",
+   "supplier": "Organization: Fedora Project",
+   "packageFileName": "7zip-25.01-5.fc44.x86_64.rpm",
+   "checksums": [
+    {
+     "algorithm": "SHA256",
+     "checksumValue": "d069a57991ad4eb504a25b2c72352e3779f3a7cf19ffdf0b4f6a65565dae273e"
+    }
+   ],
+   "sourceInfo": "Source RPM: 7zip-25.01-5.fc44.src.rpm",
+   "licenseDeclared": "LGPL-2.1-or-later AND BSD-3-Clause AND BSD-2-Clause AND LicenseRef-scancode-public-domain",
+   "externalRefs": [
+    {
+     "referenceCategory": "PACKAGE-MANAGER",
+     "referenceType": "purl",
+     "referenceLocator": "pkg:rpm/fedora/7zip@25.01-5.fc44?arch=x86_64&repository_id=fedora"
+    }
+   ],
+   "builtDate": "2026-02-16T12:01:36Z"
+  },
+  {
+   "SPDXID": "SPDXRef-bootc-container",
+   "name": "<bootc image>",
+   "versionInfo": "<digest>",
+   "supplier": "NOASSERTION",
+   "downloadLocation": "NOASSERTION",
+   "licenseDeclared": "NOASSERTION",
+   "externalRefs": [
+    {
+     "referenceCategory": "PACKAGE-MANAGER",
+     "referenceType": "purl",
+     "referenceLocator": "pkg:oci/<name>@sha256:<digest>?repository_url=<registry/repo>"
+    }
+   ],
+   "checksums": [
+    {
+     "algorithm": "SHA256",
+     "checksumValue": "<digest>"
+    }
+   ]
+  }
+ ],
+ "relationships": [
+  {
+   "spdxElementId": "SPDXRef-DOCUMENT",
+   "relationshipType": "DESCRIBES",
+   "relatedSpdxElement": "SPDXRef-image-root"
+  },
+  {
+   "spdxElementId": "SPDXRef-image-root",
+   "relationshipType": "CONTAINS",
+   "relatedSpdxElement": "SPDXRef-7f93b9ec-1efa-36df-8764-74f3d4555851"
+  },
+  {
+   "spdxElementId": "DocumentRef-buildroot-build:SPDXRef-DOCUMENT",
+   "relationshipType": "BUILD_TOOL_OF",
+   "relatedSpdxElement": "SPDXRef-image-root"
+  },
+  {
+   "spdxElementId": "SPDXRef-image-root",
+   "relationshipType": "DESCENDANT_OF",
+   "relatedSpdxElement": "SPDXRef-bootc-container"
+  },
+  {
+   "spdxElementId": "SPDXRef-bootc-container",
+   "relationshipType": "DESCRIBED_BY",
+   "relatedSpdxElement": "DocumentRef-bootc:SPDXRef-DOCUMENT"
+  }
+ ]
+}
