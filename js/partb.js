@@ -90,15 +90,14 @@
     box.append(t);
   }
 
-  window.addEventListener("DOMContentLoaded", async () => {
+  window.mountB = async (root) => {
     const jobs = [];
-    document.querySelectorAll(".cdx-policies").forEach(b => jobs.push(cdxSection(b)));
-    document.querySelectorAll(".parity").forEach(b => jobs.push(paritySection(b)));
-    document.querySelectorAll(".gaps-box").forEach(b => jobs.push(gapsSection(b)));
-    document.querySelectorAll(".table-box").forEach(b => jobs.push(tableSection(b)));
-    document.querySelectorAll("[data-grade-src]").forEach(e => jobs.push(get(e.dataset.gradeSrc).then(t => {
+    root.querySelectorAll(".cdx-policies").forEach(b => jobs.push(cdxSection(b)));
+    root.querySelectorAll(".parity").forEach(b => jobs.push(paritySection(b)));
+    root.querySelectorAll(".gaps-box").forEach(b => jobs.push(gapsSection(b)));
+    root.querySelectorAll(".table-box").forEach(b => jobs.push(tableSection(b)));
+    root.querySelectorAll("[data-grade-src]").forEach(e => jobs.push(get(e.dataset.gradeSrc).then(t => {
       const m = t.replace(/<[^>]+>/g, "").match(/Grade: ([A-F])/); e.textContent = m ? m[1] : "?"; })));
     await Promise.all(jobs);
-    document.body.dataset.readyB = "1";
-  });
+  };
 })();

@@ -74,13 +74,12 @@
     ctl.append(btn("expand all", () => dets.forEach(d => d.open = true)), btn("collapse all", () => dets.forEach(d => d.open = false)));
   }
 
-  window.addEventListener("DOMContentLoaded", async () => {
+  window.mountA = async (root) => {
     const jobs = [];
-    document.querySelectorAll(".code").forEach(b => jobs.push(setupCode(b)));
-    document.querySelectorAll(".term").forEach(b => jobs.push(setupTerm(b)));
-    document.querySelectorAll(".patch").forEach(b => jobs.push(setupPatch(b)));
-    document.querySelectorAll(".viewer").forEach(b => jobs.push(setupViewer(b)));
+    root.querySelectorAll(".code").forEach(b => jobs.push(setupCode(b)));
+    root.querySelectorAll(".term").forEach(b => jobs.push(setupTerm(b)));
+    root.querySelectorAll(".patch").forEach(b => jobs.push(setupPatch(b)));
+    root.querySelectorAll(".viewer").forEach(b => jobs.push(setupViewer(b)));
     await Promise.all(jobs);
-    document.body.dataset.ready = "1";
-  });
+  };
 })();

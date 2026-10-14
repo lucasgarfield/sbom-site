@@ -8,7 +8,9 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<nav id="toolbar"><a href="#grader" data-ch="grader">1 · sbom-grader</a><a href="#mequal" data-ch="mequal">2 · mequal</a><span class="ch-off" data-ch="cisa">3 · CISA 2026</span><span class="ch-off" data-ch="prodsec">4 · ProdSec guidelines</span><span class="ch-off" data-ch="mobster">5 · mobster + Conforma</span><span class="ch-off" data-ch="iso">A · ISO</span><span class="ch-off" data-ch="trustify">B · Trustify</span><span class="ch-off" data-ch="bootc">C · bootc</span></nav>
 <main>
+<template data-ch="grader">
 <section id="s-main">
   <h2>osbuild main · Fedora 44 qcow2 · image-os SBOM</h2>
   <div class="bar"><a class="btn" href="data/main.image-os.spdx.json" download>main.image-os.spdx.json</a></div>
@@ -49,8 +51,8 @@
 </section>
 
 
-<h1 class="part">Part B · mequal</h1>
-
+</template>
+<template data-ch="mequal">
 <section id="s-b-cdx">
   <h2>mequal · ProdSec CycloneDX policies</h2>
   <div class="bar pins">
@@ -116,10 +118,13 @@
   <h2>patch 1 ↔ patch 2</h2>
   <div class="viewer" data-left="data/p1.image-os.spdx.json" data-right="data/p2.image-os.spdx.json"></div>
 </section>
+</template>
+<div id="chapter"></div>
 </main>
 <script src="js/jsonview.js"></script>
 <script src="js/app.js"></script>
 <script src="js/rego.js"></script>
 <script src="js/partb.js"></script>
+<script src="js/router.js"></script>
 </body>
 </html>

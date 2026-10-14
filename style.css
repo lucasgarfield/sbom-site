@@ -73,3 +73,8 @@ table.gaps a { color:#7cc4ff }
 .lbl { color:var(--mut); font-size:12px }
 .grade-banner { display:inline-flex; align-items:center; gap:16px; border:2px solid #2f7a45; background:#0f2416; border-radius:10px; padding:10px 20px; margin:8px 0 }
 .g-lbl { font:600 14px system-ui; color:#b9f0c3 } .g-val { font:700 40px ui-monospace, monospace; color:#7ee08f }
+#toolbar{position:sticky;top:0;z-index:50;display:flex;gap:4px;flex-wrap:wrap;padding:8px 12px;background:#0d1117ee;border-bottom:1px solid #30363d;backdrop-filter:blur(4px)}
+#toolbar a,#toolbar .ch-off{padding:5px 12px;border-radius:6px;font:600 13px system-ui,sans-serif;text-decoration:none;color:#c9d1d9;border:1px solid #30363d}
+#toolbar a:hover{background:#161b22}
+#toolbar a.on{background:#1f6feb;border-color:#1f6feb;color:#fff}
+#toolbar .ch-off{color:#6e7681;border-style:dashed;cursor:not-allowed}
