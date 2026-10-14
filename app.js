@@ -10,7 +10,7 @@ const fv=v=>v!=null&&v!==''&&v!=='NOASSERTION'&&v!=='NONE';
 const STAGE={built:'built (real qcow2 build, sha256 recorded)',manifest:'manifest-time (no disk checksum)',input:'input to the build'};
 function scorecard(c){const ks=c.docs,sc=M.score.cases[c.id];let h='<table><tr><th>Check</th>'+ks.map(k=>`<th>${esc(S[k].label)}<br><span class="b ${S[k].stage==='built'?'pass':'nr'}">${esc(S[k].stage)}</span>${S[k].missing?'<span class="b fail">no SBOM</span>':''}</th>`).join('')+'</tr>';
  for(const r in M.score.rows){h+=`<tr><td><b>${esc(M.score.rows[r])}</b></td>`+ks.map(k=>{const [s,t]=sc[k][r]||['nr','not run'];return `<td><span class="b ${s}">${s==='nr'?'not run':s==='na'?'n/a':s}</span>${esc(t)}</td>`}).join('')+'</tr>'}
- h+='</table><p class="note">'+ks.map(k=>`<b>${esc(S[k].label)}</b> (${esc(STAGE[S[k].stage]||S[k].stage)}): ${esc(S[k].note)}${S[k].src?' — <code>'+esc(S[k].src)+'</code>':''}`).join('<br>')+'</p>';
+ h+='</table><p class="note">'+ks.map(k=>`<b>${esc(S[k].label)}</b> (${esc(STAGE[S[k].stage]||S[k].stage)}): ${esc(S[k].note)}${S[k].src?' — <code>'+esc(S[k].src)+'</code>':''}`).join('<br>')+'</p>'+(c.footnote?`<p class="note"><i>Footnote:</i> ${esc(c.footnote)}</p>`:'');
  $('scorecard').innerHTML=h}
 $('cases').innerHTML=M.cases.map((c,i)=>`<button data-c="${i}">${esc(c.title)}</button>`).join('');
 $('cases').onclick=e=>{const i=e.target.dataset.c;if(i!=null)pickCase(+i)};

@@ -8,13 +8,13 @@ RES=F+'/results'
 DOCS={
  'u-pkg':(F+'/u-pkg-built/fedora-44-generic-qcow2-x86_64.image-os.spdx.json','osbuild main (unpatched)','built','image-builder main + osbuild 193 RPM; real qcow2 build in the Fedora 44 TCG VM'),
  'p-pkg':(F+'/p-pkg-built/fedora-44-generic-qcow2-x86_64.image-os.spdx.json','osbuild + images patches','built','patched image-builder (images 0001-0005) + patched osbuild SBOM code; real qcow2 build in the VM'),
- 'u-bootc':(None,'osbuild main (unpatched)','manifest','no SBOM: image-builder main `manifest qcow2 --bootc-ref <digest> --with-sbom` exits 0 and writes the manifest but no SBOM file (checked on main)'),
- 'p-bootc':(F+'/p-bootc-built/*.image-disk.spdx.json','image-builder + bootc patch (0005)','built','--bootc-ref-sbom: container SBOM merged inline, disk sha256 recorded after the build'),
- 'ctr-bootc':(R+'/bootc/container.syft.spdx.json','input: container SBOM (syft)','input','quay.io/fedora/fedora-bootc:44 has no attached SBOM; generated with syft 1.54.1 (rpm cataloger) from the amd64 digest'),
+ 'u-bootc':(None,'osbuild main (unpatched)','manifest','no SBOM: image-builder main `manifest qcow2 --bootc-ref quay.io/coreos-devel/fedora-coreos@sha256:789b90d2… --with-sbom` exits 0 and writes the manifest but no SBOM file'),
+ 'p-bootc':(F+'/p-fcos-built/*.image-disk.spdx.json','image-builder + bootc patch 0005','built','`--bootc-ref-sbom` with the registry-attached Konflux SBOM: packages merged inline, GENERATED_FROM the container SBOM, disk sha256 recorded after the build'),
+ 'ctr-bootc':(R+'/bootc-konflux/fcos.spdx.json','input: Konflux container SBOM (registry-attached)','input','quay.io/coreos-devel/fedora-coreos:rawhide, amd64 sha256:789b90d2…; fetched exactly like build-vm-image 0.3 download-sbom (`cosign download sbom --platform=linux/amd64 <image>`); root checksum and pkg:oci purl = that digest. A Konflux container-build SBOM (syft 1.44 + hermeto + mobster 1.2.1) that build-vm-image re-attaches; not produced by build-vm-image itself'),
 }
 CASES=[
  {'id':'pkg','title':'Package mode (Fedora 44 qcow2)','docs':['u-pkg','p-pkg'],'pairs':[['u-pkg','p-pkg']]},
- {'id':'bootc','title':'bootc (Fedora 44 qcow2 from quay.io/fedora/fedora-bootc:44)','docs':['u-bootc','p-bootc','ctr-bootc'],'pairs':[['u-bootc','p-bootc'],['ctr-bootc','p-bootc']]},
+ {'id':'bootc','title':'bootc (qcow2 from Fedora CoreOS, Konflux-built container)','docs':['u-bootc','p-bootc','ctr-bootc'],'footnote':'An earlier run used quay.io/fedora/fedora-bootc:44 with a syft-generated input SBOM, because that image has no attached SBOM. It was replaced by this registry-attached Konflux SBOM. With the syft input the merged SBOM failed spdx-tools and mobster on undefined LicenseRefs from syft; with the Konflux SBOM both pass.','pairs':[['u-bootc','p-bootc'],['ctr-bootc','p-bootc']]},
 ]
 def purls(p): return [r['referenceLocator'] for r in p.get('externalRefs',[]) if r.get('referenceType')=='purl']
 def eco(p):
@@ -71,7 +71,7 @@ for k,(p,label,stage,note) in DOCS.items():
     p=override(k) or p
     if p and '*' in p:
         g=sorted(glob.glob(p)) or sorted(glob.glob(p.replace('-built/','-manifest/')))
-        if g and '-manifest/' in g[0]: stage='manifest'; note+=' (manifest-time copy: the bootc build had not finished, so no disk sha256 yet; Conforma pushed placeholder disk bytes, and matches_image passes only because the SBOM has no pkg:oci root to compare)'
+        if g and '-manifest/' in g[0]: stage='manifest'; note+=' (manifest-time copy: the bootc build had not finished, so no disk sha256 yet; Conforma pushed placeholder disk bytes)'
         p=g[0] if g else None
         if p is None: stage,note='pending','bootc build still running in the TCG VM; not measured yet'
     if p and not os.path.exists(p):
@@ -95,7 +95,7 @@ def ec(name,pol):
     return {'v':pick(c.get('violations')),'w':pick(c.get('warnings')),'s':len(pick(c.get('successes'))),'tv':len(c.get('violations') or []),'wall':c.get('warnings') or []}
 NR=['nr','not run']
 def cells(k):
-    e=ev.get(k); d=out[k]
+    e=ev.get({'p-bootc':'p-fcos','ctr-bootc':'ctr-fcos'}.get(k,k)); d=out[k]
     if d.get('missing'): return {r:(['nr','pending: build not finished'] if d['stage']=='pending' else ['na','no SBOM']) for r in ROWS}
     r={}
     if not e: return {x:NR for x in ROWS}
@@ -111,7 +111,7 @@ def cells(k):
         r['tvuln']=['info',f"{e['trustify_advisories']} advisories matched (no Fedora advisory data loaded; Trustify matches by purl namespace)"]
     else: r['trust']=['fail','upload failed: '+e['trustify_resp']]; r['tvuln']=NR
     for pol,lab in (('fcos','ecf'),('redhat_security','ecs')):
-        x=ec(k,pol)
+        x=ec({'p-bootc':'p-fcos','ctr-bootc':'ctr-fcos'}.get(k,k),pol)
         if not x: r[lab]=NR; continue
         mi=[c for c in x['v']+x['w'] if c=='sbom_spdx.matches_image']
         txt=f"SBOM/RPM rules: {len(set(x['v']))} failing, {len(set(x['w']))} warning ({x['s']} pass)"
@@ -119,12 +119,16 @@ def cells(k):
         if x['w']: txt+='; warns '+', '.join(f'{c} ×{x["w"].count(c)}' for c in sorted(set(x['w'])))
         r[lab]=['fail' if x['v'] else 'warn' if x['w'] else 'pass',txt+f". Total incl. faked-provenance rules: {x['tv']} violations"]
     for pol,lab in (('fcos','ecwf'),('redhat_security','ecws')):
-        x=ec(k+'-mobster',pol)
+        x=ec({'p-bootc':'p-fcos'}.get(k,k)+'-mobster',pol)
         if not x: r[lab]=['na','not possible: mobster refused this SBOM'] if e['mobster_p_rc']!='0' else NR; continue
         txt=f"SBOM/RPM rules: {len(set(x['v']))} failing, {len(set(x['w']))} warning ({x['s']} pass)"
         if x['v']: txt+='; fails '+', '.join(f'{c} ×{x["v"].count(c)}' for c in sorted(set(x['v'])))
         if x['w']: txt+='; warns '+', '.join(f'{c} ×{x["w"].count(c)}' for c in sorted(set(x['w'])))
         r[lab]=['fail' if x['v'] else 'warn' if x['w'] else 'pass',txt]
+    if k=='ctr-bootc':
+        r['mobp']=['na','n/a: refuses by design, the container SBOM root is the container digest, not a disk ('+r['mobp'][1][9:120]+'…)']
+        for l in ('ecf','ecs'):
+            if r[l][0]!='nr': r[l][1]+=' (same SBOM bytes as the earlier build-vm-image run, sbom-research/conforma/a-konflux-fcos, with placeholder disk bytes)'
     return r
 ROWS={'spdx':'spdx-tools validation','grader':'sbom-grader (Red Hat guide)','mequp':'mequal, upstream policies','meqp':'mequal, ProdSec-patched policies',
  'mobup':'mobster upstream: oci-artifact --from-sbom','mobp':'mobster PR branch: oci-artifact --from-sbom --fold-content-root',

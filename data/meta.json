@@ -16,12 +16,13 @@
   },
   {
    "id": "bootc",
-   "title": "bootc (Fedora 44 qcow2 from quay.io/fedora/fedora-bootc:44)",
+   "title": "bootc (qcow2 from Fedora CoreOS, Konflux-built container)",
    "docs": [
     "u-bootc",
     "p-bootc",
     "ctr-bootc"
    ],
+   "footnote": "An earlier run used quay.io/fedora/fedora-bootc:44 with a syft-generated input SBOM, because that image has no attached SBOM. It was replaced by this registry-attached Konflux SBOM. With the syft input the merged SBOM failed spdx-tools and mobster on undefined LicenseRefs from syft; with the Konflux SBOM both pass.",
    "pairs": [
     [
      "u-bootc",
@@ -205,94 +206,94 @@
     },
     "p-bootc": {
      "spdx": [
-      "fail",
-      "errors=1"
+      "pass",
+      "valid"
      ],
      "grader": [
       "fail",
-      "D: fails All packages have a checksum; Document passes extra validation; RPM packages have packageFileName"
+      "F: fails All Image PURLs contain qualifier repository_url and tag; All packages have a checksum; All packages have a supplier; All packages have a versionInfo; RPM packages have packageFileName"
      ],
      "mequp": [
       "fail",
-      "error=546 (spdx_sbom_all_components_contain_checksums_field)"
+      "error=1599 (spdx_sbom_all_components_contain_checksums_field, spdx_sbom_all_components_contain_versions)"
      ],
      "meqp": [
       "fail",
-      "error=545 tip=5 (spdx_sbom_all_components_contain_checksums_field)"
+      "error=1598 tip=5 (spdx_sbom_all_components_contain_checksums_field, spdx_sbom_all_components_contain_versions)"
      ],
      "mobup": [
       "fail",
       "rejected: unrecognized arguments: --from-sbom (upstream has no way to take a disk SBOM)"
      ],
      "mobp": [
-      "fail",
-      "refused: ValueError: Document is not valid. The following errors were detected: [ValidationMessage(validation_message='Unrecognized license reference: LicenseRef-Fedora-Firmware. license_expression must only u"
+      "pass",
+      "wrapped, 1600 packages in output"
      ],
      "trust": [
       "warn",
-      "ingested, 546 packages; 1 warning(s): Invalid reference 'DocumentRef-container:SPDXRef-DocumentRoot-Image-quay.io-fedora-fedora-bootc' of relationship 'SPDXRef-image-root' -[GeneratedFrom]-> 'DocumentRef-container:SPDXRef-DocumentRoot-Image-quay.io-fedora-fedora-bootc'"
+      "ingested, 1599 packages; 1 warning(s): Invalid reference 'DocumentRef-container:SPDXRef-image-fedora-coreos-testing-devel-03591e04c83c1db98cef05736fce6776738cc02bbb9aedab50c84e7a0bab79b6' of relationship 'SPDXRef-image-root' -[GeneratedFrom]-> 'DocumentRef-container:SPDXRef-image-fedora-coreos-testing-devel-03591e04c83c1db98cef05736fce67"
      ],
      "tvuln": [
       "info",
       "0 advisories matched (no Fedora advisory data loaded; Trustify matches by purl namespace)"
      ],
      "ecf": [
-      "pass",
-      "SBOM/RPM rules: 0 failing, 0 warning (16 pass). Total incl. faked-provenance rules: 9 violations"
+      "warn",
+      "SBOM/RPM rules: 0 failing, 1 warning (15 pass); warns sbom_spdx.hermeto_attribution_required \u00d7571. Total incl. faked-provenance rules: 9 violations"
      ],
      "ecs": [
-      "pass",
-      "SBOM/RPM rules: 0 failing, 0 warning (18 pass). Total incl. faked-provenance rules: 45 violations"
+      "fail",
+      "SBOM/RPM rules: 1 failing, 1 warning (16 pass); fails rpm_repos.ids_known \u00d710; warns sbom_spdx.hermeto_attribution_required \u00d7571. Total incl. faked-provenance rules: 56 violations"
      ],
      "ecwf": [
-      "na",
-      "not possible: mobster refused this SBOM"
+      "warn",
+      "SBOM/RPM rules: 0 failing, 1 warning (15 pass); warns sbom_spdx.hermeto_attribution_required \u00d7571"
      ],
      "ecws": [
-      "na",
-      "not possible: mobster refused this SBOM"
+      "fail",
+      "SBOM/RPM rules: 1 failing, 2 warning (15 pass); fails rpm_repos.ids_known \u00d710; warns rpm_build_deps.download_location_valid \u00d71, sbom_spdx.hermeto_attribution_required \u00d7571"
      ]
     },
     "ctr-bootc": {
      "spdx": [
-      "fail",
-      "errors=1"
+      "pass",
+      "valid"
      ],
      "grader": [
       "fail",
-      "E: fails All Image PURLs contain qualifier repository_url and tag; All packages have a checksum; Document passes extra validation; RPM packages have packageFileName"
+      "F: fails All Image PURLs contain qualifier repository_url and tag; All packages have a checksum; All packages have a supplier; All packages have a versionInfo; RPM packages have packageFileName"
      ],
      "mequp": [
       "fail",
-      "error=545 (spdx_sbom_all_components_contain_checksums_field)"
+      "error=1598 (spdx_sbom_all_components_contain_checksums_field, spdx_sbom_all_components_contain_versions)"
      ],
      "meqp": [
       "fail",
-      "error=546 tip=6 (spdx_oci_root_purl_digest, spdx_sbom_all_components_contain_checksums_field)"
+      "error=1598 tip=6 (spdx_sbom_all_components_contain_checksums_field, spdx_sbom_all_components_contain_versions)"
      ],
      "mobup": [
       "fail",
       "rejected: unrecognized arguments: --from-sbom (upstream has no way to take a disk SBOM)"
      ],
      "mobp": [
-      "fail",
-      "refused: ValueError: Content SBOM root SPDXRef-DocumentRoot-Image-quay.io-fedora-fedora-bootc records SHA256 36c8aac4265d19d14d1d552b0b70a25ede3a3c04689d703e1cc8aa3c46176f6a, but the artifact disk.qcow2 has 39"
+      "na",
+      "n/a: refuses by design, the container SBOM root is the container digest, not a disk (ValueError: Content SBOM root SPDXRef-image-fedora-coreos-testing-devel-03591e04c83c1db98cef05736fce6776738cc02\u2026)"
      ],
      "trust": [
       "pass",
-      "ingested, 546 packages; no warnings"
+      "ingested, 1599 packages; no warnings"
      ],
      "tvuln": [
       "info",
       "0 advisories matched (no Fedora advisory data loaded; Trustify matches by purl namespace)"
      ],
      "ecf": [
-      "nr",
-      "not run"
+      "warn",
+      "SBOM/RPM rules: 0 failing, 1 warning (15 pass); warns sbom_spdx.hermeto_attribution_required \u00d7571. Total incl. faked-provenance rules: 9 violations (same SBOM bytes as the earlier build-vm-image run, sbom-research/conforma/a-konflux-fcos, with placeholder disk bytes)"
      ],
      "ecs": [
-      "nr",
-      "not run"
+      "fail",
+      "SBOM/RPM rules: 2 failing, 1 warning (15 pass); fails rpm_repos.ids_known \u00d710, sbom_spdx.matches_image \u00d71; warns sbom_spdx.hermeto_attribution_required \u00d7571. Total incl. faked-provenance rules: 57 violations (same SBOM bytes as the earlier build-vm-image run, sbom-research/conforma/a-konflux-fcos, with placeholder disk bytes)"
      ],
      "ecwf": [
       "na",
