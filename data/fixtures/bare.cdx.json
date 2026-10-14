@@ -1,0 +1,12 @@
+{
+ "bomFormat": "CycloneDX",
+ "specVersion": "1.5",
+ "metadata": {
+  "component": {
+   "bom-ref": "main",
+   "name": "main",
+   "purl": "pkg:generic/main@1"
+  }
+ },
+ "components": []
+}

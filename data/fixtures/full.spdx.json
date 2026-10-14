@@ -1,0 +1,90 @@
+{
+ "SPDXID": "SPDXRef-DOCUMENT",
+ "spdxVersion": "SPDX-2.3",
+ "creationInfo": {
+  "comment": "SBOM type: build"
+ },
+ "packages": [
+  {
+   "SPDXID": "SPDXRef-main",
+   "name": "main",
+   "externalRefs": [
+    {
+     "referenceCategory": "PACKAGE-MANAGER",
+     "referenceType": "purl",
+     "referenceLocator": "pkg:generic/main@1"
+    },
+    {
+     "referenceCategory": "SECURITY",
+     "referenceType": "cpe22Type",
+     "referenceLocator": "cpe:/a:x:main:1"
+    },
+    {
+     "referenceCategory": "SECURITY",
+     "referenceType": "cpe22Type",
+     "referenceLocator": "cpe:/a:x:main-alias:1"
+    }
+   ]
+  },
+  {
+   "SPDXID": "SPDXRef-lib",
+   "name": "lib",
+   "externalRefs": [
+    {
+     "referenceCategory": "PACKAGE-MANAGER",
+     "referenceType": "purl",
+     "referenceLocator": "pkg:rpm/x/lib@1"
+    },
+    {
+     "referenceCategory": "PACKAGE-MANAGER",
+     "referenceType": "purl",
+     "referenceLocator": "pkg:rpm/y/lib@1"
+    }
+   ]
+  },
+  {
+   "SPDXID": "SPDXRef-lib-upstream",
+   "name": "lib"
+  },
+  {
+   "SPDXID": "SPDXRef-lib-arm",
+   "name": "lib"
+  },
+  {
+   "SPDXID": "SPDXRef-lib-src",
+   "name": "lib"
+  }
+ ],
+ "externalDocumentRefs": [
+  {
+   "externalDocumentId": "DocumentRef-other",
+   "spdxDocument": "https://example.com/other",
+   "checksum": {
+    "algorithm": "SHA1",
+    "checksumValue": "d6a770ba38583ed4bb4525bd96e50461655d2758"
+   }
+  }
+ ],
+ "relationships": [
+  {
+   "spdxElementId": "SPDXRef-DOCUMENT",
+   "relationshipType": "DESCRIBES",
+   "relatedSpdxElement": "SPDXRef-main"
+  },
+  {
+   "spdxElementId": "SPDXRef-lib-upstream",
+   "relationshipType": "ANCESTOR_OF",
+   "relatedSpdxElement": "SPDXRef-lib"
+  },
+  {
+   "spdxElementId": "SPDXRef-lib-arm",
+   "relationshipType": "VARIANT_OF",
+   "relatedSpdxElement": "SPDXRef-lib"
+  },
+  {
+   "spdxElementId": "SPDXRef-lib",
+   "relationshipType": "GENERATED_FROM",
+   "relatedSpdxElement": "SPDXRef-lib-src"
+  }
+ ]
+}

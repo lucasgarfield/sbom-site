@@ -1,0 +1,145 @@
+From 180584b114d490685b31f7aff1688d8afda009c7 Mon Sep 17 00:00:00 2001
+From: Lucas Garfield <lucas@local>
+Date: Wed, 14 Oct 2026 21:44:31 +0300
+Subject: [PATCH] sbom/spdx: declare the SBOM type and add mirror-independent
+ purls
+
+Fix two gaps that the ProdSec SPDX 2.3 policies for mequal report on
+osbuild's RPM SBOMs:
+
+- SPDX_SBOMTYPE (warning): SPDX 2.3 has no SBOM type field, so record
+  it in creationInfo.comment as "SBOM type: Build" (CISA SBOM type; the
+  document lists the packages depsolved for a build).
+- SPDX_MULTIPURL (tip): besides the purl with the repository_url of the
+  mirror the package was resolved from, add the same purl without
+  repository_url, so the package matches regardless of mirror.
+
+sbom-grader still grades the Fedora 44 qcow2 image SBOM A.
+---
+ osbuild/util/sbom/model.py       | 14 ++++++++++++++
+ osbuild/util/sbom/spdx.py        | 10 ++++++++++
+ osbuild/util/sbom/spdx2/model.py |  4 ++++
+ test/mod/test_util_sbom_spdx.py  | 17 +++++++++++++----
+ 4 files changed, 41 insertions(+), 4 deletions(-)
+
+diff --git a/osbuild/util/sbom/model.py b/osbuild/util/sbom/model.py
+index e9c1c923..c6a3f8f1 100644
+--- a/osbuild/util/sbom/model.py
++++ b/osbuild/util/sbom/model.py
+@@ -75,6 +75,12 @@ class BasePackage(abc.ABC):
+         https://github.com/package-url/purl-spec/blob/master/PURL-SPECIFICATION.rst
+         """
+ 
++    def purl_aliases(self) -> List[str]:
++        """
++        Return additional Package URLs that identify the same package.
++        """
++        return []
++
+ 
+ class RPMDependency:
+     """Represents an RPM dependency or provided capability."""
+@@ -183,3 +189,11 @@ class RPMPackage(BasePackage):
+ 
+     def purl(self) -> str:
+         return self._purl()
++
++    def purl_aliases(self) -> List[str]:
++        """
++        The same package without the (mirror-specific) repository URL, so that
++        it matches regardless of where it was downloaded from.
++        """
++        alias = self._purl(with_repo_url=False)
++        return [alias] if alias != self.purl() else []
+diff --git a/osbuild/util/sbom/spdx.py b/osbuild/util/sbom/spdx.py
+index d4906817..bb79e0ff 100644
+--- a/osbuild/util/sbom/spdx.py
++++ b/osbuild/util/sbom/spdx.py
+@@ -138,6 +138,9 @@ def create_spdx2_document():
+         creators=[spdx2.Creator(spdx2.CreatorType.TOOL, tool)],
+         created=datetime.now(),
+         license_list_version=spdx_license_list_version(),
++        # SPDX 2.3 has no SBOM type field. These documents list the packages
++        # depsolved for a build: CISA's "Build" SBOM type.
++        comment="SBOM type: Build",
+     )
+     doc = spdx2.Document(ci)
+ 
+@@ -172,6 +175,13 @@ def sbom_pkgset_to_spdx2_doc(
+                     reference_type="purl",
+                     locator=pkg.purl(),
+                 )
++            ] + [
++                spdx2.ExternalPackageRef(
++                    category=spdx2.ExternalPackageRefCategory.PACKAGE_MANAGER,
++                    reference_type="purl",
++                    locator=alias,
++                )
++                for alias in pkg.purl_aliases()
+             ]
+         )
+ 
+diff --git a/osbuild/util/sbom/spdx2/model.py b/osbuild/util/sbom/spdx2/model.py
+index da4acbc7..ba090072 100644
+--- a/osbuild/util/sbom/spdx2/model.py
++++ b/osbuild/util/sbom/spdx2/model.py
+@@ -83,6 +83,7 @@ class CreationInfo(EntityWithSpdxId):
+         created: datetime,
+         data_license: str = "CC0-1.0",
+         license_list_version: Optional[str] = None,
++        comment: Optional[str] = None,
+     ) -> None:
+         super().__init__(spdx_id)
+ 
+@@ -99,6 +100,7 @@ class CreationInfo(EntityWithSpdxId):
+         self.creators = creators
+         self.created = created
+         self.license_list_version = license_list_version
++        self.comment = comment
+ 
+     def to_dict(self):
+         creation_info = {
+@@ -107,6 +109,8 @@ class CreationInfo(EntityWithSpdxId):
+         }
+         if self.license_list_version:
+             creation_info["licenseListVersion"] = self.license_list_version
++        if self.comment:
++            creation_info["comment"] = self.comment
+         return {
+             "SPDXID": self.spdx_id,
+             "creationInfo": creation_info,
+diff --git a/test/mod/test_util_sbom_spdx.py b/test/mod/test_util_sbom_spdx.py
+index 31f14f79..fe481e72 100644
+--- a/test/mod/test_util_sbom_spdx.py
++++ b/test/mod/test_util_sbom_spdx.py
+@@ -149,10 +149,14 @@ def test_sbom_pkgset_to_spdx2_doc(repo_servers, licensing_available, license_ind
+             assert spdx_pkg.checksums[0].algorithm == spdx2_checksum_algorithm(list(bom_pkg.checksums.keys())[0])
+             assert spdx_pkg.checksums[0].value == list(bom_pkg.checksums.values())[0]
+ 
+-            assert len(spdx_pkg.external_references) == 1
+-            assert spdx_pkg.external_references[0].category == ExternalPackageRefCategory.PACKAGE_MANAGER
+-            assert spdx_pkg.external_references[0].reference_type == "purl"
+-            assert spdx_pkg.external_references[0].locator == bom_pkg.purl()
++            assert len(spdx_pkg.external_references) == 1 + len(bom_pkg.purl_aliases())
++            for ref in spdx_pkg.external_references:
++                assert ref.category == ExternalPackageRefCategory.PACKAGE_MANAGER
++                assert ref.reference_type == "purl"
++            assert [ref.locator for ref in spdx_pkg.external_references] == [bom_pkg.purl()] + bom_pkg.purl_aliases()
++            # the alias is the same purl without the mirror-specific repository_url
++            for alias in bom_pkg.purl_aliases():
++                assert "repository_url=" not in alias
+ 
+         assert len([rel for rel in doc.relationships if rel.relationship_type ==
+                     RelationshipType.DESCRIBES]) == len(bom_pkgset)
+@@ -168,3 +172,8 @@ def test_sbom_pkgset_to_spdx2_doc(repo_servers, licensing_available, license_ind
+         assert len(extracted_licensing_infos) > 0
+         assert sorted(extracted_licensing_infos, key=lambda x: x.license_ref_id) == \
+             sorted(doc.extracted_licensing_infos, key=lambda x: x.license_ref_id)
++
++
++def test_sbom_type_comment():
++    doc = create_spdx2_document()
++    assert doc.creation_info.to_dict()["creationInfo"]["comment"] == "SBOM type: Build"
+-- 
+2.47.3
+

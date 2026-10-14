@@ -1,0 +1,579 @@
+From 778e2f9854a168a9ee57bae501c02a8ea582bcaf Mon Sep 17 00:00:00 2001
+From: Lucas Garfield <lucas@local>
+Date: Wed, 14 Oct 2026 21:42:14 +0300
+Subject: [PATCH] Add SPDX 2.3 counterparts of the ProdSec CycloneDX policies
+
+Each CycloneDX policy in policies/cyclonedx gets an SPDX 2.3 policy in
+policies/spdx with the same severities and one rule per CycloneDX rule:
+
+- CDX_1_6_PLUS -> SPDX_2_3_PLUS (spdxVersion >= SPDX-2.3)
+- CDX_ANCESTORS -> SPDX_ANCESTORS (ANCESTOR_OF / DESCENDANT_OF)
+- CDX_VARIANTS -> SPDX_VARIANTS (VARIANT_OF)
+- CDX_PROVIDES -> SPDX_PROVIDES (GENERATED_FROM / GENERATES)
+- CDX_CPE -> SPDX_CPE (cpe22Type / cpe23Type externalRef on the described package)
+- CDX_MULTICPE -> SPDX_MULTICPE (more than one CPE externalRef on it)
+- CDX_MULTIPURL -> SPDX_MULTIPURL (a package with more than one purl externalRef)
+- CDX_EXTERNALREFS -> SPDX_EXTERNALREFS (externalDocumentRefs: valid
+  DocumentRef- ID and SHA1 checksum, non-empty spdxDocument, any present)
+- CDX_MAINCOMPONENTDUP -> SPDX_MAINPACKAGE (every described SPDX ID is in
+  packages[]; SPDX has no separate main component to duplicate)
+- CDX_SBOMTYPE -> SPDX_SBOMTYPE: SPDX 2.3 has no SBOM type field, so this
+  checks creationInfo.comment for "SBOM type: <CISA type>".
+
+spdx_util.rego holds the shared helpers (described packages, refs by type,
+relationships by type, spdxVersion as semver).
+---
+ .../prodsec/policies/spdx/spdx-2-3-plus.rego  | 37 ++++++++
+ .../prodsec/policies/spdx/spdx-ancestors.rego | 35 ++++++++
+ policy/prodsec/policies/spdx/spdx-cpe.rego    | 35 ++++++++
+ .../policies/spdx/spdx-externalrefs.rego      | 84 +++++++++++++++++++
+ .../policies/spdx/spdx-maindescribed.rego     | 37 ++++++++
+ .../prodsec/policies/spdx/spdx-multicpe.rego  | 43 ++++++++++
+ .../prodsec/policies/spdx/spdx-multipurl.rego | 41 +++++++++
+ .../prodsec/policies/spdx/spdx-provides.rego  | 35 ++++++++
+ .../prodsec/policies/spdx/spdx-sbomtype.rego  | 34 ++++++++
+ .../prodsec/policies/spdx/spdx-variants.rego  | 35 ++++++++
+ policy/prodsec/spdx_util.rego                 | 45 ++++++++++
+ 11 files changed, 461 insertions(+)
+ create mode 100644 policy/prodsec/policies/spdx/spdx-2-3-plus.rego
+ create mode 100644 policy/prodsec/policies/spdx/spdx-ancestors.rego
+ create mode 100644 policy/prodsec/policies/spdx/spdx-cpe.rego
+ create mode 100644 policy/prodsec/policies/spdx/spdx-externalrefs.rego
+ create mode 100644 policy/prodsec/policies/spdx/spdx-maindescribed.rego
+ create mode 100644 policy/prodsec/policies/spdx/spdx-multicpe.rego
+ create mode 100644 policy/prodsec/policies/spdx/spdx-multipurl.rego
+ create mode 100644 policy/prodsec/policies/spdx/spdx-provides.rego
+ create mode 100644 policy/prodsec/policies/spdx/spdx-sbomtype.rego
+ create mode 100644 policy/prodsec/policies/spdx/spdx-variants.rego
+ create mode 100644 policy/prodsec/spdx_util.rego
+
+diff --git a/policy/prodsec/policies/spdx/spdx-2-3-plus.rego b/policy/prodsec/policies/spdx/spdx-2-3-plus.rego
+new file mode 100644
+index 0000000..671ffce
+--- /dev/null
++++ b/policy/prodsec/policies/spdx/spdx-2-3-plus.rego
+@@ -0,0 +1,37 @@
++# METADATA
++# title: Teams should use SPDX 2.3 and above to use key features
++# description: >-
++#   SPDX counterpart of CDX_1_6_PLUS. SPDX 2.3 is the newest 2.x version and the one the Red Hat SBOM guide and Trustify target.
++# custom:
++#   short_name: SPDX_2_3_PLUS
++#   severity: tip
++package prodsec.policies.spdx.SPDX_2_3_PLUS
++
++import data.ec.lib
++import data.ec.lib.util.is_spdx
++import data.prodsec.spdx_util
++import rego.v1
++
++prerequisite if {
++	is_spdx
++}
++
++_policy_id := "SPDX_2_3_PLUS"
++
++# METADATA
++# title: SBOM is SPDX 2.3 and Above
++# description: SBOM is SPDX 2.3 and above in order to ensure support of potentially important features.
++# custom:
++#   short_name: spdx_sbom_is_spdx_2_3_and_above
++#   failure_msg: The SPDX version of this SBOM is older than SPDX-2.3, which may not support important features that may be required for complete and accurate manifesting.
++#   severity: tip
++deny contains result if {
++	prerequisite
++	not _is_2_3_or_above
++	result := object.union(
++		lib.result_helper(rego.metadata.chain(), []),
++		{"policy_id": _policy_id},
++	)
++}
++
++_is_2_3_or_above if semver.compare(spdx_util.spdx_semver, "2.3.0") >= 0
+diff --git a/policy/prodsec/policies/spdx/spdx-ancestors.rego b/policy/prodsec/policies/spdx/spdx-ancestors.rego
+new file mode 100644
+index 0000000..91abb8b
+--- /dev/null
++++ b/policy/prodsec/policies/spdx/spdx-ancestors.rego
+@@ -0,0 +1,35 @@
++# METADATA
++# title: SPDX SBOM Uses Ancestor Relationships
++# description: >-
++#   SPDX counterpart of CDX_ANCESTORS. CycloneDX nests the upstream of a component in pedigree.ancestors; SPDX 2.3 expresses the same with ANCESTOR_OF / DESCENDANT_OF relationships.
++# custom:
++#   short_name: SPDX_ANCESTORS
++#   severity: tip
++package prodsec.policies.spdx.SPDX_ANCESTORS
++
++import data.ec.lib
++import data.ec.lib.util.is_spdx
++import data.prodsec.spdx_util
++import rego.v1
++
++prerequisite if {
++	is_spdx
++}
++
++_policy_id := "SPDX_ANCESTORS"
++
++# METADATA
++# title: Ancestor Relationships are Used in SPDX SBOM
++# description: In a given SPDX SBOM, there are ANCESTOR_OF or DESCENDANT_OF relationships.
++# custom:
++#   short_name: spdx_ancestor_relationships_are_used
++#   failure_msg: TIP == In this SBOM, ANCESTOR_OF / DESCENDANT_OF relationships have not been utilized. They can denote the upstream of a package.
++#   severity: tip
++deny contains result if {
++	prerequisite
++	count(spdx_util.relationships_of_type({"ANCESTOR_OF", "DESCENDANT_OF"})) == 0
++	result := object.union(
++		lib.result_helper(rego.metadata.chain(), []),
++		{"policy_id": _policy_id},
++	)
++}
+diff --git a/policy/prodsec/policies/spdx/spdx-cpe.rego b/policy/prodsec/policies/spdx/spdx-cpe.rego
+new file mode 100644
+index 0000000..8d66cec
+--- /dev/null
++++ b/policy/prodsec/policies/spdx/spdx-cpe.rego
+@@ -0,0 +1,35 @@
++# METADATA
++# title: SPDX SBOM has a Main CPE
++# description: >-
++#   SPDX counterpart of CDX_CPE. SPDX has no .metadata.component.cpe; a CPE is a SECURITY externalRef (cpe22Type / cpe23Type) on the described package.
++# custom:
++#   short_name: SPDX_CPE
++#   severity: tip
++package prodsec.policies.spdx.SPDX_CPE
++
++import data.ec.lib
++import data.ec.lib.util.is_spdx
++import data.prodsec.spdx_util
++import rego.v1
++
++prerequisite if {
++	is_spdx
++}
++
++_policy_id := "SPDX_CPE"
++
++# METADATA
++# title: SPDX SBOM Has CPE
++# description: A package the SPDX document describes has a CPE externalRef.
++# custom:
++#   short_name: spdx_main_package_has_cpe
++#   failure_msg: TIP == If this a product-level SBOM, it is advised to define a CPE externalRef (cpe22Type or cpe23Type) on the described package to directly tie it to that product. If this is a component-level SBOM please disregard this tip.
++#   severity: tip
++deny contains result if {
++	prerequisite
++	count([p | some p in spdx_util.described_packages; count(spdx_util.refs_of_type(p, spdx_util.cpe_types)) > 0]) == 0
++	result := object.union(
++		lib.result_helper(rego.metadata.chain(), []),
++		{"policy_id": _policy_id},
++	)
++}
+diff --git a/policy/prodsec/policies/spdx/spdx-externalrefs.rego b/policy/prodsec/policies/spdx/spdx-externalrefs.rego
+new file mode 100644
+index 0000000..69ab969
+--- /dev/null
++++ b/policy/prodsec/policies/spdx/spdx-externalrefs.rego
+@@ -0,0 +1,84 @@
++# METADATA
++# title: SPDX SBOM Makes Valid External References to other SBOMs
++# description: >-
++#   SPDX counterpart of CDX_EXTERNALREFS. CycloneDX references other SBOMs from components (Bomlink urn:cdx: or a bom URL); SPDX 2.3 declares them once in externalDocumentRefs (DocumentRef- ID, spdxDocument URI, SHA1 checksum).
++# custom:
++#   short_name: SPDX_EXTERNALREFS
++#   severity: error
++package prodsec.policies.spdx.SPDX_EXTERNALREFS
++
++import data.ec.lib
++import data.ec.lib.util.is_spdx
++import rego.v1
++
++prerequisite if {
++	is_spdx
++}
++
++_policy_id := "SPDX_EXTERNALREFS"
++
++_doc_refs := object.get(input, "externalDocumentRefs", [])
++
++# METADATA
++# title: All External Document References are Valid
++# description: Given an SBOM, ensure that every externalDocumentRefs entry has a valid DocumentRef- ID and a SHA1 checksum.
++# custom:
++#   short_name: spdx_all_sbom_exrefs_valid_documentref
++#   failure_msg: An invalid external document reference has been found for externalDocumentIds %s
++#   severity: error
++deny contains result if {
++	prerequisite
++	count(_invalid_ids) > 0
++	result := object.union(
++		lib.result_helper(rego.metadata.chain(), [_invalid_ids]),
++		{"policy_id": _policy_id},
++	)
++}
++
++_invalid_ids contains object.get(ref, "externalDocumentId", "") if {
++	some ref in _doc_refs
++	not _valid(ref)
++}
++
++_valid(ref) if {
++	regex.match(`^DocumentRef-[A-Za-z0-9.\-]+$`, ref.externalDocumentId)
++	ref.checksum.algorithm == "SHA1"
++	regex.match(`^[0-9a-f]{40}$`, ref.checksum.checksumValue)
++}
++
++# METADATA
++# title: All External Document References Have Non-empty spdxDocument Fields
++# description: Given an SBOM, ensure that every externalDocumentRefs entry has a non-empty spdxDocument URI.
++# custom:
++#   short_name: spdx_all_sbom_exrefs_nonempty_spdxdocument
++#   failure_msg: An empty spdxDocument has been found for externalDocumentIds %s
++#   severity: error
++deny contains result if {
++	prerequisite
++	count(_empty_ids) > 0
++	result := object.union(
++		lib.result_helper(rego.metadata.chain(), [_empty_ids]),
++		{"policy_id": _policy_id},
++	)
++}
++
++_empty_ids contains object.get(ref, "externalDocumentId", "") if {
++	some ref in _doc_refs
++	object.get(ref, "spdxDocument", "") == ""
++}
++
++# METADATA
++# title: External SBOM References Used
++# description: Given an SBOM, there have been external document references identified.
++# custom:
++#   short_name: spdx_sbom_exrefs_used
++#   failure_msg: TIP == No external SBOM references have been found in this SBOM. Referencing other SBOMs is possible with externalDocumentRefs.
++#   severity: tip
++deny contains result if {
++	prerequisite
++	count(_doc_refs) == 0
++	result := object.union(
++		lib.result_helper(rego.metadata.chain(), []),
++		{"policy_id": _policy_id},
++	)
++}
+diff --git a/policy/prodsec/policies/spdx/spdx-maindescribed.rego b/policy/prodsec/policies/spdx/spdx-maindescribed.rego
+new file mode 100644
+index 0000000..7870826
+--- /dev/null
++++ b/policy/prodsec/policies/spdx/spdx-maindescribed.rego
+@@ -0,0 +1,37 @@
++# METADATA
++# title: SPDX_MAINPACKAGE
++# description: >-
++#   SPDX counterpart of CDX_MAINCOMPONENTDUP. SPDX has no separate .metadata.component to duplicate; the described package must itself be present in packages[].
++# custom:
++#   short_name: SPDX_MAINPACKAGE
++#   severity: error
++package prodsec.policies.spdx.SPDX_MAINPACKAGE
++
++import data.ec.lib
++import data.ec.lib.util.is_spdx
++import data.prodsec.spdx_util
++import rego.v1
++
++prerequisite if {
++	is_spdx
++}
++
++_policy_id := "SPDX_MAINPACKAGE"
++
++# METADATA
++# title: Described package is in packages
++# description: Every SPDX ID the document describes is a package in packages[].
++# custom:
++#   short_name: spdx_described_package_in_packages
++#   failure_msg: SPDX SBOM describes '%s', which is not in the packages array
++#   severity: error
++deny contains result if {
++	prerequisite
++	some id in spdx_util.described_ids
++	not startswith(id, "DocumentRef-")
++	count([p | some p in object.get(input, "packages", []); p.SPDXID == id]) == 0
++	result := object.union(
++		lib.result_helper(rego.metadata.chain(), [id]),
++		{"policy_id": _policy_id},
++	)
++}
+diff --git a/policy/prodsec/policies/spdx/spdx-multicpe.rego b/policy/prodsec/policies/spdx/spdx-multicpe.rego
+new file mode 100644
+index 0000000..76ce4f5
+--- /dev/null
++++ b/policy/prodsec/policies/spdx/spdx-multicpe.rego
+@@ -0,0 +1,43 @@
++# METADATA
++# title: SPDX SBOM Contains Multiple CPEs
++# description: >-
++#   SPDX counterpart of CDX_MULTICPE. CycloneDX 1.6 lists CPE aliases in metadata.component.evidence.identity; SPDX lists every CPE as its own externalRef on the described package.
++# custom:
++#   short_name: SPDX_MULTICPE
++#   severity: tip
++package prodsec.policies.spdx.SPDX_MULTICPE
++
++import data.ec.lib
++import data.ec.lib.util.is_spdx
++import data.prodsec.spdx_util
++import rego.v1
++
++prerequisite if {
++	is_spdx
++	# same gate as the CycloneDX rule's 1.6 (where evidence.identity was added)
++	semver.compare(spdx_util.spdx_semver, "2.3.0") >= 0
++	some p in spdx_util.described_packages
++	count(spdx_util.refs_of_type(p, spdx_util.cpe_types)) > 0
++}
++
++_policy_id := "SPDX_MULTICPE"
++
++# METADATA
++# title: SPDX SBOM Uses Multi-CPE
++# description: A package the SPDX document describes has more than one CPE externalRef.
++# custom:
++#   short_name: spdx_contains_multicpe_example
++#   failure_msg: TIP == This SBOM includes a main CPE. SPDX can represent CPE aliases by adding one externalRef per CPE to the described package. This is supported for Trustify SBOM ingestion.
++#   severity: tip
++deny contains result if {
++	prerequisite
++	count([p | some p in spdx_util.described_packages; count(spdx_util.refs_of_type(p, spdx_util.cpe_types)) > 1]) == 0
++	example_snippet := {"externalRefs": [
++		{"referenceCategory": "SECURITY", "referenceType": "cpe22Type", "referenceLocator": "main_cpe_here"},
++		{"referenceCategory": "SECURITY", "referenceType": "cpe22Type", "referenceLocator": "cpe_alias_here"},
++	]}
++	result := object.union(
++		lib.result_helper(rego.metadata.chain(), []),
++		{"policy_id": _policy_id, "multi_cpe_example": example_snippet},
++	)
++}
+diff --git a/policy/prodsec/policies/spdx/spdx-multipurl.rego b/policy/prodsec/policies/spdx/spdx-multipurl.rego
+new file mode 100644
+index 0000000..5b5d5b5
+--- /dev/null
++++ b/policy/prodsec/policies/spdx/spdx-multipurl.rego
+@@ -0,0 +1,41 @@
++# METADATA
++# title: SPDX SBOM Contains Multiple PURLs
++# description: >-
++#   SPDX counterpart of CDX_MULTIPURL. CycloneDX 1.6 lists PURL aliases in .evidence.identity; SPDX lists every PURL as its own externalRef.
++# custom:
++#   short_name: SPDX_MULTIPURL
++#   severity: tip
++package prodsec.policies.spdx.SPDX_MULTIPURL
++
++import data.ec.lib
++import data.ec.lib.util.is_spdx
++import data.prodsec.spdx_util
++import rego.v1
++
++prerequisite if {
++	is_spdx
++	# same gate as the CycloneDX rule's 1.6 (where evidence.identity was added)
++	semver.compare(spdx_util.spdx_semver, "2.3.0") >= 0
++}
++
++_policy_id := "SPDX_MULTIPURL"
++
++# METADATA
++# title: SPDX SBOM Uses Multi-PURL
++# description: A given SBOM has a package with more than one purl externalRef.
++# custom:
++#   short_name: spdx_contains_multipurl_example
++#   failure_msg: TIP == SPDX can represent PURL aliases by adding one purl externalRef per PURL to a package. This is supported for Trustify SBOM ingestion.
++#   severity: tip
++deny contains result if {
++	prerequisite
++	count([p | some p in object.get(input, "packages", []); count(spdx_util.refs_of_type(p, {"purl"})) > 1]) == 0
++	example_snippet := {"externalRefs": [
++		{"referenceCategory": "PACKAGE-MANAGER", "referenceType": "purl", "referenceLocator": "main_purl_here"},
++		{"referenceCategory": "PACKAGE-MANAGER", "referenceType": "purl", "referenceLocator": "purl_alias_here"},
++	]}
++	result := object.union(
++		lib.result_helper(rego.metadata.chain(), []),
++		{"policy_id": _policy_id, "multipurl_example": example_snippet},
++	)
++}
+diff --git a/policy/prodsec/policies/spdx/spdx-provides.rego b/policy/prodsec/policies/spdx/spdx-provides.rego
+new file mode 100644
+index 0000000..c0d0239
+--- /dev/null
++++ b/policy/prodsec/policies/spdx/spdx-provides.rego
+@@ -0,0 +1,35 @@
++# METADATA
++# title: SPDX SBOM Uses Source-to-Binary Relationships
++# description: >-
++#   SPDX counterpart of CDX_PROVIDES for its Trustify use, source-to-binary links, which SPDX 2.3 expresses with GENERATED_FROM / GENERATES relationships.
++# custom:
++#   short_name: SPDX_PROVIDES
++#   severity: tip
++package prodsec.policies.spdx.SPDX_PROVIDES
++
++import data.ec.lib
++import data.ec.lib.util.is_spdx
++import data.prodsec.spdx_util
++import rego.v1
++
++prerequisite if {
++	is_spdx
++}
++
++_policy_id := "SPDX_PROVIDES"
++
++# METADATA
++# title: Source-to-Binary Relationships are Used in SPDX SBOM
++# description: In a given SPDX SBOM, there are GENERATED_FROM or GENERATES relationships.
++# custom:
++#   short_name: spdx_generated_from_relationships_are_used
++#   failure_msg: TIP == In this SBOM, GENERATED_FROM / GENERATES relationships have not been utilized. If the SBOM is to be ingested by Trustify, they specify source-to-binary relationships.
++#   severity: tip
++deny contains result if {
++	prerequisite
++	count(spdx_util.relationships_of_type({"GENERATED_FROM", "GENERATES"})) == 0
++	result := object.union(
++		lib.result_helper(rego.metadata.chain(), []),
++		{"policy_id": _policy_id},
++	)
++}
+diff --git a/policy/prodsec/policies/spdx/spdx-sbomtype.rego b/policy/prodsec/policies/spdx/spdx-sbomtype.rego
+new file mode 100644
+index 0000000..4ae1955
+--- /dev/null
++++ b/policy/prodsec/policies/spdx/spdx-sbomtype.rego
+@@ -0,0 +1,34 @@
++# METADATA
++# title: Specify the SBOM Type in SPDX
++# description: >-
++#   SPDX counterpart of CDX_SBOMTYPE. SPDX 2.3 has no field for the SBOM type (CycloneDX .metadata.lifecycles; SPDX 3.0 software_sbomType), so this checks creationInfo.comment for "SBOM type: <CISA type>".
++# custom:
++#   short_name: SPDX_SBOMTYPE
++#   severity: warning
++package prodsec.policies.spdx.SPDX_SBOMTYPE
++
++import data.ec.lib
++import data.ec.lib.util.is_spdx
++import rego.v1
++
++prerequisite if {
++	is_spdx
++}
++
++_policy_id := "SPDX_SBOMTYPE"
++
++# METADATA
++# title: SPDX creationInfo.comment Declares the SBOM Type
++# description: In an SPDX SBOM, creationInfo.comment contains "SBOM type:" followed by a CISA SBOM type (design, source, build, analyzed, deployed, runtime).
++# custom:
++#   short_name: spdx_creationinfo_sbom_type_exists
++#   failure_msg: No "SBOM type:" declaration has been found in creationInfo.comment. Defining an SBOM type helps Mequal evaluate SBOMs in different specialized contexts in the future.
++#   severity: warning
++deny contains result if {
++	prerequisite
++	not regex.match(`(?i)\bsbom type:\s*(design|source|build|analyzed|deployed|runtime)\b`, object.get(object.get(input, "creationInfo", {}), "comment", ""))
++	result := object.union(
++		lib.result_helper(rego.metadata.chain(), []),
++		{"policy_id": _policy_id},
++	)
++}
+diff --git a/policy/prodsec/policies/spdx/spdx-variants.rego b/policy/prodsec/policies/spdx/spdx-variants.rego
+new file mode 100644
+index 0000000..fa6b161
+--- /dev/null
++++ b/policy/prodsec/policies/spdx/spdx-variants.rego
+@@ -0,0 +1,35 @@
++# METADATA
++# title: SPDX SBOM Uses Variant Relationships
++# description: >-
++#   SPDX counterpart of CDX_VARIANTS. CycloneDX nests architecture variants in pedigree.variants; SPDX 2.3 expresses the same with VARIANT_OF relationships.
++# custom:
++#   short_name: SPDX_VARIANTS
++#   severity: tip
++package prodsec.policies.spdx.SPDX_VARIANTS
++
++import data.ec.lib
++import data.ec.lib.util.is_spdx
++import data.prodsec.spdx_util
++import rego.v1
++
++prerequisite if {
++	is_spdx
++}
++
++_policy_id := "SPDX_VARIANTS"
++
++# METADATA
++# title: Variant Relationships are Used in SPDX SBOM
++# description: In a given SPDX SBOM, there are VARIANT_OF relationships.
++# custom:
++#   short_name: spdx_variant_relationships_are_used
++#   failure_msg: TIP == In this SBOM, VARIANT_OF relationships have not been utilized. They can represent the relationship of an image index to its architecture variants.
++#   severity: tip
++deny contains result if {
++	prerequisite
++	count(spdx_util.relationships_of_type({"VARIANT_OF"})) == 0
++	result := object.union(
++		lib.result_helper(rego.metadata.chain(), []),
++		{"policy_id": _policy_id},
++	)
++}
+diff --git a/policy/prodsec/spdx_util.rego b/policy/prodsec/spdx_util.rego
+new file mode 100644
+index 0000000..73940ae
+--- /dev/null
++++ b/policy/prodsec/spdx_util.rego
+@@ -0,0 +1,45 @@
++package prodsec.spdx_util
++
++import rego.v1
++
++# SPDX IDs of the packages the document describes (the SPDX counterpart of
++# CycloneDX .metadata.component): documentDescribes, DESCRIBES from the
++# document, and DESCRIBED_BY pointing at the document.
++described_ids contains id if {
++	some id in input.documentDescribes
++}
++
++described_ids contains r.relatedSpdxElement if {
++	some r in input.relationships
++	r.spdxElementId == "SPDXRef-DOCUMENT"
++	r.relationshipType == "DESCRIBES"
++}
++
++described_ids contains r.spdxElementId if {
++	some r in input.relationships
++	r.relatedSpdxElement == "SPDXRef-DOCUMENT"
++	r.relationshipType == "DESCRIBED_BY"
++}
++
++described_packages contains p if {
++	some p in input.packages
++	p.SPDXID in described_ids
++}
++
++refs_of_type(pkg, types) := [ref |
++	some ref in object.get(pkg, "externalRefs", [])
++	ref.referenceType in types
++]
++
++cpe_types := {"cpe22Type", "cpe23Type"}
++
++relationships_of_type(types) := [r |
++	some r in object.get(input, "relationships", [])
++	r.relationshipType in types
++]
++
++# "SPDX-2.3" -> "2.3.0"
++spdx_semver := v if {
++	m := regex.find_all_string_submatch_n(`^SPDX-(\d+)\.(\d+)$`, input.spdxVersion, 1)[0]
++	v := sprintf("%s.%s.0", [m[1], m[2]])
++}
+-- 
+2.47.3
+

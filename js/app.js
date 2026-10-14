@@ -15,6 +15,7 @@
       box.insertBefore(hdr, host);
     }
     const v = new JsonView(host, left, right);
+    (window.jsonViews = window.jsonViews || new Map()).set(box, v);
     bar.append(btn("expand all", () => v.expandAll()), btn("collapse all", () => v.collapseAll()));
     if (right !== undefined) {
       const pos = el("span", "pos", "");

@@ -45,3 +45,31 @@ details.gen > summary { cursor:pointer; color:var(--mut); font-size:12px; margin
 .p-add { } .p-body .p-add { background:var(--add); color:#d4f5da } .p-body .p-del { background:var(--del); color:#ffd7db }
 .p-hunk { color:#7cc4ff; background:#121a28 } .p-meta { color:var(--mut) }
 .note { color:#e6c07b; font-size:13px; margin:4px 0 8px } .note code { background:#232a37; padding:0 4px; border-radius:3px }
+/* part B */
+h1.part { font-size:22px; margin:56px 0 16px; border-top:2px solid #344055; padding-top:20px }
+h3 { font-size:14px; color:var(--mut) }
+.rego { margin:0; padding:10px 14px; background:#0b0d12; overflow:auto; font:12.5px/1.5 ui-monospace, monospace }
+.rg-com { color:#6b7487 } .rg-meta { color:#8fa1b3 } .rg-str { color:var(--str) } .rg-num { color:var(--num) } .rg-op { color:#89ddff }
+.rg-kw { color:#c792ea; font-weight:600 } .rg-fn { color:#82aaff } .rg-rule { color:#ffcb6b; font-weight:600 } .rg-id { color:var(--fg) }
+details.pol, details.rule { border:1px solid var(--line); border-radius:6px; margin:6px 0; background:var(--panel) }
+details.pol > summary, details.rule > summary { cursor:pointer; padding:6px 10px; display:flex; gap:10px; align-items:center; flex-wrap:wrap }
+details.rule { margin:6px 8px; background:#10131a }
+.pid { font:600 13px ui-monospace, monospace } .rid { font:12.5px ui-monospace, monospace; color:var(--key) }
+.srcl { font:12px ui-monospace, monospace; color:var(--mut) } .srcl:hover { color:var(--fg) }
+.sev { font:11px ui-monospace, monospace; padding:0 6px; border-radius:8px; border:1px solid }
+.sev-tip { color:#8fd6ff; border-color:#2f5d7a } .sev-warning { color:#ffcf70; border-color:#7a5f20 } .sev-error { color:#ff8f9b; border-color:#7a2f38 }
+.mk { font:11px ui-monospace, monospace; padding:1px 7px; border-radius:8px }
+.mk-exact { background:#16361f; color:#7ee08f } .mk-adapted { background:#3a3216; color:#ffd479 } .mk-not-convertible { background:#3d1a1f; color:#ff8f9b }
+.pgrid { display:grid; grid-template-columns:1fr 1fr; gap:6px } .pgrid > details.rule { margin:6px 0; min-width:0 }
+.phead div { font:12px ui-monospace, monospace; color:var(--mut); padding:0 10px }
+.prow { border-top:1px solid var(--line); padding:8px 8px 4px }
+.ptop { display:flex; gap:10px; align-items:center; flex-wrap:wrap }
+.fx { margin-left:auto; display:flex; gap:4px } .chip { font:11px ui-monospace, monospace; padding:0 6px; border-radius:8px; text-decoration:none }
+.chip.ok { background:#16361f; color:#b9f0c3 } .chip.bad { background:#3d1a1f; color:#ffd7db }
+.callout { margin:6px 0 2px; padding:4px 10px; border-left:3px solid #e6c07b; background:#1d1a10; color:#f0dca8; font-size:12.5px }
+table.gaps { border-collapse:collapse; margin:8px 0; font-size:12.5px } table.gaps th, table.gaps td { border:1px solid var(--line); padding:4px 10px; text-align:left; vertical-align:top }
+table.gaps th { background:#161a22; color:var(--mut); font-weight:500 } td.num { font-family:ui-monospace, monospace; text-align:right }
+table.gaps a { color:#7cc4ff }
+.lbl { color:var(--mut); font-size:12px }
+.grade-banner { display:inline-flex; align-items:center; gap:16px; border:2px solid #2f7a45; background:#0f2416; border-radius:10px; padding:10px 20px; margin:8px 0 }
+.g-lbl { font:600 14px system-ui; color:#b9f0c3 } .g-val { font:700 40px ui-monospace, monospace; color:#7ee08f }

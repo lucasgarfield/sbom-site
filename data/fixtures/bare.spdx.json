@@ -1,0 +1,12 @@
+{
+ "SPDXID": "SPDXRef-DOCUMENT",
+ "spdxVersion": "SPDX-2.2",
+ "packages": [],
+ "relationships": [
+  {
+   "spdxElementId": "SPDXRef-DOCUMENT",
+   "relationshipType": "DESCRIBES",
+   "relatedSpdxElement": "SPDXRef-main"
+  }
+ ]
+}

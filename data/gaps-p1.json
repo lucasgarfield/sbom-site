@@ -1,0 +1,58 @@
+[
+ {
+  "rule_id": "spdx_ancestor_relationships_are_used",
+  "policy_id": "SPDX_ANCESTORS",
+  "severity": "tip",
+  "affected": 511,
+  "total": 511,
+  "path": "$.relationships"
+ },
+ {
+  "rule_id": "spdx_main_package_has_cpe",
+  "policy_id": "SPDX_CPE",
+  "severity": "tip",
+  "affected": 1,
+  "total": 511,
+  "path": "$.packages[fedora-44-generic-qcow2-x86_64 44]"
+ },
+ {
+  "rule_id": "spdx_sbom_exrefs_used",
+  "policy_id": "SPDX_EXTERNALREFS",
+  "severity": "tip",
+  "affected": "document",
+  "total": 511,
+  "path": "$.SPDXID"
+ },
+ {
+  "rule_id": "spdx_contains_multipurl_example",
+  "policy_id": "SPDX_MULTIPURL",
+  "severity": "tip",
+  "affected": 511,
+  "total": 511,
+  "path": "$.packages"
+ },
+ {
+  "rule_id": "spdx_generated_from_relationships_are_used",
+  "policy_id": "SPDX_PROVIDES",
+  "severity": "tip",
+  "affected": 511,
+  "total": 511,
+  "path": "$.relationships"
+ },
+ {
+  "rule_id": "spdx_creationinfo_sbom_type_exists",
+  "policy_id": "SPDX_SBOMTYPE",
+  "severity": "warning",
+  "affected": "document",
+  "total": 511,
+  "path": "$.creationInfo"
+ },
+ {
+  "rule_id": "spdx_variant_relationships_are_used",
+  "policy_id": "SPDX_VARIANTS",
+  "severity": "tip",
+  "affected": 511,
+  "total": 511,
+  "path": "$.relationships"
+ }
+]

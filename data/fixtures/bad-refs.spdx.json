@@ -1,0 +1,42 @@
+{
+ "SPDXID": "SPDXRef-DOCUMENT",
+ "spdxVersion": "SPDX-2.3",
+ "packages": [
+  {
+   "SPDXID": "SPDXRef-main",
+   "name": "main",
+   "externalRefs": [
+    {
+     "referenceCategory": "PACKAGE-MANAGER",
+     "referenceType": "purl",
+     "referenceLocator": "pkg:generic/main@1"
+    }
+   ]
+  }
+ ],
+ "relationships": [
+  {
+   "spdxElementId": "SPDXRef-DOCUMENT",
+   "relationshipType": "DESCRIBES",
+   "relatedSpdxElement": "SPDXRef-main"
+  }
+ ],
+ "externalDocumentRefs": [
+  {
+   "externalDocumentId": "DocumentRef-a",
+   "spdxDocument": "https://example.com/a",
+   "checksum": {
+    "algorithm": "SHA256",
+    "checksumValue": "x"
+   }
+  },
+  {
+   "externalDocumentId": "DocumentRef-b",
+   "spdxDocument": "",
+   "checksum": {
+    "algorithm": "SHA1",
+    "checksumValue": "d6a770ba38583ed4bb4525bd96e50461655d2758"
+   }
+  }
+ ]
+}

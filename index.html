@@ -48,8 +48,78 @@
   <div class="viewer" data-left="data/main.image-os.spdx.json" data-right="data/p1.image-os.spdx.json"></div>
 </section>
 
+
+<h1 class="part">Part B · mequal</h1>
+
+<section id="s-b-cdx">
+  <h2>mequal · ProdSec CycloneDX policies</h2>
+  <div class="bar pins">
+    <a class="btn" target="_blank" href="https://github.com/sbomer-project/mequal/tree/386a4d05d499674e7c23b9b0b2507a660543beee">sbomer-project/mequal@386a4d0</a>
+    <a class="btn" target="_blank" href="https://github.com/sbomer-project/mequal-prodsec-policies/tree/d3c38e775c37af6461aa9a59df6a6018c3aa0080">sbomer-project/mequal-prodsec-policies@d3c38e7</a>
+    <a class="btn" target="_blank" href="https://github.com/sbomer-project/mequal-helpers/tree/273f8c7b2e26935215bf95497da2b80fc499a40a">sbomer-project/mequal-helpers@273f8c7</a>
+  </div>
+  <div class="cdx-policies"></div>
+</section>
+
+<section id="s-b-parity">
+  <h2>CycloneDX → SPDX 2.3</h2>
+  <div class="parity"></div>
+</section>
+
+<section id="s-b-links">
+  <h2>patched mequal</h2>
+  <table class="gaps links">
+    <tr><th>repo</th><th>branch</th><th>PR</th></tr>
+    <tr><td class="rid">lucasgarfield/mequal-prodsec-policies</td><td><a target="_blank" href="https://github.com/lucasgarfield/mequal-prodsec-policies/tree/spdx-2-3-policies">spdx-2-3-policies</a> <a target="_blank" href="https://github.com/lucasgarfield/mequal-prodsec-policies/commit/778e2f9854a168a9ee57bae501c02a8ea582bcaf">778e2f9</a></td><td><a target="_blank" href="https://github.com/lucasgarfield/mequal-prodsec-policies/pull/1">#1</a></td></tr>
+    <tr><td class="rid">lucasgarfield/mequal</td><td><a target="_blank" href="https://github.com/lucasgarfield/mequal/tree/spdx-prodsec-policies">spdx-prodsec-policies</a> <a target="_blank" href="https://github.com/lucasgarfield/mequal/commit/048d4501437ac009aeef76b74df082d8e3dc9e30">048d450</a></td><td><a target="_blank" href="https://github.com/lucasgarfield/mequal/pull/1">#1</a></td></tr>
+  </table>
+  <div class="bar"><a class="btn" href="data/prodsec-spdx.patch" download>prodsec-spdx.patch</a></div>
+</section>
+
+<section id="s-b-run-p1">
+  <h2>mequal · patch 1</h2>
+  <div class="bar"><a class="btn" href="data/p1.image-os.spdx.json" download>p1.image-os.spdx.json</a><a class="btn" href="data/prodsec-spdx.patch" download>prodsec-spdx.patch</a></div>
+  <div class="code" data-src="cmd/mequal-p1.sh"></div>
+  <pre class="term" data-src="data/mequal-p1.html"></pre>
+</section>
+
+<section id="s-b-gaps">
+  <h2>gaps · patch 1</h2>
+  <div class="gaps-box"><div class="viewer" data-left="data/p1.image-os.spdx.json"></div></div>
+</section>
+
+<section id="s-b-patch2">
+  <h2>osbuild patch 2</h2>
+  <div class="table-box" data-src="data/p2-map.json"></div>
+  <h3>not fixed in osbuild</h3>
+  <div class="table-box" data-src="data/p2-unfixable.json"></div>
+  <div class="bar"><a class="btn" href="data/osbuild-p2.patch" download>osbuild-p2.patch</a></div>
+  <div class="patch" data-src="data/osbuild-p2.patch"></div>
+</section>
+
+<section id="s-b-run-p2">
+  <h2>mequal · patch 2</h2>
+  <div class="bar"><a class="btn" href="data/p2.image-os.spdx.json" download>p2.image-os.spdx.json</a></div>
+  <details class="gen"><summary>generate</summary><div class="code" data-src="cmd/generate-p2.sh"></div></details>
+  <div class="code" data-src="cmd/mequal-p2.sh"></div>
+  <pre class="term" data-src="data/mequal-p2.html"></pre>
+</section>
+
+<section id="s-b-grader-p2">
+  <h2>sbom-grader · patch 2</h2>
+  <div class="grade-banner"><span class="g-lbl">sbom-grader · patch 2</span><span class="g-val" data-grade-src="data/grader-p2.html">…</span></div>
+  <div class="code" data-src="cmd/grader-p2.sh"></div>
+  <pre class="term" data-src="data/grader-p2.html"></pre>
+</section>
+
+<section id="s-b-diff">
+  <h2>patch 1 ↔ patch 2</h2>
+  <div class="viewer" data-left="data/p1.image-os.spdx.json" data-right="data/p2.image-os.spdx.json"></div>
+</section>
 </main>
 <script src="js/jsonview.js"></script>
 <script src="js/app.js"></script>
+<script src="js/rego.js"></script>
+<script src="js/partb.js"></script>
 </body>
 </html>

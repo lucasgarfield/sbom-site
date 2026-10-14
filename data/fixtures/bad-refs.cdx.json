@@ -1,0 +1,38 @@
+{
+ "bomFormat": "CycloneDX",
+ "specVersion": "1.6",
+ "metadata": {
+  "component": {
+   "bom-ref": "main",
+   "name": "main",
+   "purl": "pkg:generic/main@1"
+  }
+ },
+ "components": [
+  {
+   "bom-ref": "main",
+   "name": "main",
+   "purl": "pkg:generic/main@1"
+  },
+  {
+   "bom-ref": "a",
+   "name": "a",
+   "externalReferences": [
+    {
+     "type": "bom",
+     "url": "urn:cdx:not-a-uuid/1"
+    }
+   ]
+  },
+  {
+   "bom-ref": "b",
+   "name": "b",
+   "externalReferences": [
+    {
+     "type": "bom",
+     "url": ""
+    }
+   ]
+  }
+ ]
+}

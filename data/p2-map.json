@@ -1,0 +1,5 @@
+{"cols": ["gap (patch 1)", "severity", "hunk (patch 2)", "after patch 2"],
+ "rows": [
+  ["spdx_creationinfo_sbom_type_exists", "warning", "spdx.py create_spdx2_document: comment=\"SBOM type: Build\"; spdx2/model.py CreationInfo.comment", "pass"],
+  ["spdx_contains_multipurl_example", "tip", "model.py purl_aliases(): purl without repository_url; spdx.py: one extra purl externalRef per alias", "pass"]
+ ]}

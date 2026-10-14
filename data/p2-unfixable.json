@@ -1,0 +1,8 @@
+{"cols": ["gap", "severity", "where", "why"],
+ "rows": [
+  ["spdx_generated_from_relationships_are_used", "tip", "osbuild + policy", "needs SRPM packages; no SRPM checksum at depsolve time → sbom-grader 'All packages have a checksum' and mequal LPOL3 would fail"],
+  ["spdx_main_package_has_cpe", "tip", "image-builder", "described package is the disk image root written by image-builder; osbuild never sees it"],
+  ["spdx_sbom_exrefs_used", "tip", "image-builder", "linking image-os ↔ buildroot SBOM needs both documents and their SHA1s; image-builder writes them"],
+  ["spdx_ancestor_relationships_are_used", "tip", "—", "RPM metadata has no upstream-project identity to point an ANCESTOR_OF at"],
+  ["spdx_variant_relationships_are_used", "tip", "—", "single-arch disk image; VARIANT_OF is for image index ↔ per-arch variants"]
+ ]}

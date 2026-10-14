@@ -1,0 +1,73 @@
+{
+ "bomFormat": "CycloneDX",
+ "specVersion": "1.6",
+ "metadata": {
+  "lifecycles": [
+   {
+    "phase": "build"
+   }
+  ],
+  "component": {
+   "bom-ref": "main",
+   "name": "main",
+   "purl": "pkg:generic/main@1",
+   "cpe": "cpe:/a:x:main:1",
+   "evidence": {
+    "identity": [
+     {
+      "field": "cpe",
+      "concludedValue": "cpe:/a:x:main-alias:1"
+     }
+    ]
+   }
+  }
+ },
+ "components": [
+  {
+   "bom-ref": "main",
+   "name": "main",
+   "purl": "pkg:generic/main@1"
+  },
+  {
+   "bom-ref": "lib",
+   "name": "lib",
+   "purl": "pkg:rpm/x/lib@1",
+   "evidence": {
+    "identity": [
+     {
+      "field": "purl",
+      "concludedValue": "pkg:rpm/y/lib@1"
+     }
+    ]
+   },
+   "pedigree": {
+    "ancestors": [
+     {
+      "bom-ref": "lib-upstream",
+      "name": "lib"
+     }
+    ],
+    "variants": [
+     {
+      "bom-ref": "lib-arm",
+      "name": "lib"
+     }
+    ]
+   },
+   "externalReferences": [
+    {
+     "type": "bom",
+     "url": "urn:cdx:3e671687-395b-41f5-a30f-a58921a69b79/1"
+    }
+   ]
+  }
+ ],
+ "dependencies": [
+  {
+   "ref": "lib",
+   "provides": [
+    "lib-src"
+   ]
+  }
+ ]
+}
