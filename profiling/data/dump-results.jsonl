@@ -1,0 +1,15 @@
+{"cmd":"dump","filelists":false,"metadata":"full","packages":76354,"sbom":false,"specs":"*","tag":"dnf4-full-0","wall_ns":11564294825}
+{"cmd":"search","filelists":false,"metadata":"full","packages":76354,"sbom":false,"specs":"*","tag":"dnf4-full-0","wall_ns":17155486110}
+{"cmd":"dump","filelists":false,"metadata":"full","packages":76354,"sbom":false,"specs":"*","tag":"dnf4-full-1","wall_ns":10684342828}
+{"cmd":"search","filelists":false,"metadata":"full","packages":76354,"sbom":false,"specs":"*","tag":"dnf4-full-1","wall_ns":17318687503}
+{"cmd":"dump","filelists":false,"metadata":"full","packages":76354,"sbom":false,"specs":"*","tag":"dnf4-full-2","wall_ns":10833641604}
+{"cmd":"search","filelists":false,"metadata":"full","packages":76354,"sbom":false,"specs":"*","tag":"dnf4-full-2","wall_ns":16346465711}
+{"cmd":"dump","filelists":false,"metadata":"minimal","packages":76354,"sbom":false,"specs":"*","tag":"dnf4-minimal-0","wall_ns":4698590747}
+{"cmd":"search","filelists":false,"metadata":"minimal","packages":76354,"sbom":false,"specs":"*","tag":"dnf4-minimal-0","wall_ns":4858674860}
+{"cmd":"dump","filelists":false,"metadata":"minimal","packages":76354,"sbom":false,"specs":"*","tag":"dnf4-minimal-1","wall_ns":4882497905}
+{"cmd":"search","filelists":false,"metadata":"minimal","packages":76354,"sbom":false,"specs":"*","tag":"dnf4-minimal-1","wall_ns":4743357896}
+{"cmd":"dump","filelists":false,"metadata":"minimal","packages":76354,"sbom":false,"specs":"*","tag":"dnf4-minimal-2","wall_ns":4342574686}
+{"cmd":"search","filelists":false,"metadata":"minimal","packages":76354,"sbom":false,"specs":"*","tag":"dnf4-minimal-2","wall_ns":4683729625}
+{"cmd":"dump","filelists":false,"metadata":"minimal","packages":76354,"sbom":false,"specs":"*","tag":"dnf5-minimal-0","wall_ns":15723870173}
+{"cmd":"dump","filelists":false,"metadata":"minimal","packages":76354,"sbom":false,"specs":"*","tag":"dnf5-minimal-1","wall_ns":15519977811}
+{"cmd":"dump","filelists":false,"metadata":"minimal","packages":76354,"sbom":false,"specs":"*","tag":"dnf5-minimal-2","wall_ns":15593288489}

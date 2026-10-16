@@ -1,0 +1,35 @@
+Fri Oct 16 15:12:09 2026    /workspace/depsolve-perf/runs/profiles/py-workstation-dnf4.pstats
+
+         1617277 function calls (1405014 primitive calls) in 2.423 seconds
+
+   Ordered by: internal time
+   List reduced from 848 to 25 due to restriction <25>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+     2027    0.297    0.000    0.297    0.000 {built-in method libdnf._transaction.Swdb_addItem}
+        2    0.289    0.145    0.289    0.145 {method 'load_repo' of '_hawkey.Sack' objects}
+      399    0.219    0.001    0.219    0.001 {method 'union' of '_hawkey.Query' objects}
+        2    0.158    0.079    0.158    0.079 {built-in method libdnf._repo.Repo_load}
+     2011    0.145    0.000    0.520    0.000 /workspace/depsolve-perf/osbuild/osbuild/solver/dnf.py:39(_dnf_pkg_to_package)
+      353    0.112    0.000    0.112    0.000 {method 'apply' of '_hawkey.Query' objects}
+     2011    0.105    0.000    0.157    0.000 /workspace/depsolve-perf/osbuild/osbuild/solver/api/v2.py:58(_package_as_dict)
+   102081    0.099    0.000    0.123    0.000 /workspace/depsolve-perf/osbuild/osbuild/solver/dnf.py:23(_reldep_to_dependency)
+        2    0.066    0.033    0.066    0.033 {method 'add_excludes' of '_hawkey.Sack' objects}
+212206/4022    0.063    0.000    0.118    0.000 {built-in method builtins.hash}
+        3    0.063    0.021    0.063    0.021 /usr/lib64/python3.14/json/encoder.py:207(iterencode)
+   204162    0.054    0.000    0.080    0.000 /workspace/depsolve-perf/osbuild/osbuild/solver/model.py:266(__hash__)
+    66406    0.045    0.000    0.065    0.000 /workspace/depsolve-perf/osbuild/osbuild/solver/model.py:39(__setattr__)
+     2011    0.043    0.000    0.043    0.000 {built-in method libdnf._repo.Repo_getMirrors}
+   102081    0.040    0.000    0.040    0.000 /workspace/depsolve-perf/osbuild/osbuild/solver/api/v2.py:49(_dependency_as_dict)
+       49    0.032    0.001    0.032    0.001 {method 'get_best_solution' of '_hawkey.Subject' objects}
+    20135    0.027    0.000    0.046    0.000 {built-in method builtins.sorted}
+     2011    0.025    0.000    0.100    0.000 /workspace/depsolve-perf/osbuild/osbuild/solver/model.py:356(__init__)
+        1    0.025    0.025    0.025    0.025 {method 'fromxml_f' of '_libpycomps.Comps' objects}
+        1    0.020    0.020    0.020    0.020 {built-in method libdnf._repo.Repo_loadCache}
+     4022    0.019    0.000    0.137    0.000 /workspace/depsolve-perf/osbuild/osbuild/solver/model.py:456(__hash__)
+   102081    0.018    0.000    0.018    0.000 /workspace/depsolve-perf/osbuild/osbuild/solver/model.py:272(__str__)
+        2    0.018    0.009    0.018    0.009 {built-in method gc.collect}
+        1    0.015    0.015    0.015    0.015 {method 'run' of '_hawkey.Goal' objects}
+   104152    0.014    0.000    0.014    0.000 {method 'strip' of 'str' objects}
+
+

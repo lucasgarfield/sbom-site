@@ -1,0 +1,49 @@
+File: image-builder
+Build ID: 02c307e1ea7fc5dd7ce23799a37a7244bc547c54
+Type: cpu
+Time: 2026-10-16 15:13:12 UTC
+Duration: 6.26s, Total samples = 4.05s (64.74%)
+Showing nodes accounting for 0.20s, 4.94% of 4.05s total
+Dropped 275 nodes (cum <= 0.02s)
+Showing top 40 nodes out of 269
+      flat  flat%   sum%        cum   cum%
+         0     0%     0%      3.11s 76.79%  main.cmdManifest
+         0     0%     0%      3.08s 76.05%  github.com/spf13/cobra.(*Command).ExecuteC
+         0     0%     0%      3.08s 76.05%  github.com/spf13/cobra.(*Command).execute
+         0     0%     0%      3.06s 75.56%  github.com/spf13/cobra.(*Command).Execute (inline)
+         0     0%     0%      3.06s 75.56%  main.run
+         0     0%     0%      3.02s 74.57%  main.main
+         0     0%     0%      3.02s 74.57%  runtime.main
+         0     0%     0%      2.67s 65.93%  main.getOneImage
+         0     0%     0%      2.65s 65.43%  main.getImage
+         0     0%     0%      2.52s 62.22%  go.yaml.in/yaml/v3.(*Decoder).Decode
+         0     0%     0%      2.45s 60.49%  github.com/osbuild/image-builder/pkg/imagefilter.(*ImageFilter).Filter
+         0     0%     0%      1.63s 40.25%  github.com/osbuild/image-builder/pkg/distro/defs.(*Loader).loadDistros
+         0     0%     0%      1.60s 39.51%  github.com/osbuild/image-builder/pkg/distro/defs.(*Loader).ParseID
+         0     0%     0%      1.60s 39.51%  github.com/osbuild/image-builder/pkg/distroidparser.(*Parser).Parse
+         0     0%     0%      1.40s 34.57%  github.com/osbuild/image-builder/pkg/distrosort.Names
+         0     0%     0%      1.40s 34.57%  github.com/osbuild/image-builder/pkg/distrosort.Names.func1
+         0     0%     0%      1.40s 34.57%  slices.SortFunc[go.shape.[]string,go.shape.string] (inline)
+         0     0%     0%      1.40s 34.57%  slices.pdqsortCmpFunc[go.shape.string]
+     0.01s  0.25%  0.25%      1.33s 32.84%  go.yaml.in/yaml/v3.(*parser).parse
+         0     0%  0.25%      1.32s 32.59%  go.yaml.in/yaml/v3.(*parser).document
+     0.01s  0.25%  0.49%      1.32s 32.59%  go.yaml.in/yaml/v3.(*parser).mapping
+         0     0%  0.49%      1.32s 32.59%  go.yaml.in/yaml/v3.(*parser).parseChild (inline)
+         0     0%  0.49%      1.24s 30.62%  go.yaml.in/yaml/v3.(*parser).sequence
+     0.02s  0.49%  0.99%      1.20s 29.63%  go.yaml.in/yaml/v3.(*decoder).mapping
+     0.02s  0.49%  1.48%      1.20s 29.63%  go.yaml.in/yaml/v3.(*decoder).unmarshal
+         0     0%  1.48%      1.19s 29.38%  go.yaml.in/yaml/v3.(*decoder).document (inline)
+     0.06s  1.48%  2.96%      1.15s 28.40%  go.yaml.in/yaml/v3.(*decoder).mappingStruct
+     0.01s  0.25%  3.21%      1.12s 27.65%  go.yaml.in/yaml/v3.(*parser).peek
+     0.01s  0.25%  3.46%      1.11s 27.41%  go.yaml.in/yaml/v3.yaml_parser_parse
+         0     0%  3.46%      1.10s 27.16%  go.yaml.in/yaml/v3.yaml_parser_state_machine
+         0     0%  3.46%      1.08s 26.67%  github.com/osbuild/image-builder/pkg/distro/defs.NewWithLoader
+         0     0%  3.46%      1.07s 26.42%  github.com/osbuild/image-builder/pkg/distro/defs.DistroFactory
+         0     0%  3.46%      1.07s 26.42%  github.com/osbuild/image-builder/pkg/distro/defs.DistroFactory.DistroFactoryWithLoader.func1 (inline)
+         0     0%  3.46%      1.06s 26.17%  github.com/osbuild/image-builder/pkg/distrofactory.(*Factory).getDistro
+         0     0%  3.46%      1.05s 25.93%  github.com/osbuild/image-builder/pkg/distrofactory.(*Factory).GetDistro
+         0     0%  3.46%      1.05s 25.93%  go.yaml.in/yaml/v3.peek_token
+         0     0%  3.46%      1.03s 25.43%  go.yaml.in/yaml/v3.yaml_parser_fetch_more_tokens
+     0.04s  0.99%  4.44%      1.01s 24.94%  go.yaml.in/yaml/v3.yaml_parser_fetch_next_token
+         0     0%  4.44%      0.88s 21.73%  github.com/osbuild/image-builder/pkg/distro/defs.(*Loader).NewDistroYAML
+     0.02s  0.49%  4.94%      0.87s 21.48%  go.yaml.in/yaml/v3.(*decoder).sequence

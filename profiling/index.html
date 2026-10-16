@@ -1,0 +1,729 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>osbuild-depsolve-dnf → image-builder · metadata transfer profiling</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../style.css">
+<style>img.plot{max-width:100%;border:1px solid var(--line);border-radius:6px;background:#fff} .pgrid img{width:100%} details.gen table{margin-left:12px}</style>
+</head>
+<body>
+<nav id="toolbar"><a href="../">← sbom-site</a><a href="#s-sum">summary</a><a href="#s-env">setup</a><a href="#s-img">1 · image builds</a><a href="#s-scale">2 · scaling</a><a href="#s-dump">3 · dump/search</a><a href="#s-pipe">4 · pipe</a><a href="#s-prof">5 · profiles</a><a href="#s-cmd">reproduce</a><a href="#s-oq">open questions</a></nav>
+<main>
+<section id="s-sum">
+  <h2>Depsolve metadata transfer · osbuild-depsolve-dnf → image-builder · Fedora 44</h2>
+  <table class='gaps'><tr><th>measure</th><th>result</th><th>where</th></tr><tr><td>full vs minimal (no SBOM), metadata stages, image builds 288→2276 pkgs</td><td>dnf4 +0.05 → +0.52 s · dnf5 +0.10 → +1.02 s</td><td>4–6 s wall</td></tr><tr><td>share of wall in metadata stages, full</td><td>dnf4 1.6–10.3 % · dnf5 4.3–27.3 %</td><td>§1</td></tr><tr><td>in-depsolver SPDX SBOM (today − full)</td><td>0.12–0.71 s dnf4 · 0.17–1.15 s dnf5</td><td>§1</td></tr><tr><td>largest metadata stage</td><td>Py dnf→model.Package: 60–70 % of metadata cost</td><td>§1, profiles</td></tr><tr><td>json.dumps + write · Go Unmarshal (workstation, full)</td><td>0.08 / 0.11 s dnf4 · 0.23 / 0.25 s dnf5</td><td>§1</td></tr><tr><td>pipe</td><td>~2 ms/MB (400–700 MB/s)</td><td>§4</td></tr><tr><td>scaling exponent (n ≥ 100)</td><td>0.97–1.09 convert/dumps/Unmarshal · 1.1–1.35 dict/disjoint</td><td>§2</td></tr><tr><td>dnf5 remote_locations</td><td>94 URLs/pkg · 75–81 % of payload bytes</td><td>§1</td></tr><tr><td>whole repo 76 354 pkgs, dnf4</td><td>full 207 MB: dump 10.8 s, search 17.2 s (1.6 GiB) · minimal 40 MB: 4.7 s</td><td>§3</td></tr><tr><td>whole repo, dnf5</td><td>full: OOM at 4 GiB · minimal: 1.0 GB, 15.6 s, Go 3.1 GiB</td><td>§3</td></tr><tr><td>msgpack / CBOR (estimate)</td><td>−5…−17 % bytes vs JSON</td><td>§2</td></tr><tr><td>gzip -1 (estimate)</td><td>8–15× smaller</td><td>§2</td></tr><tr><td>GOEXPERIMENT=jsonv2 (estimate)</td><td>1.6–2.1× faster decode</td><td>§2</td></tr><tr><td>image-builder outside depsolve</td><td>2.8–3.1 s/manifest; YAML decode 62 % of Go CPU</td><td>profiles</td></tr></table>
+  <div class="bar"><a class='btn' href='data/REPORT.md' download>REPORT.md</a><a class='btn' href='data/osbuild-package-metadata.patch' download>osbuild-package-metadata.patch</a><a class='btn' href='data/image-builder-package-metadata.patch' download>image-builder-package-metadata.patch</a><a class='btn' href='data/bench-scripts.tar.gz' download>bench-scripts.tar.gz</a></div>
+</section>
+
+<section id="s-env">
+  <h2>setup</h2>
+  <table class='gaps'><tr><th>host</th><td>Intel Xeon, 8 vCPU, 15 GiB, kernel 6.12.94, podman 5.4.2</td></tr><tr><th>container</th><td>Fedora 44 · Python 3.14.8 · python3-dnf 4.24.0 · libdnf5 5.4.6 · Go 1.26.9 · heavy runs --memory 4g</td></tr><tr><th>repos</th><td>Fedora 44 fedora + updates, 76 354 packages</td></tr><tr><th>osbuild</th><td>depsolve-package-metadata @ af8acb42 (base main aff1eccb)</td></tr><tr><th>image-builder</th><td>depsolve-package-metadata @ 58760d43d: d27e2f18f metadata level · 7bd6e1557 trace · 6634b1a8d pprof · 58760d43d benchmarks (base main 964a2fdc9)</td></tr><tr><th>reps</th><td>warm 5 · cold 3 · sweep 5 (filelists 3) · Go bench count 3 · dump/search 3 · median (min–max)</td></tr><tr><th>variants</th><td>today = full + SBOM in depsolver (upstream now) · full = no SBOM · minimal = package_metadata: minimal · full_files = + filelists</td></tr><tr><th>fit</th><td>exponent b: least squares on log t = a + b·log n, n ≥ 100 · linear t = c + k·n (µs/pkg, R²) · t = c′ + k′·bytes (ns/byte)</td></tr><tr><th>sweep scope</th><td>random samples of loaded packages: metadata transfer cost only, no libsolv solve; solve time = §1</td></tr></table>
+</section>
+
+<section id="s-img">
+  <h2>1 · image-builder manifest · real depsolves · per stage</h2>
+  <img class="plot" src="plots/stages_warm.png" alt="stacked stage times, warm cache">
+  <p class="note">medians of 5 (warm) / 3 (cold) reps · seconds · metadata = Py convert+disjoint+dict+dumps+write + Go unmarshal+convert · share = metadata / wall</p>
+  <h3>dnf4, warm cache</h3><table class='gaps'><tr><th>image (pkgs)</th><th>variant</th><th>wall</th><th>repo load</th><th>resolve</th><th>Py convert</th><th>SBOM (py)</th><th>dumps+write</th><th>Go unmarshal</th><th>metadata total</th><th>share</th><th>IB rest</th><th>payload MB</th><th>Py RSS MiB</th><th>Go RSS MiB</th></tr>
+<tr><td>generic-container (288)</td><td>today</td><td class='num'>4.21</td><td class='num'>0.82</td><td class='num'>0.18</td><td class='num'>0.05</td><td class='num'>0.12</td><td class='num'>0.010</td><td class='num'>0.012</td><td class='num'>0.08</td><td class='num'>1.9%</td><td class='num'>2.77</td><td class='num'>1.4</td><td class='num'>124</td><td class='num'>68</td></tr>
+<tr><td>generic-container (288)</td><td>full</td><td class='num'>4.10</td><td class='num'>0.85</td><td class='num'>0.16</td><td class='num'>0.05</td><td class='num'>0.00</td><td class='num'>0.006</td><td class='num'>0.008</td><td class='num'>0.07</td><td class='num'>1.6%</td><td class='num'>2.67</td><td class='num'>0.9</td><td class='num'>120</td><td class='num'>69</td></tr>
+<tr><td>generic-container (288)</td><td>minimal</td><td class='num'>4.30</td><td class='num'>1.07</td><td class='num'>0.16</td><td class='num'>0.01</td><td class='num'>0.00</td><td class='num'>0.001</td><td class='num'>0.002</td><td class='num'>0.02</td><td class='num'>0.4%</td><td class='num'>2.76</td><td class='num'>0.1</td><td class='num'>120</td><td class='num'>69</td></tr>
+<tr><td>generic-container (288)</td><td>full_files</td><td class='num'>4.73</td><td class='num'>1.16</td><td class='num'>0.17</td><td class='num'>0.17</td><td class='num'>0.00</td><td class='num'>0.018</td><td class='num'>0.025</td><td class='num'>0.22</td><td class='num'>4.7%</td><td class='num'>2.75</td><td class='num'>3.0</td><td class='num'>131</td><td class='num'>73</td></tr>
+<tr><td>minimal-raw-xz (592)</td><td>today</td><td class='num'>5.55</td><td class='num'>0.93</td><td class='num'>0.61</td><td class='num'>0.18</td><td class='num'>0.23</td><td class='num'>0.041</td><td class='num'>0.047</td><td class='num'>0.35</td><td class='num'>6.3%</td><td class='num'>3.10</td><td class='num'>5.4</td><td class='num'>169</td><td class='num'>84</td></tr>
+<tr><td>minimal-raw-xz (592)</td><td>full</td><td class='num'>5.14</td><td class='num'>0.88</td><td class='num'>0.62</td><td class='num'>0.19</td><td class='num'>0.00</td><td class='num'>0.033</td><td class='num'>0.042</td><td class='num'>0.32</td><td class='num'>6.2%</td><td class='num'>2.93</td><td class='num'>4.2</td><td class='num'>160</td><td class='num'>80</td></tr>
+<tr><td>minimal-raw-xz (592)</td><td>minimal</td><td class='num'>4.94</td><td class='num'>0.87</td><td class='num'>0.62</td><td class='num'>0.04</td><td class='num'>0.00</td><td class='num'>0.002</td><td class='num'>0.003</td><td class='num'>0.05</td><td class='num'>1.0%</td><td class='num'>2.89</td><td class='num'>0.3</td><td class='num'>128</td><td class='num'>69</td></tr>
+<tr><td>minimal-raw-xz (592)</td><td>full_files</td><td class='num'>5.91</td><td class='num'>1.17</td><td class='num'>0.64</td><td class='num'>0.49</td><td class='num'>0.00</td><td class='num'>0.054</td><td class='num'>0.069</td><td class='num'>0.69</td><td class='num'>11.6%</td><td class='num'>3.06</td><td class='num'>8.0</td><td class='num'>182</td><td class='num'>88</td></tr>
+<tr><td>generic-qcow2 (704)</td><td>today</td><td class='num'>5.51</td><td class='num'>1.04</td><td class='num'>0.69</td><td class='num'>0.21</td><td class='num'>0.26</td><td class='num'>0.042</td><td class='num'>0.054</td><td class='num'>0.39</td><td class='num'>7.0%</td><td class='num'>2.83</td><td class='num'>5.9</td><td class='num'>170</td><td class='num'>85</td></tr>
+<tr><td>generic-qcow2 (704)</td><td>full</td><td class='num'>5.20</td><td class='num'>0.89</td><td class='num'>0.70</td><td class='num'>0.21</td><td class='num'>0.00</td><td class='num'>0.032</td><td class='num'>0.045</td><td class='num'>0.34</td><td class='num'>6.5%</td><td class='num'>2.87</td><td class='num'>4.5</td><td class='num'>162</td><td class='num'>80</td></tr>
+<tr><td>generic-qcow2 (704)</td><td>minimal</td><td class='num'>4.89</td><td class='num'>0.96</td><td class='num'>0.69</td><td class='num'>0.05</td><td class='num'>0.00</td><td class='num'>0.002</td><td class='num'>0.004</td><td class='num'>0.06</td><td class='num'>1.3%</td><td class='num'>2.75</td><td class='num'>0.4</td><td class='num'>128</td><td class='num'>68</td></tr>
+<tr><td>generic-qcow2 (704)</td><td>full_files</td><td class='num'>5.90</td><td class='num'>1.16</td><td class='num'>0.73</td><td class='num'>0.54</td><td class='num'>0.00</td><td class='num'>0.054</td><td class='num'>0.076</td><td class='num'>0.75</td><td class='num'>12.6%</td><td class='num'>2.79</td><td class='num'>8.6</td><td class='num'>184</td><td class='num'>87</td></tr>
+<tr><td>server-qcow2 (1095)</td><td>today</td><td class='num'>6.46</td><td class='num'>0.93</td><td class='num'>1.21</td><td class='num'>0.30</td><td class='num'>0.39</td><td class='num'>0.058</td><td class='num'>0.070</td><td class='num'>0.51</td><td class='num'>7.9%</td><td class='num'>2.90</td><td class='num'>8.1</td><td class='num'>191</td><td class='num'>88</td></tr>
+<tr><td>server-qcow2 (1095)</td><td>full</td><td class='num'>5.92</td><td class='num'>0.95</td><td class='num'>1.16</td><td class='num'>0.31</td><td class='num'>0.00</td><td class='num'>0.045</td><td class='num'>0.058</td><td class='num'>0.49</td><td class='num'>8.1%</td><td class='num'>2.95</td><td class='num'>5.7</td><td class='num'>174</td><td class='num'>85</td></tr>
+<tr><td>server-qcow2 (1095)</td><td>minimal</td><td class='num'>5.63</td><td class='num'>1.07</td><td class='num'>1.21</td><td class='num'>0.07</td><td class='num'>0.00</td><td class='num'>0.004</td><td class='num'>0.006</td><td class='num'>0.09</td><td class='num'>1.6%</td><td class='num'>3.10</td><td class='num'>0.6</td><td class='num'>131</td><td class='num'>68</td></tr>
+<tr><td>server-qcow2 (1095)</td><td>full_files</td><td class='num'>6.66</td><td class='num'>1.30</td><td class='num'>1.21</td><td class='num'>0.74</td><td class='num'>0.00</td><td class='num'>0.079</td><td class='num'>0.094</td><td class='num'>1.03</td><td class='num'>15.1%</td><td class='num'>2.87</td><td class='num'>11.5</td><td class='num'>212</td><td class='num'>104</td></tr>
+<tr><td>workstation-live-installer (2276)</td><td>today</td><td class='num'>6.71</td><td class='num'>1.02</td><td class='num'>0.99</td><td class='num'>0.29</td><td class='num'>0.71</td><td class='num'>0.103</td><td class='num'>0.122</td><td class='num'>0.62</td><td class='num'>9.2%</td><td class='num'>3.01</td><td class='num'>14.3</td><td class='num'>217</td><td class='num'>117</td></tr>
+<tr><td>workstation-live-installer (2276)</td><td>full</td><td class='num'>6.21</td><td class='num'>1.04</td><td class='num'>0.98</td><td class='num'>0.29</td><td class='num'>0.00</td><td class='num'>0.080</td><td class='num'>0.108</td><td class='num'>0.64</td><td class='num'>10.3%</td><td class='num'>3.16</td><td class='num'>9.2</td><td class='num'>189</td><td class='num'>115</td></tr>
+<tr><td>workstation-live-installer (2276)</td><td>minimal</td><td class='num'>5.82</td><td class='num'>1.17</td><td class='num'>0.94</td><td class='num'>0.09</td><td class='num'>0.00</td><td class='num'>0.008</td><td class='num'>0.012</td><td class='num'>0.12</td><td class='num'>2.1%</td><td class='num'>3.23</td><td class='num'>1.2</td><td class='num'>137</td><td class='num'>71</td></tr>
+<tr><td>workstation-live-installer (2276)</td><td>full_files</td><td class='num'>6.97</td><td class='num'>1.05</td><td class='num'>0.95</td><td class='num'>0.82</td><td class='num'>0.00</td><td class='num'>0.170</td><td class='num'>0.172</td><td class='num'>1.33</td><td class='num'>19.5%</td><td class='num'>3.06</td><td class='num'>20.2</td><td class='num'>242</td><td class='num'>139</td></tr></table>
+<h3>dnf5, warm cache</h3><table class='gaps'><tr><th>image (pkgs)</th><th>variant</th><th>wall</th><th>repo load</th><th>resolve</th><th>Py convert</th><th>SBOM (py)</th><th>dumps+write</th><th>Go unmarshal</th><th>metadata total</th><th>share</th><th>IB rest</th><th>payload MB</th><th>Py RSS MiB</th><th>Go RSS MiB</th></tr>
+<tr><td>generic-container (288)</td><td>today</td><td class='num'>4.13</td><td class='num'>0.36</td><td class='num'>0.20</td><td class='num'>0.10</td><td class='num'>0.17</td><td class='num'>0.025</td><td class='num'>0.032</td><td class='num'>0.17</td><td class='num'>4.0%</td><td class='num'>2.86</td><td class='num'>4.8</td><td class='num'>142</td><td class='num'>78</td></tr>
+<tr><td>generic-container (288)</td><td>full</td><td class='num'>3.97</td><td class='num'>0.30</td><td class='num'>0.20</td><td class='num'>0.10</td><td class='num'>0.00</td><td class='num'>0.024</td><td class='num'>0.028</td><td class='num'>0.17</td><td class='num'>4.3%</td><td class='num'>2.94</td><td class='num'>4.2</td><td class='num'>138</td><td class='num'>76</td></tr>
+<tr><td>generic-container (288)</td><td>minimal</td><td class='num'>3.84</td><td class='num'>0.29</td><td class='num'>0.21</td><td class='num'>0.02</td><td class='num'>0.00</td><td class='num'>0.019</td><td class='num'>0.022</td><td class='num'>0.07</td><td class='num'>1.7%</td><td class='num'>2.92</td><td class='num'>3.5</td><td class='num'>135</td><td class='num'>71</td></tr>
+<tr><td>generic-container (288)</td><td>full_files</td><td class='num'>4.30</td><td class='num'>0.42</td><td class='num'>0.22</td><td class='num'>0.23</td><td class='num'>0.00</td><td class='num'>0.038</td><td class='num'>0.043</td><td class='num'>0.32</td><td class='num'>7.4%</td><td class='num'>3.07</td><td class='num'>6.4</td><td class='num'>145</td><td class='num'>81</td></tr>
+<tr><td>minimal-raw-xz (592)</td><td>today</td><td class='num'>4.97</td><td class='num'>0.27</td><td class='num'>0.27</td><td class='num'>0.52</td><td class='num'>0.42</td><td class='num'>0.084</td><td class='num'>0.086</td><td class='num'>0.75</td><td class='num'>15.2%</td><td class='num'>2.77</td><td class='num'>12.4</td><td class='num'>208</td><td class='num'>104</td></tr>
+<tr><td>minimal-raw-xz (592)</td><td>full</td><td class='num'>4.64</td><td class='num'>0.28</td><td class='num'>0.29</td><td class='num'>0.53</td><td class='num'>0.00</td><td class='num'>0.080</td><td class='num'>0.079</td><td class='num'>0.76</td><td class='num'>16.2%</td><td class='num'>2.88</td><td class='num'>11.2</td><td class='num'>193</td><td class='num'>105</td></tr>
+<tr><td>minimal-raw-xz (592)</td><td>minimal</td><td class='num'>3.94</td><td class='num'>0.34</td><td class='num'>0.27</td><td class='num'>0.07</td><td class='num'>0.00</td><td class='num'>0.039</td><td class='num'>0.041</td><td class='num'>0.16</td><td class='num'>4.1%</td><td class='num'>2.85</td><td class='num'>7.3</td><td class='num'>155</td><td class='num'>85</td></tr>
+<tr><td>minimal-raw-xz (592)</td><td>full_files</td><td class='num'>5.02</td><td class='num'>0.36</td><td class='num'>0.28</td><td class='num'>0.81</td><td class='num'>0.00</td><td class='num'>0.089</td><td class='num'>0.105</td><td class='num'>1.06</td><td class='num'>22.1%</td><td class='num'>2.90</td><td class='num'>15.0</td><td class='num'>209</td><td class='num'>105</td></tr>
+<tr><td>generic-qcow2 (704)</td><td>today</td><td class='num'>5.18</td><td class='num'>0.30</td><td class='num'>0.31</td><td class='num'>0.61</td><td class='num'>0.48</td><td class='num'>0.094</td><td class='num'>0.103</td><td class='num'>0.85</td><td class='num'>16.7%</td><td class='num'>2.75</td><td class='num'>14.3</td><td class='num'>215</td><td class='num'>102</td></tr>
+<tr><td>generic-qcow2 (704)</td><td>full</td><td class='num'>4.91</td><td class='num'>0.36</td><td class='num'>0.30</td><td class='num'>0.59</td><td class='num'>0.00</td><td class='num'>0.082</td><td class='num'>0.092</td><td class='num'>0.85</td><td class='num'>17.3%</td><td class='num'>3.02</td><td class='num'>12.8</td><td class='num'>199</td><td class='num'>106</td></tr>
+<tr><td>generic-qcow2 (704)</td><td>minimal</td><td class='num'>4.18</td><td class='num'>0.31</td><td class='num'>0.31</td><td class='num'>0.08</td><td class='num'>0.00</td><td class='num'>0.046</td><td class='num'>0.047</td><td class='num'>0.19</td><td class='num'>4.8%</td><td class='num'>2.97</td><td class='num'>8.7</td><td class='num'>165</td><td class='num'>86</td></tr>
+<tr><td>generic-qcow2 (704)</td><td>full_files</td><td class='num'>5.18</td><td class='num'>0.39</td><td class='num'>0.31</td><td class='num'>0.93</td><td class='num'>0.00</td><td class='num'>0.104</td><td class='num'>0.126</td><td class='num'>1.22</td><td class='num'>24.0%</td><td class='num'>2.94</td><td class='num'>16.9</td><td class='num'>217</td><td class='num'>117</td></tr>
+<tr><td>server-qcow2 (1095)</td><td>today</td><td class='num'>5.89</td><td class='num'>0.29</td><td class='num'>0.40</td><td class='num'>0.87</td><td class='num'>0.66</td><td class='num'>0.169</td><td class='num'>0.138</td><td class='num'>1.30</td><td class='num'>22.1%</td><td class='num'>2.86</td><td class='num'>21.0</td><td class='num'>252</td><td class='num'>146</td></tr>
+<tr><td>server-qcow2 (1095)</td><td>full</td><td class='num'>5.22</td><td class='num'>0.30</td><td class='num'>0.41</td><td class='num'>0.90</td><td class='num'>0.00</td><td class='num'>0.127</td><td class='num'>0.128</td><td class='num'>1.32</td><td class='num'>24.8%</td><td class='num'>2.86</td><td class='num'>18.7</td><td class='num'>234</td><td class='num'>120</td></tr>
+<tr><td>server-qcow2 (1095)</td><td>minimal</td><td class='num'>4.22</td><td class='num'>0.28</td><td class='num'>0.41</td><td class='num'>0.13</td><td class='num'>0.00</td><td class='num'>0.078</td><td class='num'>0.075</td><td class='num'>0.31</td><td class='num'>7.2%</td><td class='num'>2.87</td><td class='num'>13.5</td><td class='num'>189</td><td class='num'>104</td></tr>
+<tr><td>server-qcow2 (1095)</td><td>full_files</td><td class='num'>6.30</td><td class='num'>0.41</td><td class='num'>0.40</td><td class='num'>1.42</td><td class='num'>0.00</td><td class='num'>0.178</td><td class='num'>0.174</td><td class='num'>1.94</td><td class='num'>32.6%</td><td class='num'>2.92</td><td class='num'>24.4</td><td class='num'>262</td><td class='num'>155</td></tr>
+<tr><td>workstation-live-installer (2276)</td><td>today</td><td class='num'>6.96</td><td class='num'>0.29</td><td class='num'>0.52</td><td class='num'>0.83</td><td class='num'>1.15</td><td class='num'>0.316</td><td class='num'>0.272</td><td class='num'>1.55</td><td class='num'>22.7%</td><td class='num'>2.87</td><td class='num'>41.6</td><td class='num'>302</td><td class='num'>230</td></tr>
+<tr><td>workstation-live-installer (2276)</td><td>full</td><td class='num'>5.69</td><td class='num'>0.31</td><td class='num'>0.52</td><td class='num'>0.91</td><td class='num'>0.00</td><td class='num'>0.226</td><td class='num'>0.249</td><td class='num'>1.53</td><td class='num'>27.3%</td><td class='num'>2.87</td><td class='num'>36.6</td><td class='num'>273</td><td class='num'>148</td></tr>
+<tr><td>workstation-live-installer (2276)</td><td>minimal</td><td class='num'>4.60</td><td class='num'>0.29</td><td class='num'>0.52</td><td class='num'>0.15</td><td class='num'>0.00</td><td class='num'>0.166</td><td class='num'>0.162</td><td class='num'>0.51</td><td class='num'>11.5%</td><td class='num'>2.87</td><td class='num'>28.5</td><td class='num'>223</td><td class='num'>150</td></tr>
+<tr><td>workstation-live-installer (2276)</td><td>full_files</td><td class='num'>6.42</td><td class='num'>0.40</td><td class='num'>0.52</td><td class='num'>1.39</td><td class='num'>0.00</td><td class='num'>0.351</td><td class='num'>0.311</td><td class='num'>2.22</td><td class='num'>34.9%</td><td class='num'>2.92</td><td class='num'>47.6</td><td class='num'>311</td><td class='num'>246</td></tr></table>
+  <h3>dnf4, cold cache</h3><table class='gaps'><tr><th>image (pkgs)</th><th>variant</th><th>wall</th><th>repo load</th><th>resolve</th><th>Py convert</th><th>SBOM (py)</th><th>dumps+write</th><th>Go unmarshal</th><th>metadata total</th><th>share</th><th>IB rest</th><th>payload MB</th><th>Py RSS MiB</th><th>Go RSS MiB</th></tr>
+<tr><td>generic-qcow2 (704)</td><td>today</td><td class='num'>11.57</td><td class='num'>5.70</td><td class='num'>1.68</td><td class='num'>0.25</td><td class='num'>0.29</td><td class='num'>0.053</td><td class='num'>0.058</td><td class='num'>0.45</td><td class='num'>3.9%</td><td class='num'>3.01</td><td class='num'>5.9</td><td class='num'>201</td><td class='num'>88</td></tr>
+<tr><td>generic-qcow2 (704)</td><td>minimal</td><td class='num'>11.48</td><td class='num'>6.28</td><td class='num'>1.65</td><td class='num'>0.05</td><td class='num'>0.00</td><td class='num'>0.003</td><td class='num'>0.006</td><td class='num'>0.06</td><td class='num'>0.5%</td><td class='num'>3.09</td><td class='num'>0.4</td><td class='num'>192</td><td class='num'>68</td></tr></table>
+<h3>dnf5, cold cache</h3><table class='gaps'><tr><th>image (pkgs)</th><th>variant</th><th>wall</th><th>repo load</th><th>resolve</th><th>Py convert</th><th>SBOM (py)</th><th>dumps+write</th><th>Go unmarshal</th><th>metadata total</th><th>share</th><th>IB rest</th><th>payload MB</th><th>Py RSS MiB</th><th>Go RSS MiB</th></tr>
+<tr><td>generic-qcow2 (704)</td><td>today</td><td class='num'>11.50</td><td class='num'>5.57</td><td class='num'>1.28</td><td class='num'>0.63</td><td class='num'>0.50</td><td class='num'>0.103</td><td class='num'>0.101</td><td class='num'>0.90</td><td class='num'>7.8%</td><td class='num'>2.95</td><td class='num'>14.3</td><td class='num'>233</td><td class='num'>110</td></tr>
+<tr><td>generic-qcow2 (704)</td><td>minimal</td><td class='num'>10.26</td><td class='num'>5.42</td><td class='num'>1.26</td><td class='num'>0.09</td><td class='num'>0.00</td><td class='num'>0.051</td><td class='num'>0.052</td><td class='num'>0.20</td><td class='num'>2.0%</td><td class='num'>2.97</td><td class='num'>8.7</td><td class='num'>207</td><td class='num'>87</td></tr></table>
+  <h3>all stages · median (min–max) ms · sum over the 2 depsolve calls</h3>
+  <details class='gen'><summary>generic-container — dnf4 — 288 packages over 2 depsolve calls, 5 reps</summary><table class='gaps'><tr><th>stage (sum over calls), median (min–max) ms</th><th>today</th><th>full</th><th>minimal</th><th>full_files</th></tr>
+<tr><td>response payload (MB)</td><td class='num'>1.44</td><td class='num'>0.88</td><td class='num'>0.15</td><td class='num'>2.99</td></tr>
+<tr><td>of which depsolver SBOM (MB)</td><td class='num'>0.57</td><td class='num'>0.00</td><td class='num'>0.00</td><td class='num'>0.00</td></tr>
+<tr><td>reldeps / files returned</td><td class='num'>7054</td><td class='num'>7054</td><td class='num'>0</td><td class='num'>7054</td></tr>
+<tr><td>Py interpreter start (before harness)</td><td class='num'>116 (102–118)</td><td class='num'>101 (101–110)</td><td class='num'>101 (92–105)</td><td class='num'>99 (96–108)</td></tr>
+<tr><td>Py import dnf/libdnf5 + tool</td><td class='num'>237 (230–244)</td><td class='num'>241 (232–266)</td><td class='num'>243 (226–261)</td><td class='num'>240 (225–262)</td></tr>
+<tr><td>Py read+parse request</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td></tr>
+<tr><td>Py repo metadata load (solver init)</td><td class='num'>822 (717–1165)</td><td class='num'>851 (808–1236)</td><td class='num'>1068 (801–1322)</td><td class='num'>1157 (1110–1334)</td></tr>
+<tr><td>Py depsolve (resolve, minus convert/SBOM)</td><td class='num'>177 (168–186)</td><td class='num'>163 (158–184)</td><td class='num'>165 (156–318)</td><td class='num'>167 (161–183)</td></tr>
+<tr><td>Py dnf pkg -&gt; model.Package</td><td class='num'>50 (49–56)</td><td class='num'>46 (46–50)</td><td class='num'>11 (10–15)</td><td class='num'>171 (157–179)</td></tr>
+<tr><td>Py SPDX SBOM in depsolver</td><td class='num'>124 (119–130)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td></tr>
+<tr><td>Py disjoint sets (hash Packages)</td><td class='num'>3 (3–5)</td><td class='num'>3 (3–4)</td><td class='num'>1 (1–2)</td><td class='num'>5 (5–6)</td></tr>
+<tr><td>Py model.Package -&gt; dict</td><td class='num'>2 (2–4)</td><td class='num'>3 (3–4)</td><td class='num'>0 (0–0)</td><td class='num'>3 (3–4)</td></tr>
+<tr><td>Py json.dumps</td><td class='num'>6 (5–8)</td><td class='num'>3 (3–6)</td><td class='num'>1 (1–1)</td><td class='num'>9 (8–9)</td></tr>
+<tr><td>Py stdout write+flush</td><td class='num'>4 (4–8)</td><td class='num'>2 (2–3)</td><td class='num'>0 (0–1)</td><td class='num'>9 (8–10)</td></tr>
+<tr><td>Py exit/teardown after output</td><td class='num'>1 (1–1)</td><td class='num'>1 (1–1)</td><td class='num'>1 (1–1)</td><td class='num'>1 (1–1)</td></tr>
+<tr><td>(of repo load: Repo.load md check)</td><td class='num'>262 (169–527)</td><td class='num'>263 (245–586)</td><td class='num'>474 (281–750)</td><td class='num'>402 (167–589)</td></tr>
+<tr><td>Go marshal request</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td></tr>
+<tr><td>Go json.Unmarshal</td><td class='num'>12 (12–13)</td><td class='num'>8 (8–11)</td><td class='num'>2 (1–3)</td><td class='num'>25 (24–28)</td></tr>
+<tr><td>Go convert to rpmmd</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–1)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–1)</td></tr>
+<tr><td>Go other post-processing (incl. SBOM doc)</td><td class='num'>0 (0–1)</td><td class='num'>0 (0–1)</td><td class='num'>0 (0–1)</td><td class='num'>0 (0–0)</td></tr>
+<tr><td><b>metadata-dependent stages</b> (convert+disjoint+dict+dumps+write+unmarshal+convert)</td><td class='num'>83 (77–84)</td><td class='num'>67 (66–76)</td><td class='num'>16 (14–20)</td><td class='num'>224 (210–234)</td></tr>
+<tr><td>depsolver process (Go view)</td><td class='num'>1551 (1413–1905)</td><td class='num'>1428 (1365–1855)</td><td class='num'>1639 (1291–1852)</td><td class='num'>1878 (1779–2044)</td></tr>
+<tr><td>output arrival window (first→last byte)</td><td class='num'>7 (7–11)</td><td class='num'>3 (2–3)</td><td class='num'>0 (0–0)</td><td class='num'>9 (8–9)</td></tr>
+<tr><td>rest of image-builder (not depsolve)</td><td class='num'>2767 (2603–3019)</td><td class='num'>2674 (2611–3146)</td><td class='num'>2759 (2608–2976)</td><td class='num'>2754 (2699–2981)</td></tr>
+<tr><td><b>total wall</b></td><td class='num'>4212 (4166–4740)</td><td class='num'>4102 (3985–5011)</td><td class='num'>4300 (3900–4831)</td><td class='num'>4726 (4505–4958)</td></tr>
+<tr><td>metadata-dependent share of wall</td><td class='num'>1.9%</td><td class='num'>1.6%</td><td class='num'>0.4%</td><td class='num'>4.7%</td></tr>
+<tr><td>peak RSS Python (MiB, max over calls)</td><td class='num'>124</td><td class='num'>120</td><td class='num'>120</td><td class='num'>131</td></tr>
+<tr><td>peak RSS image-builder Go process (MiB)</td><td class='num'>68</td><td class='num'>69</td><td class='num'>69</td><td class='num'>73</td></tr></table></details>
+<details class='gen'><summary>minimal-raw-xz — dnf4 — 592 packages over 2 depsolve calls, 5 reps</summary><table class='gaps'><tr><th>stage (sum over calls), median (min–max) ms</th><th>today</th><th>full</th><th>minimal</th><th>full_files</th></tr>
+<tr><td>response payload (MB)</td><td class='num'>5.39</td><td class='num'>4.18</td><td class='num'>0.30</td><td class='num'>8.03</td></tr>
+<tr><td>of which depsolver SBOM (MB)</td><td class='num'>1.22</td><td class='num'>0.00</td><td class='num'>0.00</td><td class='num'>0.00</td></tr>
+<tr><td>reldeps / files returned</td><td class='num'>51554</td><td class='num'>51554</td><td class='num'>0</td><td class='num'>51554</td></tr>
+<tr><td>Py interpreter start (before harness)</td><td class='num'>110 (103–117)</td><td class='num'>108 (105–124)</td><td class='num'>109 (101–124)</td><td class='num'>109 (108–118)</td></tr>
+<tr><td>Py import dnf/libdnf5 + tool</td><td class='num'>244 (236–282)</td><td class='num'>253 (235–255)</td><td class='num'>250 (238–325)</td><td class='num'>255 (237–312)</td></tr>
+<tr><td>Py read+parse request</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td></tr>
+<tr><td>Py repo metadata load (solver init)</td><td class='num'>928 (850–1077)</td><td class='num'>883 (850–1050)</td><td class='num'>866 (734–1532)</td><td class='num'>1166 (997–1304)</td></tr>
+<tr><td>Py depsolve (resolve, minus convert/SBOM)</td><td class='num'>610 (598–623)</td><td class='num'>616 (613–653)</td><td class='num'>624 (580–648)</td><td class='num'>642 (605–847)</td></tr>
+<tr><td>Py dnf pkg -&gt; model.Package</td><td class='num'>184 (182–203)</td><td class='num'>194 (186–197)</td><td class='num'>41 (36–55)</td><td class='num'>494 (465–561)</td></tr>
+<tr><td>Py SPDX SBOM in depsolver</td><td class='num'>226 (218–247)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td></tr>
+<tr><td>Py disjoint sets (hash Packages)</td><td class='num'>28 (27–31)</td><td class='num'>29 (27–33)</td><td class='num'>4 (4–5)</td><td class='num'>37 (36–41)</td></tr>
+<tr><td>Py model.Package -&gt; dict</td><td class='num'>44 (42–49)</td><td class='num'>18 (16–21)</td><td class='num'>0 (0–1)</td><td class='num'>19 (17–21)</td></tr>
+<tr><td>Py json.dumps</td><td class='num'>23 (22–24)</td><td class='num'>21 (20–22)</td><td class='num'>1 (1–2)</td><td class='num'>31 (30–37)</td></tr>
+<tr><td>Py stdout write+flush</td><td class='num'>17 (16–20)</td><td class='num'>12 (10–12)</td><td class='num'>1 (1–1)</td><td class='num'>23 (20–44)</td></tr>
+<tr><td>Py exit/teardown after output</td><td class='num'>1 (1–1)</td><td class='num'>1 (1–1)</td><td class='num'>1 (1–1)</td><td class='num'>1 (1–1)</td></tr>
+<tr><td>(of repo load: Repo.load md check)</td><td class='num'>318 (268–459)</td><td class='num'>297 (241–442)</td><td class='num'>286 (181–763)</td><td class='num'>296 (207–459)</td></tr>
+<tr><td>Go marshal request</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td></tr>
+<tr><td>Go json.Unmarshal</td><td class='num'>47 (46–50)</td><td class='num'>42 (39–58)</td><td class='num'>3 (3–5)</td><td class='num'>69 (64–87)</td></tr>
+<tr><td>Go convert to rpmmd</td><td class='num'>2 (1–5)</td><td class='num'>4 (1–6)</td><td class='num'>0 (0–2)</td><td class='num'>2 (2–5)</td></tr>
+<tr><td>Go other post-processing (incl. SBOM doc)</td><td class='num'>0 (0–1)</td><td class='num'>1 (1–1)</td><td class='num'>1 (0–1)</td><td class='num'>1 (0–1)</td></tr>
+<tr><td><b>metadata-dependent stages</b> (convert+disjoint+dict+dumps+write+unmarshal+convert)</td><td class='num'>346 (342–376)</td><td class='num'>319 (312–339)</td><td class='num'>54 (45–66)</td><td class='num'>689 (647–768)</td></tr>
+<tr><td>depsolver process (Go view)</td><td class='num'>2512 (2312–2612)</td><td class='num'>2163 (2114–2355)</td><td class='num'>1923 (1709–2683)</td><td class='num'>2899 (2647–2997)</td></tr>
+<tr><td>output arrival window (first→last byte)</td><td class='num'>27 (25–29)</td><td class='num'>16 (15–19)</td><td class='num'>1 (1–2)</td><td class='num'>29 (26–48)</td></tr>
+<tr><td>rest of image-builder (not depsolve)</td><td class='num'>3100 (2780–3187)</td><td class='num'>2926 (2673–3274)</td><td class='num'>2890 (2748–3013)</td><td class='num'>3059 (2756–3178)</td></tr>
+<tr><td><b>total wall</b></td><td class='num'>5552 (5397–5813)</td><td class='num'>5136 (4829–5693)</td><td class='num'>4941 (4487–5579)</td><td class='num'>5914 (5586–6192)</td></tr>
+<tr><td>metadata-dependent share of wall</td><td class='num'>6.3%</td><td class='num'>6.2%</td><td class='num'>1.0%</td><td class='num'>11.6%</td></tr>
+<tr><td>peak RSS Python (MiB, max over calls)</td><td class='num'>169</td><td class='num'>160</td><td class='num'>128</td><td class='num'>182</td></tr>
+<tr><td>peak RSS image-builder Go process (MiB)</td><td class='num'>84</td><td class='num'>80</td><td class='num'>69</td><td class='num'>88</td></tr></table></details>
+<details class='gen'><summary>generic-qcow2 — dnf4 — 704 packages over 2 depsolve calls, 5 reps</summary><table class='gaps'><tr><th>stage (sum over calls), median (min–max) ms</th><th>today</th><th>full</th><th>minimal</th><th>full_files</th></tr>
+<tr><td>response payload (MB)</td><td class='num'>5.93</td><td class='num'>4.48</td><td class='num'>0.36</td><td class='num'>8.57</td></tr>
+<tr><td>of which depsolver SBOM (MB)</td><td class='num'>1.44</td><td class='num'>0.00</td><td class='num'>0.00</td><td class='num'>0.00</td></tr>
+<tr><td>reldeps / files returned</td><td class='num'>53964</td><td class='num'>53964</td><td class='num'>0</td><td class='num'>53964</td></tr>
+<tr><td>Py interpreter start (before harness)</td><td class='num'>109 (99–122)</td><td class='num'>104 (99–114)</td><td class='num'>101 (99–117)</td><td class='num'>113 (101–115)</td></tr>
+<tr><td>Py import dnf/libdnf5 + tool</td><td class='num'>240 (234–255)</td><td class='num'>238 (223–273)</td><td class='num'>235 (234–241)</td><td class='num'>250 (228–279)</td></tr>
+<tr><td>Py read+parse request</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td></tr>
+<tr><td>Py repo metadata load (solver init)</td><td class='num'>1044 (809–1129)</td><td class='num'>894 (792–1242)</td><td class='num'>958 (756–1224)</td><td class='num'>1156 (1017–1546)</td></tr>
+<tr><td>Py depsolve (resolve, minus convert/SBOM)</td><td class='num'>687 (642–712)</td><td class='num'>697 (655–721)</td><td class='num'>687 (649–799)</td><td class='num'>732 (672–775)</td></tr>
+<tr><td>Py dnf pkg -&gt; model.Package</td><td class='num'>209 (203–220)</td><td class='num'>210 (208–218)</td><td class='num'>47 (42–55)</td><td class='num'>544 (511–626)</td></tr>
+<tr><td>Py SPDX SBOM in depsolver</td><td class='num'>260 (248–275)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td></tr>
+<tr><td>Py disjoint sets (hash Packages)</td><td class='num'>31 (28–35)</td><td class='num'>29 (28–30)</td><td class='num'>5 (5–8)</td><td class='num'>40 (35–44)</td></tr>
+<tr><td>Py model.Package -&gt; dict</td><td class='num'>44 (37–49)</td><td class='num'>18 (18–22)</td><td class='num'>0 (0–1)</td><td class='num'>19 (16–21)</td></tr>
+<tr><td>Py json.dumps</td><td class='num'>26 (23–27)</td><td class='num'>22 (20–27)</td><td class='num'>1 (1–2)</td><td class='num'>34 (31–38)</td></tr>
+<tr><td>Py stdout write+flush</td><td class='num'>16 (15–17)</td><td class='num'>10 (9–11)</td><td class='num'>1 (1–2)</td><td class='num'>20 (19–28)</td></tr>
+<tr><td>Py exit/teardown after output</td><td class='num'>1 (1–1)</td><td class='num'>1 (1–1)</td><td class='num'>1 (1–1)</td><td class='num'>1 (1–1)</td></tr>
+<tr><td>(of repo load: Repo.load md check)</td><td class='num'>454 (202–599)</td><td class='num'>321 (262–673)</td><td class='num'>346 (223–679)</td><td class='num'>341 (249–799)</td></tr>
+<tr><td>Go marshal request</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td></tr>
+<tr><td>Go json.Unmarshal</td><td class='num'>54 (48–56)</td><td class='num'>45 (44–53)</td><td class='num'>4 (3–5)</td><td class='num'>76 (68–88)</td></tr>
+<tr><td>Go convert to rpmmd</td><td class='num'>1 (1–2)</td><td class='num'>4 (2–5)</td><td class='num'>0 (0–1)</td><td class='num'>2 (2–3)</td></tr>
+<tr><td>Go other post-processing (incl. SBOM doc)</td><td class='num'>0 (0–1)</td><td class='num'>0 (0–1)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–1)</td></tr>
+<tr><td><b>metadata-dependent stages</b> (convert+disjoint+dict+dumps+write+unmarshal+convert)</td><td class='num'>387 (360–391)</td><td class='num'>343 (336–354)</td><td class='num'>62 (53–71)</td><td class='num'>748 (683–820)</td></tr>
+<tr><td>depsolver process (Go view)</td><td class='num'>2676 (2502–2729)</td><td class='num'>2222 (2075–2640)</td><td class='num'>2123 (1799–2280)</td><td class='num'>3083 (2737–3174)</td></tr>
+<tr><td>output arrival window (first→last byte)</td><td class='num'>26 (24–31)</td><td class='num'>14 (12–14)</td><td class='num'>1 (1–2)</td><td class='num'>25 (22–34)</td></tr>
+<tr><td>rest of image-builder (not depsolve)</td><td class='num'>2829 (2689–3043)</td><td class='num'>2873 (2792–2938)</td><td class='num'>2748 (2675–2816)</td><td class='num'>2789 (2720–3103)</td></tr>
+<tr><td><b>total wall</b></td><td class='num'>5514 (5423–5617)</td><td class='num'>5202 (4914–5528)</td><td class='num'>4886 (4505–5033)</td><td class='num'>5901 (5599–6292)</td></tr>
+<tr><td>metadata-dependent share of wall</td><td class='num'>7.0%</td><td class='num'>6.5%</td><td class='num'>1.3%</td><td class='num'>12.6%</td></tr>
+<tr><td>peak RSS Python (MiB, max over calls)</td><td class='num'>170</td><td class='num'>162</td><td class='num'>128</td><td class='num'>184</td></tr>
+<tr><td>peak RSS image-builder Go process (MiB)</td><td class='num'>85</td><td class='num'>80</td><td class='num'>68</td><td class='num'>87</td></tr></table></details>
+<details class='gen'><summary>server-qcow2 — dnf4 — 1095 packages over 2 depsolve calls, 5 reps</summary><table class='gaps'><tr><th>stage (sum over calls), median (min–max) ms</th><th>today</th><th>full</th><th>minimal</th><th>full_files</th></tr>
+<tr><td>response payload (MB)</td><td class='num'>8.09</td><td class='num'>5.71</td><td class='num'>0.56</td><td class='num'>11.48</td></tr>
+<tr><td>of which depsolver SBOM (MB)</td><td class='num'>2.38</td><td class='num'>0.00</td><td class='num'>0.00</td><td class='num'>0.00</td></tr>
+<tr><td>reldeps / files returned</td><td class='num'>68633</td><td class='num'>68633</td><td class='num'>0</td><td class='num'>68633</td></tr>
+<tr><td>Py interpreter start (before harness)</td><td class='num'>127 (124–130)</td><td class='num'>110 (106–111)</td><td class='num'>110 (102–125)</td><td class='num'>113 (107–123)</td></tr>
+<tr><td>Py import dnf/libdnf5 + tool</td><td class='num'>255 (247–274)</td><td class='num'>244 (233–269)</td><td class='num'>249 (242–254)</td><td class='num'>234 (230–297)</td></tr>
+<tr><td>Py read+parse request</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td></tr>
+<tr><td>Py repo metadata load (solver init)</td><td class='num'>932 (882–1343)</td><td class='num'>955 (869–1108)</td><td class='num'>1071 (867–1208)</td><td class='num'>1300 (1040–1423)</td></tr>
+<tr><td>Py depsolve (resolve, minus convert/SBOM)</td><td class='num'>1215 (1180–1311)</td><td class='num'>1165 (1149–1219)</td><td class='num'>1210 (1163–1269)</td><td class='num'>1212 (1154–1256)</td></tr>
+<tr><td>Py dnf pkg -&gt; model.Package</td><td class='num'>301 (295–333)</td><td class='num'>314 (282–322)</td><td class='num'>71 (69–72)</td><td class='num'>743 (726–793)</td></tr>
+<tr><td>Py SPDX SBOM in depsolver</td><td class='num'>393 (388–395)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td></tr>
+<tr><td>Py disjoint sets (hash Packages)</td><td class='num'>46 (44–46)</td><td class='num'>44 (43–54)</td><td class='num'>8 (8–10)</td><td class='num'>57 (54–59)</td></tr>
+<tr><td>Py model.Package -&gt; dict</td><td class='num'>25 (23–29)</td><td class='num'>25 (23–34)</td><td class='num'>1 (1–1)</td><td class='num'>27 (25–30)</td></tr>
+<tr><td>Py json.dumps</td><td class='num'>35 (33–39)</td><td class='num'>27 (27–32)</td><td class='num'>2 (2–3)</td><td class='num'>46 (44–49)</td></tr>
+<tr><td>Py stdout write+flush</td><td class='num'>23 (19–36)</td><td class='num'>18 (15–22)</td><td class='num'>2 (2–3)</td><td class='num'>33 (31–53)</td></tr>
+<tr><td>Py exit/teardown after output</td><td class='num'>1 (1–1)</td><td class='num'>1 (1–1)</td><td class='num'>1 (1–1)</td><td class='num'>1 (1–1)</td></tr>
+<tr><td>(of repo load: Repo.load md check)</td><td class='num'>282 (243–675)</td><td class='num'>350 (283–511)</td><td class='num'>410 (257–595)</td><td class='num'>493 (285–506)</td></tr>
+<tr><td>Go marshal request</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td></tr>
+<tr><td>Go json.Unmarshal</td><td class='num'>70 (67–74)</td><td class='num'>58 (54–69)</td><td class='num'>6 (5–7)</td><td class='num'>94 (92–104)</td></tr>
+<tr><td>Go convert to rpmmd</td><td class='num'>3 (2–7)</td><td class='num'>2 (2–6)</td><td class='num'>0 (0–1)</td><td class='num'>3 (3–3)</td></tr>
+<tr><td>Go other post-processing (incl. SBOM doc)</td><td class='num'>1 (0–1)</td><td class='num'>1 (1–1)</td><td class='num'>1 (0–1)</td><td class='num'>1 (0–1)</td></tr>
+<tr><td><b>metadata-dependent stages</b> (convert+disjoint+dict+dumps+write+unmarshal+convert)</td><td class='num'>508 (485–553)</td><td class='num'>492 (462–532)</td><td class='num'>91 (88–94)</td><td class='num'>1027 (979–1062)</td></tr>
+<tr><td>depsolver process (Go view)</td><td class='num'>3484 (3329–3768)</td><td class='num'>2967 (2779–3144)</td><td class='num'>2713 (2493–2929)</td><td class='num'>3737 (3522–4042)</td></tr>
+<tr><td>output arrival window (first→last byte)</td><td class='num'>41 (35–52)</td><td class='num'>26 (23–31)</td><td class='num'>3 (2–3)</td><td class='num'>44 (41–65)</td></tr>
+<tr><td>rest of image-builder (not depsolve)</td><td class='num'>2901 (2734–3002)</td><td class='num'>2950 (2744–3067)</td><td class='num'>3102 (2905–3122)</td><td class='num'>2872 (2655–3344)</td></tr>
+<tr><td><b>total wall</b></td><td class='num'>6464 (6141–6762)</td><td class='num'>5918 (5807–6096)</td><td class='num'>5628 (5613–6059)</td><td class='num'>6656 (6273–7495)</td></tr>
+<tr><td>metadata-dependent share of wall</td><td class='num'>7.9%</td><td class='num'>8.1%</td><td class='num'>1.6%</td><td class='num'>15.1%</td></tr>
+<tr><td>peak RSS Python (MiB, max over calls)</td><td class='num'>191</td><td class='num'>174</td><td class='num'>131</td><td class='num'>212</td></tr>
+<tr><td>peak RSS image-builder Go process (MiB)</td><td class='num'>88</td><td class='num'>85</td><td class='num'>68</td><td class='num'>104</td></tr></table></details>
+<details class='gen'><summary>workstation-live-installer — dnf4 — 2276 packages over 2 depsolve calls, 5 reps</summary><table class='gaps'><tr><th>stage (sum over calls), median (min–max) ms</th><th>today</th><th>full</th><th>minimal</th><th>full_files</th></tr>
+<tr><td>response payload (MB)</td><td class='num'>14.30</td><td class='num'>9.24</td><td class='num'>1.17</td><td class='num'>20.23</td></tr>
+<tr><td>of which depsolver SBOM (MB)</td><td class='num'>5.06</td><td class='num'>0.00</td><td class='num'>0.00</td><td class='num'>0.00</td></tr>
+<tr><td>reldeps / files returned</td><td class='num'>108404</td><td class='num'>108404</td><td class='num'>0</td><td class='num'>108404</td></tr>
+<tr><td>Py interpreter start (before harness)</td><td class='num'>152 (134–171)</td><td class='num'>117 (110–175)</td><td class='num'>108 (104–118)</td><td class='num'>119 (110–205)</td></tr>
+<tr><td>Py import dnf/libdnf5 + tool</td><td class='num'>255 (254–267)</td><td class='num'>280 (256–296)</td><td class='num'>268 (261–292)</td><td class='num'>262 (253–281)</td></tr>
+<tr><td>Py read+parse request</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–1)</td></tr>
+<tr><td>Py repo metadata load (solver init)</td><td class='num'>1021 (882–1084)</td><td class='num'>1040 (914–1266)</td><td class='num'>1173 (991–1349)</td><td class='num'>1049 (1022–1141)</td></tr>
+<tr><td>Py depsolve (resolve, minus convert/SBOM)</td><td class='num'>995 (918–1006)</td><td class='num'>976 (943–1126)</td><td class='num'>942 (921–1045)</td><td class='num'>947 (931–1027)</td></tr>
+<tr><td>Py dnf pkg -&gt; model.Package</td><td class='num'>286 (270–310)</td><td class='num'>294 (273–315)</td><td class='num'>86 (80–97)</td><td class='num'>819 (767–840)</td></tr>
+<tr><td>Py SPDX SBOM in depsolver</td><td class='num'>706 (680–761)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td></tr>
+<tr><td>Py disjoint sets (hash Packages)</td><td class='num'>49 (48–51)</td><td class='num'>49 (46–51)</td><td class='num'>14 (14–15)</td><td class='num'>63 (58–90)</td></tr>
+<tr><td>Py model.Package -&gt; dict</td><td class='num'>52 (51–54)</td><td class='num'>97 (93–103)</td><td class='num'>1 (1–2)</td><td class='num'>95 (95–106)</td></tr>
+<tr><td>Py json.dumps</td><td class='num'>66 (65–68)</td><td class='num'>48 (45–50)</td><td class='num'>4 (4–4)</td><td class='num'>88 (85–90)</td></tr>
+<tr><td>Py stdout write+flush</td><td class='num'>36 (34–40)</td><td class='num'>33 (30–37)</td><td class='num'>3 (3–4)</td><td class='num'>81 (65–109)</td></tr>
+<tr><td>Py exit/teardown after output</td><td class='num'>1 (1–1)</td><td class='num'>1 (1–1)</td><td class='num'>1 (1–1)</td><td class='num'>1 (1–1)</td></tr>
+<tr><td>(of repo load: Repo.load md check)</td><td class='num'>354 (238–475)</td><td class='num'>373 (209–555)</td><td class='num'>481 (309–659)</td><td class='num'>249 (227–290)</td></tr>
+<tr><td>Go marshal request</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–1)</td><td class='num'>0 (0–0)</td></tr>
+<tr><td>Go json.Unmarshal</td><td class='num'>122 (118–128)</td><td class='num'>108 (98–113)</td><td class='num'>12 (11–13)</td><td class='num'>172 (162–178)</td></tr>
+<tr><td>Go convert to rpmmd</td><td class='num'>8 (7–8)</td><td class='num'>9 (8–10)</td><td class='num'>1 (1–1)</td><td class='num'>4 (3–6)</td></tr>
+<tr><td>Go other post-processing (incl. SBOM doc)</td><td class='num'>1 (1–1)</td><td class='num'>1 (1–1)</td><td class='num'>1 (1–1)</td><td class='num'>1 (1–1)</td></tr>
+<tr><td><b>metadata-dependent stages</b> (convert+disjoint+dict+dumps+write+unmarshal+convert)</td><td class='num'>620 (598–652)</td><td class='num'>643 (608–651)</td><td class='num'>123 (116–135)</td><td class='num'>1331 (1268–1387)</td></tr>
+<tr><td>depsolver process (Go view)</td><td class='num'>3567 (3474–3744)</td><td class='num'>2916 (2851–3204)</td><td class='num'>2573 (2444–2895)</td><td class='num'>3604 (3499–3782)</td></tr>
+<tr><td>output arrival window (first→last byte)</td><td class='num'>64 (62–70)</td><td class='num'>38 (37–56)</td><td class='num'>4 (4–5)</td><td class='num'>96 (76–111)</td></tr>
+<tr><td>rest of image-builder (not depsolve)</td><td class='num'>3010 (2798–3051)</td><td class='num'>3159 (2888–3203)</td><td class='num'>3228 (3058–3436)</td><td class='num'>3063 (2946–3218)</td></tr>
+<tr><td><b>total wall</b></td><td class='num'>6710 (6492–6879)</td><td class='num'>6213 (5922–6479)</td><td class='num'>5821 (5516–6139)</td><td class='num'>6968 (6612–7016)</td></tr>
+<tr><td>metadata-dependent share of wall</td><td class='num'>9.2%</td><td class='num'>10.3%</td><td class='num'>2.1%</td><td class='num'>19.5%</td></tr>
+<tr><td>peak RSS Python (MiB, max over calls)</td><td class='num'>217</td><td class='num'>189</td><td class='num'>137</td><td class='num'>242</td></tr>
+<tr><td>peak RSS image-builder Go process (MiB)</td><td class='num'>117</td><td class='num'>115</td><td class='num'>71</td><td class='num'>139</td></tr></table></details>
+<details class='gen'><summary>generic-container — dnf5 — 288 packages over 2 depsolve calls, 5 reps</summary><table class='gaps'><tr><th>stage (sum over calls), median (min–max) ms</th><th>today</th><th>full</th><th>minimal</th><th>full_files</th></tr>
+<tr><td>response payload (MB)</td><td class='num'>4.81</td><td class='num'>4.24</td><td class='num'>3.52</td><td class='num'>6.36</td></tr>
+<tr><td>of which depsolver SBOM (MB)</td><td class='num'>0.56</td><td class='num'>0.00</td><td class='num'>0.00</td><td class='num'>0.00</td></tr>
+<tr><td>reldeps / files returned</td><td class='num'>7054</td><td class='num'>7054</td><td class='num'>0</td><td class='num'>7054</td></tr>
+<tr><td>Py interpreter start (before harness)</td><td class='num'>107 (105–118)</td><td class='num'>100 (97–104)</td><td class='num'>104 (100–112)</td><td class='num'>111 (103–128)</td></tr>
+<tr><td>Py import dnf/libdnf5 + tool</td><td class='num'>222 (211–238)</td><td class='num'>225 (216–290)</td><td class='num'>226 (213–272)</td><td class='num'>229 (204–241)</td></tr>
+<tr><td>Py read+parse request</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td></tr>
+<tr><td>Py repo metadata load (solver init)</td><td class='num'>355 (263–460)</td><td class='num'>304 (270–325)</td><td class='num'>288 (266–496)</td><td class='num'>418 (356–566)</td></tr>
+<tr><td>Py depsolve (resolve, minus convert/SBOM)</td><td class='num'>203 (201–213)</td><td class='num'>203 (200–211)</td><td class='num'>211 (203–224)</td><td class='num'>221 (198–225)</td></tr>
+<tr><td>Py dnf pkg -&gt; model.Package</td><td class='num'>100 (97–102)</td><td class='num'>103 (102–113)</td><td class='num'>21 (21–24)</td><td class='num'>226 (216–239)</td></tr>
+<tr><td>Py SPDX SBOM in depsolver</td><td class='num'>171 (162–183)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td></tr>
+<tr><td>Py disjoint sets (hash Packages)</td><td class='num'>6 (5–6)</td><td class='num'>5 (5–6)</td><td class='num'>3 (3–4)</td><td class='num'>8 (7–8)</td></tr>
+<tr><td>Py model.Package -&gt; dict</td><td class='num'>3 (3–3)</td><td class='num'>6 (6–6)</td><td class='num'>0 (0–0)</td><td class='num'>7 (6–7)</td></tr>
+<tr><td>Py json.dumps</td><td class='num'>13 (13–14)</td><td class='num'>12 (11–13)</td><td class='num'>8 (8–9)</td><td class='num'>19 (17–21)</td></tr>
+<tr><td>Py stdout write+flush</td><td class='num'>12 (11–15)</td><td class='num'>12 (11–15)</td><td class='num'>10 (8–13)</td><td class='num'>19 (16–24)</td></tr>
+<tr><td>Py exit/teardown after output</td><td class='num'>1 (1–1)</td><td class='num'>1 (1–1)</td><td class='num'>1 (1–1)</td><td class='num'>1 (1–1)</td></tr>
+<tr><td>Go marshal request</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td></tr>
+<tr><td>Go json.Unmarshal</td><td class='num'>32 (31–34)</td><td class='num'>28 (27–30)</td><td class='num'>22 (19–24)</td><td class='num'>43 (39–48)</td></tr>
+<tr><td>Go convert to rpmmd</td><td class='num'>0 (0–1)</td><td class='num'>0 (0–1)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td></tr>
+<tr><td>Go other post-processing (incl. SBOM doc)</td><td class='num'>0 (0–1)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–1)</td><td class='num'>0 (0–1)</td></tr>
+<tr><td><b>metadata-dependent stages</b> (convert+disjoint+dict+dumps+write+unmarshal+convert)</td><td class='num'>168 (162–171)</td><td class='num'>168 (166–179)</td><td class='num'>67 (61–67)</td><td class='num'>325 (306–338)</td></tr>
+<tr><td>depsolver process (Go view)</td><td class='num'>1228 (1090–1329)</td><td class='num'>986 (952–1008)</td><td class='num'>894 (840–1158)</td><td class='num'>1289 (1162–1387)</td></tr>
+<tr><td>output arrival window (first→last byte)</td><td class='num'>19 (17–22)</td><td class='num'>15 (14–17)</td><td class='num'>15 (11–17)</td><td class='num'>22 (18–37)</td></tr>
+<tr><td>rest of image-builder (not depsolve)</td><td class='num'>2858 (2770–3022)</td><td class='num'>2935 (2800–2990)</td><td class='num'>2920 (2714–3068)</td><td class='num'>3068 (2843–3237)</td></tr>
+<tr><td><b>total wall</b></td><td class='num'>4132 (3982–4285)</td><td class='num'>3971 (3797–4008)</td><td class='num'>3838 (3586–4248)</td><td class='num'>4305 (4274–4575)</td></tr>
+<tr><td>metadata-dependent share of wall</td><td class='num'>4.0%</td><td class='num'>4.3%</td><td class='num'>1.7%</td><td class='num'>7.4%</td></tr>
+<tr><td>peak RSS Python (MiB, max over calls)</td><td class='num'>142</td><td class='num'>138</td><td class='num'>135</td><td class='num'>145</td></tr>
+<tr><td>peak RSS image-builder Go process (MiB)</td><td class='num'>78</td><td class='num'>76</td><td class='num'>71</td><td class='num'>81</td></tr></table></details>
+<details class='gen'><summary>minimal-raw-xz — dnf5 — 592 packages over 2 depsolve calls, 5 reps</summary><table class='gaps'><tr><th>stage (sum over calls), median (min–max) ms</th><th>today</th><th>full</th><th>minimal</th><th>full_files</th></tr>
+<tr><td>response payload (MB)</td><td class='num'>12.36</td><td class='num'>11.15</td><td class='num'>7.28</td><td class='num'>15.00</td></tr>
+<tr><td>of which depsolver SBOM (MB)</td><td class='num'>1.21</td><td class='num'>0.00</td><td class='num'>0.00</td><td class='num'>0.00</td></tr>
+<tr><td>reldeps / files returned</td><td class='num'>51554</td><td class='num'>51554</td><td class='num'>0</td><td class='num'>51554</td></tr>
+<tr><td>Py interpreter start (before harness)</td><td class='num'>116 (106–122)</td><td class='num'>104 (101–104)</td><td class='num'>99 (97–100)</td><td class='num'>111 (93–119)</td></tr>
+<tr><td>Py import dnf/libdnf5 + tool</td><td class='num'>222 (207–226)</td><td class='num'>228 (214–257)</td><td class='num'>214 (212–230)</td><td class='num'>215 (208–255)</td></tr>
+<tr><td>Py read+parse request</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td></tr>
+<tr><td>Py repo metadata load (solver init)</td><td class='num'>267 (247–627)</td><td class='num'>284 (259–305)</td><td class='num'>341 (261–617)</td><td class='num'>363 (356–401)</td></tr>
+<tr><td>Py depsolve (resolve, minus convert/SBOM)</td><td class='num'>268 (261–294)</td><td class='num'>291 (280–316)</td><td class='num'>268 (259–298)</td><td class='num'>277 (269–285)</td></tr>
+<tr><td>Py dnf pkg -&gt; model.Package</td><td class='num'>525 (509–565)</td><td class='num'>535 (496–576)</td><td class='num'>68 (64–79)</td><td class='num'>807 (792–883)</td></tr>
+<tr><td>Py SPDX SBOM in depsolver</td><td class='num'>420 (401–451)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td></tr>
+<tr><td>Py disjoint sets (hash Packages)</td><td class='num'>37 (35–51)</td><td class='num'>38 (35–47)</td><td class='num'>11 (11–13)</td><td class='num'>42 (41–43)</td></tr>
+<tr><td>Py model.Package -&gt; dict</td><td class='num'>15 (14–21)</td><td class='num'>21 (18–23)</td><td class='num'>1 (0–1)</td><td class='num'>19 (19–20)</td></tr>
+<tr><td>Py json.dumps</td><td class='num'>45 (43–62)</td><td class='num'>43 (39–47)</td><td class='num'>17 (17–18)</td><td class='num'>48 (48–50)</td></tr>
+<tr><td>Py stdout write+flush</td><td class='num'>39 (37–47)</td><td class='num'>37 (33–39)</td><td class='num'>21 (20–22)</td><td class='num'>41 (36–56)</td></tr>
+<tr><td>Py exit/teardown after output</td><td class='num'>1 (1–1)</td><td class='num'>1 (1–1)</td><td class='num'>1 (1–1)</td><td class='num'>1 (1–1)</td></tr>
+<tr><td>Go marshal request</td><td class='num'>0 (0–1)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td></tr>
+<tr><td>Go json.Unmarshal</td><td class='num'>86 (84–98)</td><td class='num'>79 (74–100)</td><td class='num'>41 (40–44)</td><td class='num'>105 (97–148)</td></tr>
+<tr><td>Go convert to rpmmd</td><td class='num'>1 (1–3)</td><td class='num'>2 (1–3)</td><td class='num'>0 (0–0)</td><td class='num'>2 (1–2)</td></tr>
+<tr><td>Go other post-processing (incl. SBOM doc)</td><td class='num'>1 (0–1)</td><td class='num'>0 (0–1)</td><td class='num'>0 (0–0)</td><td class='num'>1 (0–1)</td></tr>
+<tr><td><b>metadata-dependent stages</b> (convert+disjoint+dict+dumps+write+unmarshal+convert)</td><td class='num'>746 (734–823)</td><td class='num'>755 (706–821)</td><td class='num'>159 (153–173)</td><td class='num'>1060 (1053–1189)</td></tr>
+<tr><td>depsolver process (Go view)</td><td class='num'>2114 (1929–2352)</td><td class='num'>1592 (1553–1660)</td><td class='num'>1109 (964–1324)</td><td class='num'>2011 (1905–2045)</td></tr>
+<tr><td>output arrival window (first→last byte)</td><td class='num'>54 (49–65)</td><td class='num'>45 (43–49)</td><td class='num'>25 (24–26)</td><td class='num'>57 (49–74)</td></tr>
+<tr><td>rest of image-builder (not depsolve)</td><td class='num'>2772 (2742–2987)</td><td class='num'>2883 (2754–3013)</td><td class='num'>2851 (2736–3009)</td><td class='num'>2902 (2701–3171)</td></tr>
+<tr><td><b>total wall</b></td><td class='num'>4969 (4759–5441)</td><td class='num'>4640 (4397–4714)</td><td class='num'>3940 (3797–4236)</td><td class='num'>5017 (4706–5368)</td></tr>
+<tr><td>metadata-dependent share of wall</td><td class='num'>15.2%</td><td class='num'>16.2%</td><td class='num'>4.1%</td><td class='num'>22.1%</td></tr>
+<tr><td>peak RSS Python (MiB, max over calls)</td><td class='num'>208</td><td class='num'>193</td><td class='num'>155</td><td class='num'>209</td></tr>
+<tr><td>peak RSS image-builder Go process (MiB)</td><td class='num'>104</td><td class='num'>105</td><td class='num'>85</td><td class='num'>105</td></tr></table></details>
+<details class='gen'><summary>generic-qcow2 — dnf5 — 704 packages over 2 depsolve calls, 5 reps</summary><table class='gaps'><tr><th>stage (sum over calls), median (min–max) ms</th><th>today</th><th>full</th><th>minimal</th><th>full_files</th></tr>
+<tr><td>response payload (MB)</td><td class='num'>14.26</td><td class='num'>12.82</td><td class='num'>8.70</td><td class='num'>16.91</td></tr>
+<tr><td>of which depsolver SBOM (MB)</td><td class='num'>1.44</td><td class='num'>0.00</td><td class='num'>0.00</td><td class='num'>0.00</td></tr>
+<tr><td>reldeps / files returned</td><td class='num'>53964</td><td class='num'>53964</td><td class='num'>0</td><td class='num'>53964</td></tr>
+<tr><td>Py interpreter start (before harness)</td><td class='num'>122 (118–270)</td><td class='num'>116 (105–123)</td><td class='num'>102 (96–136)</td><td class='num'>118 (100–119)</td></tr>
+<tr><td>Py import dnf/libdnf5 + tool</td><td class='num'>239 (216–327)</td><td class='num'>245 (217–274)</td><td class='num'>226 (209–271)</td><td class='num'>235 (208–256)</td></tr>
+<tr><td>Py read+parse request</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td></tr>
+<tr><td>Py repo metadata load (solver init)</td><td class='num'>303 (270–975)</td><td class='num'>361 (272–759)</td><td class='num'>313 (252–450)</td><td class='num'>389 (348–522)</td></tr>
+<tr><td>Py depsolve (resolve, minus convert/SBOM)</td><td class='num'>307 (292–352)</td><td class='num'>305 (298–321)</td><td class='num'>305 (279–342)</td><td class='num'>305 (290–327)</td></tr>
+<tr><td>Py dnf pkg -&gt; model.Package</td><td class='num'>606 (572–723)</td><td class='num'>591 (590–615)</td><td class='num'>84 (76–110)</td><td class='num'>930 (893–1013)</td></tr>
+<tr><td>Py SPDX SBOM in depsolver</td><td class='num'>485 (458–5845)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td></tr>
+<tr><td>Py disjoint sets (hash Packages)</td><td class='num'>41 (40–60)</td><td class='num'>41 (40–44)</td><td class='num'>14 (13–14)</td><td class='num'>49 (47–50)</td></tr>
+<tr><td>Py model.Package -&gt; dict</td><td class='num'>21 (19–37)</td><td class='num'>22 (21–23)</td><td class='num'>1 (1–1)</td><td class='num'>22 (20–33)</td></tr>
+<tr><td>Py json.dumps</td><td class='num'>50 (49–76)</td><td class='num'>44 (43–59)</td><td class='num'>23 (22–37)</td><td class='num'>59 (53–78)</td></tr>
+<tr><td>Py stdout write+flush</td><td class='num'>44 (38–120)</td><td class='num'>38 (35–81)</td><td class='num'>22 (21–37)</td><td class='num'>45 (39–119)</td></tr>
+<tr><td>Py exit/teardown after output</td><td class='num'>1 (1–1)</td><td class='num'>1 (1–1)</td><td class='num'>1 (1–1)</td><td class='num'>1 (1–1)</td></tr>
+<tr><td>Go marshal request</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td></tr>
+<tr><td>Go json.Unmarshal</td><td class='num'>103 (92–140)</td><td class='num'>92 (89–107)</td><td class='num'>47 (46–49)</td><td class='num'>126 (118–144)</td></tr>
+<tr><td>Go convert to rpmmd</td><td class='num'>2 (2–6)</td><td class='num'>2 (2–3)</td><td class='num'>0 (0–0)</td><td class='num'>3 (2–3)</td></tr>
+<tr><td>Go other post-processing (incl. SBOM doc)</td><td class='num'>1 (1–5)</td><td class='num'>1 (0–1)</td><td class='num'>0 (0–1)</td><td class='num'>1 (0–1)</td></tr>
+<tr><td><b>metadata-dependent stages</b> (convert+disjoint+dict+dumps+write+unmarshal+convert)</td><td class='num'>852 (813–1163)</td><td class='num'>853 (823–898)</td><td class='num'>193 (179–244)</td><td class='num'>1219 (1192–1438)</td></tr>
+<tr><td>depsolver process (Go view)</td><td class='num'>2227 (2106–8808)</td><td class='num'>1896 (1654–2246)</td><td class='num'>1185 (980–1285)</td><td class='num'>2118 (2051–2533)</td></tr>
+<tr><td>output arrival window (first→last byte)</td><td class='num'>67 (52–141)</td><td class='num'>49 (44–88)</td><td class='num'>26 (23–41)</td><td class='num'>57 (51–127)</td></tr>
+<tr><td>rest of image-builder (not depsolve)</td><td class='num'>2749 (2674–3208)</td><td class='num'>3018 (2731–3231)</td><td class='num'>2967 (2801–3363)</td><td class='num'>2943 (2766–3172)</td></tr>
+<tr><td><b>total wall</b></td><td class='num'>5182 (4875–11709)</td><td class='num'>4910 (4545–5514)</td><td class='num'>4178 (3829–4699)</td><td class='num'>5183 (4940–5776)</td></tr>
+<tr><td>metadata-dependent share of wall</td><td class='num'>16.7%</td><td class='num'>17.3%</td><td class='num'>4.8%</td><td class='num'>24.0%</td></tr>
+<tr><td>peak RSS Python (MiB, max over calls)</td><td class='num'>215</td><td class='num'>199</td><td class='num'>165</td><td class='num'>217</td></tr>
+<tr><td>peak RSS image-builder Go process (MiB)</td><td class='num'>102</td><td class='num'>106</td><td class='num'>86</td><td class='num'>117</td></tr></table></details>
+<details class='gen'><summary>server-qcow2 — dnf5 — 1095 packages over 2 depsolve calls, 5 reps</summary><table class='gaps'><tr><th>stage (sum over calls), median (min–max) ms</th><th>today</th><th>full</th><th>minimal</th><th>full_files</th></tr>
+<tr><td>response payload (MB)</td><td class='num'>21.04</td><td class='num'>18.68</td><td class='num'>13.53</td><td class='num'>24.45</td></tr>
+<tr><td>of which depsolver SBOM (MB)</td><td class='num'>2.36</td><td class='num'>0.00</td><td class='num'>0.00</td><td class='num'>0.00</td></tr>
+<tr><td>reldeps / files returned</td><td class='num'>68633</td><td class='num'>68633</td><td class='num'>0</td><td class='num'>68633</td></tr>
+<tr><td>Py interpreter start (before harness)</td><td class='num'>119 (115–123)</td><td class='num'>107 (95–110)</td><td class='num'>109 (102–119)</td><td class='num'>107 (105–129)</td></tr>
+<tr><td>Py import dnf/libdnf5 + tool</td><td class='num'>232 (218–238)</td><td class='num'>220 (206–271)</td><td class='num'>232 (226–267)</td><td class='num'>230 (221–242)</td></tr>
+<tr><td>Py read+parse request</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td></tr>
+<tr><td>Py repo metadata load (solver init)</td><td class='num'>288 (276–489)</td><td class='num'>296 (266–492)</td><td class='num'>279 (260–541)</td><td class='num'>409 (406–769)</td></tr>
+<tr><td>Py depsolve (resolve, minus convert/SBOM)</td><td class='num'>396 (386–403)</td><td class='num'>410 (372–422)</td><td class='num'>408 (389–429)</td><td class='num'>403 (396–427)</td></tr>
+<tr><td>Py dnf pkg -&gt; model.Package</td><td class='num'>874 (859–959)</td><td class='num'>902 (828–927)</td><td class='num'>129 (128–134)</td><td class='num'>1418 (1328–1539)</td></tr>
+<tr><td>Py SPDX SBOM in depsolver</td><td class='num'>664 (637–772)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td></tr>
+<tr><td>Py disjoint sets (hash Packages)</td><td class='num'>65 (63–69)</td><td class='num'>63 (57–67)</td><td class='num'>24 (24–26)</td><td class='num'>79 (76–91)</td></tr>
+<tr><td>Py model.Package -&gt; dict</td><td class='num'>29 (28–40)</td><td class='num'>65 (55–79)</td><td class='num'>1 (1–1)</td><td class='num'>86 (73–90)</td></tr>
+<tr><td>Py json.dumps</td><td class='num'>75 (70–83)</td><td class='num'>67 (58–75)</td><td class='num'>36 (35–37)</td><td class='num'>85 (79–113)</td></tr>
+<tr><td>Py stdout write+flush</td><td class='num'>94 (79–104)</td><td class='num'>60 (48–63)</td><td class='num'>42 (36–46)</td><td class='num'>93 (71–99)</td></tr>
+<tr><td>Py exit/teardown after output</td><td class='num'>1 (1–1)</td><td class='num'>1 (1–1)</td><td class='num'>1 (1–1)</td><td class='num'>1 (1–1)</td></tr>
+<tr><td>Go marshal request</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td></tr>
+<tr><td>Go json.Unmarshal</td><td class='num'>138 (135–147)</td><td class='num'>128 (126–130)</td><td class='num'>75 (74–82)</td><td class='num'>174 (164–191)</td></tr>
+<tr><td>Go convert to rpmmd</td><td class='num'>3 (2–4)</td><td class='num'>7 (2–7)</td><td class='num'>0 (0–0)</td><td class='num'>3 (3–4)</td></tr>
+<tr><td>Go other post-processing (incl. SBOM doc)</td><td class='num'>1 (1–1)</td><td class='num'>1 (1–1)</td><td class='num'>1 (1–1)</td><td class='num'>1 (0–1)</td></tr>
+<tr><td><b>metadata-dependent stages</b> (convert+disjoint+dict+dumps+write+unmarshal+convert)</td><td class='num'>1300 (1254–1378)</td><td class='num'>1318 (1176–1332)</td><td class='num'>312 (304–317)</td><td class='num'>1937 (1846–2089)</td></tr>
+<tr><td>depsolver process (Go view)</td><td class='num'>3001 (2801–3049)</td><td class='num'>2301 (2014–2468)</td><td class='num'>1314 (1237–1521)</td><td class='num'>3008 (2974–3215)</td></tr>
+<tr><td>output arrival window (first→last byte)</td><td class='num'>117 (102–130)</td><td class='num'>70 (61–75)</td><td class='num'>48 (44–51)</td><td class='num'>112 (90–120)</td></tr>
+<tr><td>rest of image-builder (not depsolve)</td><td class='num'>2864 (2540–3101)</td><td class='num'>2858 (2719–2976)</td><td class='num'>2867 (2687–2954)</td><td class='num'>2918 (2777–3117)</td></tr>
+<tr><td><b>total wall</b></td><td class='num'>5894 (5679–6292)</td><td class='num'>5224 (4981–5581)</td><td class='num'>4217 (4075–4390)</td><td class='num'>6304 (5944–6361)</td></tr>
+<tr><td>metadata-dependent share of wall</td><td class='num'>22.1%</td><td class='num'>24.8%</td><td class='num'>7.2%</td><td class='num'>32.6%</td></tr>
+<tr><td>peak RSS Python (MiB, max over calls)</td><td class='num'>252</td><td class='num'>234</td><td class='num'>189</td><td class='num'>262</td></tr>
+<tr><td>peak RSS image-builder Go process (MiB)</td><td class='num'>146</td><td class='num'>120</td><td class='num'>104</td><td class='num'>155</td></tr></table></details>
+<details class='gen'><summary>workstation-live-installer — dnf5 — 2276 packages over 2 depsolve calls, 5 reps</summary><table class='gaps'><tr><th>stage (sum over calls), median (min–max) ms</th><th>today</th><th>full</th><th>minimal</th><th>full_files</th></tr>
+<tr><td>response payload (MB)</td><td class='num'>41.63</td><td class='num'>36.59</td><td class='num'>28.52</td><td class='num'>47.58</td></tr>
+<tr><td>of which depsolver SBOM (MB)</td><td class='num'>5.04</td><td class='num'>0.00</td><td class='num'>0.00</td><td class='num'>0.00</td></tr>
+<tr><td>reldeps / files returned</td><td class='num'>108404</td><td class='num'>108404</td><td class='num'>0</td><td class='num'>108404</td></tr>
+<tr><td>Py interpreter start (before harness)</td><td class='num'>132 (123–154)</td><td class='num'>105 (100–130)</td><td class='num'>102 (100–107)</td><td class='num'>107 (104–117)</td></tr>
+<tr><td>Py import dnf/libdnf5 + tool</td><td class='num'>222 (217–276)</td><td class='num'>211 (207–240)</td><td class='num'>224 (208–247)</td><td class='num'>218 (214–254)</td></tr>
+<tr><td>Py read+parse request</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td></tr>
+<tr><td>Py repo metadata load (solver init)</td><td class='num'>294 (251–448)</td><td class='num'>305 (266–441)</td><td class='num'>293 (275–415)</td><td class='num'>402 (370–526)</td></tr>
+<tr><td>Py depsolve (resolve, minus convert/SBOM)</td><td class='num'>516 (465–657)</td><td class='num'>519 (493–521)</td><td class='num'>521 (490–544)</td><td class='num'>518 (503–570)</td></tr>
+<tr><td>Py dnf pkg -&gt; model.Package</td><td class='num'>833 (809–1123)</td><td class='num'>914 (834–918)</td><td class='num'>152 (141–156)</td><td class='num'>1392 (1342–1541)</td></tr>
+<tr><td>Py SPDX SBOM in depsolver</td><td class='num'>1146 (1135–1383)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td></tr>
+<tr><td>Py disjoint sets (hash Packages)</td><td class='num'>70 (69–72)</td><td class='num'>67 (64–69)</td><td class='num'>33 (31–36)</td><td class='num'>78 (75–86)</td></tr>
+<tr><td>Py model.Package -&gt; dict</td><td class='num'>52 (49–67)</td><td class='num'>97 (92–132)</td><td class='num'>5 (5–6)</td><td class='num'>106 (96–148)</td></tr>
+<tr><td>Py json.dumps</td><td class='num'>139 (129–175)</td><td class='num'>127 (122–139)</td><td class='num'>76 (73–84)</td><td class='num'>167 (148–213)</td></tr>
+<tr><td>Py stdout write+flush</td><td class='num'>177 (126–275)</td><td class='num'>99 (77–123)</td><td class='num'>90 (79–112)</td><td class='num'>184 (166–301)</td></tr>
+<tr><td>Py exit/teardown after output</td><td class='num'>1 (1–1)</td><td class='num'>1 (1–1)</td><td class='num'>1 (1–1)</td><td class='num'>1 (1–1)</td></tr>
+<tr><td>Go marshal request</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–4)</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td></tr>
+<tr><td>Go json.Unmarshal</td><td class='num'>272 (270–279)</td><td class='num'>249 (233–259)</td><td class='num'>162 (153–168)</td><td class='num'>311 (307–367)</td></tr>
+<tr><td>Go convert to rpmmd</td><td class='num'>6 (5–6)</td><td class='num'>4 (3–5)</td><td class='num'>1 (1–1)</td><td class='num'>6 (5–6)</td></tr>
+<tr><td>Go other post-processing (incl. SBOM doc)</td><td class='num'>1 (1–1)</td><td class='num'>1 (0–1)</td><td class='num'>1 (0–1)</td><td class='num'>1 (1–1)</td></tr>
+<tr><td><b>metadata-dependent stages</b> (convert+disjoint+dict+dumps+write+unmarshal+convert)</td><td class='num'>1551 (1473–1995)</td><td class='num'>1534 (1454–1624)</td><td class='num'>515 (507–534)</td><td class='num'>2218 (2215–2654)</td></tr>
+<tr><td>depsolver process (Go view)</td><td class='num'>3819 (3461–4620)</td><td class='num'>2500 (2363–2697)</td><td class='num'>1545 (1505–1583)</td><td class='num'>3203 (3169–3738)</td></tr>
+<tr><td>output arrival window (first→last byte)</td><td class='num'>211 (155–295)</td><td class='num'>108 (88–127)</td><td class='num'>89 (81–103)</td><td class='num'>193 (170–274)</td></tr>
+<tr><td>rest of image-builder (not depsolve)</td><td class='num'>2871 (2805–3089)</td><td class='num'>2871 (2788–2957)</td><td class='num'>2867 (2770–2952)</td><td class='num'>2916 (2784–3000)</td></tr>
+<tr><td><b>total wall</b></td><td class='num'>6961 (6549–7994)</td><td class='num'>5692 (5390–5922)</td><td class='num'>4601 (4460–4652)</td><td class='num'>6424 (6288–7113)</td></tr>
+<tr><td>metadata-dependent share of wall</td><td class='num'>22.7%</td><td class='num'>27.3%</td><td class='num'>11.5%</td><td class='num'>34.9%</td></tr>
+<tr><td>peak RSS Python (MiB, max over calls)</td><td class='num'>302</td><td class='num'>273</td><td class='num'>223</td><td class='num'>311</td></tr>
+<tr><td>peak RSS image-builder Go process (MiB)</td><td class='num'>230</td><td class='num'>148</td><td class='num'>150</td><td class='num'>246</td></tr></table></details>
+<details class='gen'><summary>generic-qcow2 — dnf4 — 704 packages over 2 depsolve calls, 3 reps</summary><table class='gaps'><tr><th>stage (sum over calls), median (min–max) ms</th><th>today (cold)</th><th>minimal (cold)</th></tr>
+<tr><td>response payload (MB)</td><td class='num'>5.91</td><td class='num'>0.36</td></tr>
+<tr><td>of which depsolver SBOM (MB)</td><td class='num'>1.43</td><td class='num'>0.00</td></tr>
+<tr><td>reldeps / files returned</td><td class='num'>53964</td><td class='num'>0</td></tr>
+<tr><td>Py interpreter start (before harness)</td><td class='num'>141 (129–146)</td><td class='num'>132 (129–146)</td></tr>
+<tr><td>Py import dnf/libdnf5 + tool</td><td class='num'>289 (258–377)</td><td class='num'>297 (276–304)</td></tr>
+<tr><td>Py read+parse request</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td></tr>
+<tr><td>Py repo metadata load (solver init)</td><td class='num'>5703 (5702–5876)</td><td class='num'>6282 (6131–6983)</td></tr>
+<tr><td>Py depsolve (resolve, minus convert/SBOM)</td><td class='num'>1681 (1620–1783)</td><td class='num'>1645 (1637–1727)</td></tr>
+<tr><td>Py dnf pkg -&gt; model.Package</td><td class='num'>249 (218–305)</td><td class='num'>46 (45–47)</td></tr>
+<tr><td>Py SPDX SBOM in depsolver</td><td class='num'>286 (271–331)</td><td class='num'>0 (0–0)</td></tr>
+<tr><td>Py disjoint sets (hash Packages)</td><td class='num'>36 (35–37)</td><td class='num'>5 (5–5)</td></tr>
+<tr><td>Py model.Package -&gt; dict</td><td class='num'>59 (56–62)</td><td class='num'>0 (0–1)</td></tr>
+<tr><td>Py json.dumps</td><td class='num'>28 (26–29)</td><td class='num'>2 (1–2)</td></tr>
+<tr><td>Py stdout write+flush</td><td class='num'>25 (22–52)</td><td class='num'>1 (1–2)</td></tr>
+<tr><td>Py exit/teardown after output</td><td class='num'>1 (1–1)</td><td class='num'>1 (1–1)</td></tr>
+<tr><td>(of repo load: Repo.load md check)</td><td class='num'>2894 (2825–3093)</td><td class='num'>3532 (3494–4251)</td></tr>
+<tr><td>Go marshal request</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td></tr>
+<tr><td>Go json.Unmarshal</td><td class='num'>58 (51–63)</td><td class='num'>6 (5–6)</td></tr>
+<tr><td>Go convert to rpmmd</td><td class='num'>3 (2–3)</td><td class='num'>0 (0–1)</td></tr>
+<tr><td>Go other post-processing (incl. SBOM doc)</td><td class='num'>1 (1–1)</td><td class='num'>1 (1–1)</td></tr>
+<tr><td><b>metadata-dependent stages</b> (convert+disjoint+dict+dumps+write+unmarshal+convert)</td><td class='num'>453 (416–549)</td><td class='num'>60 (60–61)</td></tr>
+<tr><td>depsolver process (Go view)</td><td class='num'>8505 (8360–9015)</td><td class='num'>8385 (8262–9219)</td></tr>
+<tr><td>output arrival window (first→last byte)</td><td class='num'>37 (36–67)</td><td class='num'>2 (1–2)</td></tr>
+<tr><td>rest of image-builder (not depsolve)</td><td class='num'>3009 (2934–3238)</td><td class='num'>3087 (2981–3090)</td></tr>
+<tr><td><b>total wall</b></td><td class='num'>11575 (11349–12319)</td><td class='num'>11482 (11249–12314)</td></tr>
+<tr><td>metadata-dependent share of wall</td><td class='num'>3.9%</td><td class='num'>0.5%</td></tr>
+<tr><td>peak RSS Python (MiB, max over calls)</td><td class='num'>201</td><td class='num'>192</td></tr>
+<tr><td>peak RSS image-builder Go process (MiB)</td><td class='num'>88</td><td class='num'>68</td></tr></table></details>
+<details class='gen'><summary>generic-qcow2 — dnf5 — 704 packages over 2 depsolve calls, 3 reps</summary><table class='gaps'><tr><th>stage (sum over calls), median (min–max) ms</th><th>today (cold)</th><th>minimal (cold)</th></tr>
+<tr><td>response payload (MB)</td><td class='num'>14.26</td><td class='num'>8.70</td></tr>
+<tr><td>of which depsolver SBOM (MB)</td><td class='num'>1.44</td><td class='num'>0.00</td></tr>
+<tr><td>reldeps / files returned</td><td class='num'>53964</td><td class='num'>0</td></tr>
+<tr><td>Py interpreter start (before harness)</td><td class='num'>132 (121–137)</td><td class='num'>114 (108–115)</td></tr>
+<tr><td>Py import dnf/libdnf5 + tool</td><td class='num'>242 (232–245)</td><td class='num'>243 (218–253)</td></tr>
+<tr><td>Py read+parse request</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–13)</td></tr>
+<tr><td>Py repo metadata load (solver init)</td><td class='num'>5569 (5421–5682)</td><td class='num'>5420 (5407–5591)</td></tr>
+<tr><td>Py depsolve (resolve, minus convert/SBOM)</td><td class='num'>1278 (1261–1315)</td><td class='num'>1258 (1235–1259)</td></tr>
+<tr><td>Py dnf pkg -&gt; model.Package</td><td class='num'>631 (585–648)</td><td class='num'>86 (84–87)</td></tr>
+<tr><td>Py SPDX SBOM in depsolver</td><td class='num'>497 (464–501)</td><td class='num'>0 (0–0)</td></tr>
+<tr><td>Py disjoint sets (hash Packages)</td><td class='num'>45 (44–45)</td><td class='num'>15 (14–16)</td></tr>
+<tr><td>Py model.Package -&gt; dict</td><td class='num'>22 (21–23)</td><td class='num'>1 (1–1)</td></tr>
+<tr><td>Py json.dumps</td><td class='num'>54 (53–55)</td><td class='num'>25 (22–26)</td></tr>
+<tr><td>Py stdout write+flush</td><td class='num'>50 (49–57)</td><td class='num'>26 (24–29)</td></tr>
+<tr><td>Py exit/teardown after output</td><td class='num'>1 (1–1)</td><td class='num'>1 (0–1)</td></tr>
+<tr><td>Go marshal request</td><td class='num'>0 (0–0)</td><td class='num'>0 (0–0)</td></tr>
+<tr><td>Go json.Unmarshal</td><td class='num'>101 (99–107)</td><td class='num'>52 (47–55)</td></tr>
+<tr><td>Go convert to rpmmd</td><td class='num'>3 (2–3)</td><td class='num'>0 (0–0)</td></tr>
+<tr><td>Go other post-processing (incl. SBOM doc)</td><td class='num'>1 (1–1)</td><td class='num'>1 (1–1)</td></tr>
+<tr><td><b>metadata-dependent stages</b> (convert+disjoint+dict+dumps+write+unmarshal+convert)</td><td class='num'>901 (866–930)</td><td class='num'>201 (200–207)</td></tr>
+<tr><td>depsolver process (Go view)</td><td class='num'>8565 (8421–8589)</td><td class='num'>7212 (7149–7375)</td></tr>
+<tr><td>output arrival window (first→last byte)</td><td class='num'>76 (64–88)</td><td class='num'>36 (34–39)</td></tr>
+<tr><td>rest of image-builder (not depsolve)</td><td class='num'>2952 (2811–2969)</td><td class='num'>2973 (2937–2997)</td></tr>
+<tr><td><b>total wall</b></td><td class='num'>11504 (11493–11627)</td><td class='num'>10263 (10133–10403)</td></tr>
+<tr><td>metadata-dependent share of wall</td><td class='num'>7.8%</td><td class='num'>2.0%</td></tr>
+<tr><td>peak RSS Python (MiB, max over calls)</td><td class='num'>233</td><td class='num'>207</td></tr>
+<tr><td>peak RSS image-builder Go process (MiB)</td><td class='num'>110</td><td class='num'>87</td></tr></table></details>
+  <div class="bar"><a class='btn' href='data/warm-tables.md' download>warm-tables.md</a><a class='btn' href='data/cold-tables.md' download>cold-tables.md</a><a class='btn' href='data/warm-summary.json' download>warm-summary.json</a><a class='btn' href='data/cold-summary.json' download>cold-summary.json</a></div>
+  <details class="gen"><summary>generate</summary><div class='code' data-src='cmd/2-matrix.sh'></div><div class='code' data-src='cmd/1-manifest-one.sh'></div></details>
+</section>
+
+<section id="s-scale">
+  <h2>2 · scaling · metadata transfer cost vs n and bytes (dump-sampled, no solve)</h2>
+  <div class="pgrid">
+    <img class="plot" src="plots/scaling_stages_dnf4.png" alt="dnf4 scaling">
+    <img class="plot" src="plots/scaling_stages_dnf5.png" alt="dnf5 scaling">
+    <img class="plot" src="plots/scaling_bytes.png" alt="payload bytes vs n">
+    <img class="plot" src="plots/scaling_time_vs_bytes.png" alt="time vs bytes">
+  </div>
+  <h3>fits · exponent over n ≥ 100 · linear µs/pkg and ns/byte over all n · R² of linear-in-n</h3>
+  <table class='gaps'><tr><th>solver</th><th>files</th><th>level</th><th>stage</th><th>exponent b (t ∝ n^b)</th><th>µs per package</th><th>ns per payload byte</th><th>R² (linear)</th></tr>
+<tr><td>dnf4</td><td>False</td><td>full</td><td>Py pkg_convert</td><td class='num'>1.02</td><td class='num'>225.09</td><td class='num'>82.69</td><td class='num'>1.000</td></tr>
+<tr><td>dnf4</td><td>False</td><td>full</td><td>Py disjoint</td><td class='num'>1.15</td><td class='num'>26.48</td><td class='num'>9.69</td><td class='num'>0.999</td></tr>
+<tr><td>dnf4</td><td>False</td><td>full</td><td>Py pkg_dict</td><td class='num'>1.31</td><td class='num'>61.04</td><td class='num'>22.34</td><td class='num'>0.997</td></tr>
+<tr><td>dnf4</td><td>False</td><td>full</td><td>Py json_dumps</td><td class='num'>1.09</td><td class='num'>19.37</td><td class='num'>7.12</td><td class='num'>1.000</td></tr>
+<tr><td>dnf4</td><td>False</td><td>full</td><td>Py write</td><td class='num'>0.74</td><td class='num'>1.25</td><td class='num'>0.47</td><td class='num'>0.985</td></tr>
+<tr><td>dnf4</td><td>False</td><td>full</td><td>Go Unmarshal</td><td class='num'>1.03</td><td class='num'>27.73</td><td class='num'>10.22</td><td class='num'>0.999</td></tr>
+<tr><td>dnf4</td><td>False</td><td>full</td><td>Go Full</td><td class='num'>1.02</td><td class='num'>27.86</td><td class='num'>10.26</td><td class='num'>0.999</td></tr>
+<tr><td>dnf4</td><td>False</td><td>minimal</td><td>Py pkg_convert</td><td class='num'>0.99</td><td class='num'>42.18</td><td class='num'>79.43</td><td class='num'>1.000</td></tr>
+<tr><td>dnf4</td><td>False</td><td>minimal</td><td>Py disjoint</td><td class='num'>1.19</td><td class='num'>15.39</td><td class='num'>28.81</td><td class='num'>0.997</td></tr>
+<tr><td>dnf4</td><td>False</td><td>minimal</td><td>Py pkg_dict</td><td class='num'>1.29</td><td class='num'>2.34</td><td class='num'>4.39</td><td class='num'>0.999</td></tr>
+<tr><td>dnf4</td><td>False</td><td>minimal</td><td>Py json_dumps</td><td class='num'>1.09</td><td class='num'>3.58</td><td class='num'>6.72</td><td class='num'>0.999</td></tr>
+<tr><td>dnf4</td><td>False</td><td>minimal</td><td>Py write</td><td class='num'>0.55</td><td class='num'>0.29</td><td class='num'>0.55</td><td class='num'>0.992</td></tr>
+<tr><td>dnf4</td><td>False</td><td>minimal</td><td>Go Unmarshal</td><td class='num'>1.02</td><td class='num'>5.16</td><td class='num'>9.73</td><td class='num'>1.000</td></tr>
+<tr><td>dnf4</td><td>False</td><td>minimal</td><td>Go Full</td><td class='num'>1.02</td><td class='num'>5.65</td><td class='num'>10.64</td><td class='num'>0.999</td></tr>
+<tr><td>dnf4</td><td>True</td><td>full</td><td>Py pkg_convert</td><td class='num'>1.05</td><td class='num'>716.43</td><td class='num'>56.57</td><td class='num'>0.999</td></tr>
+<tr><td>dnf4</td><td>True</td><td>full</td><td>Py disjoint</td><td class='num'>1.12</td><td class='num'>28.21</td><td class='num'>2.23</td><td class='num'>1.000</td></tr>
+<tr><td>dnf4</td><td>True</td><td>full</td><td>Py pkg_dict</td><td class='num'>1.27</td><td class='num'>36.29</td><td class='num'>2.87</td><td class='num'>0.998</td></tr>
+<tr><td>dnf4</td><td>True</td><td>full</td><td>Py json_dumps</td><td class='num'>1.08</td><td class='num'>43.12</td><td class='num'>3.40</td><td class='num'>1.000</td></tr>
+<tr><td>dnf4</td><td>True</td><td>full</td><td>Py write</td><td class='num'>0.81</td><td class='num'>5.64</td><td class='num'>0.45</td><td class='num'>0.997</td></tr>
+<tr><td>dnf4</td><td>True</td><td>full</td><td>Go Unmarshal</td><td class='num'>1.02</td><td class='num'>92.27</td><td class='num'>7.28</td><td class='num'>1.000</td></tr>
+<tr><td>dnf4</td><td>True</td><td>full</td><td>Go Full</td><td class='num'>1.00</td><td class='num'>89.68</td><td class='num'>7.08</td><td class='num'>1.000</td></tr>
+<tr><td>dnf4</td><td>True</td><td>minimal</td><td>Py pkg_convert</td><td class='num'>0.97</td><td class='num'>37.45</td><td class='num'>70.68</td><td class='num'>1.000</td></tr>
+<tr><td>dnf4</td><td>True</td><td>minimal</td><td>Py disjoint</td><td class='num'>1.16</td><td class='num'>10.41</td><td class='num'>19.65</td><td class='num'>0.999</td></tr>
+<tr><td>dnf4</td><td>True</td><td>minimal</td><td>Py pkg_dict</td><td class='num'>1.26</td><td class='num'>1.71</td><td class='num'>3.23</td><td class='num'>0.998</td></tr>
+<tr><td>dnf4</td><td>True</td><td>minimal</td><td>Py json_dumps</td><td class='num'>1.02</td><td class='num'>2.53</td><td class='num'>4.77</td><td class='num'>1.000</td></tr>
+<tr><td>dnf4</td><td>True</td><td>minimal</td><td>Py write</td><td class='num'>0.45</td><td class='num'>0.36</td><td class='num'>0.68</td><td class='num'>0.999</td></tr>
+<tr><td>dnf4</td><td>True</td><td>minimal</td><td>Go Unmarshal</td><td class='num'>1.02</td><td class='num'>5.34</td><td class='num'>10.07</td><td class='num'>1.000</td></tr>
+<tr><td>dnf4</td><td>True</td><td>minimal</td><td>Go Full</td><td class='num'>1.02</td><td class='num'>5.17</td><td class='num'>9.76</td><td class='num'>1.000</td></tr>
+<tr><td>dnf5</td><td>False</td><td>full</td><td>Py pkg_convert</td><td class='num'>1.02</td><td class='num'>349.00</td><td class='num'>22.67</td><td class='num'>0.999</td></tr>
+<tr><td>dnf5</td><td>False</td><td>full</td><td>Py disjoint</td><td class='num'>1.11</td><td class='num'>31.95</td><td class='num'>2.07</td><td class='num'>0.999</td></tr>
+<tr><td>dnf5</td><td>False</td><td>full</td><td>Py pkg_dict</td><td class='num'>1.35</td><td class='num'>74.10</td><td class='num'>4.73</td><td class='num'>0.973</td></tr>
+<tr><td>dnf5</td><td>False</td><td>full</td><td>Py json_dumps</td><td class='num'>1.07</td><td class='num'>53.87</td><td class='num'>3.50</td><td class='num'>1.000</td></tr>
+<tr><td>dnf5</td><td>False</td><td>full</td><td>Py write</td><td class='num'>0.83</td><td class='num'>7.24</td><td class='num'>0.47</td><td class='num'>1.000</td></tr>
+<tr><td>dnf5</td><td>False</td><td>full</td><td>Go Unmarshal</td><td class='num'>1.00</td><td class='num'>96.26</td><td class='num'>6.28</td><td class='num'>1.000</td></tr>
+<tr><td>dnf5</td><td>False</td><td>full</td><td>Go Full</td><td class='num'>1.00</td><td class='num'>100.02</td><td class='num'>6.52</td><td class='num'>1.000</td></tr>
+<tr><td>dnf5</td><td>False</td><td>minimal</td><td>Py pkg_convert</td><td class='num'>1.04</td><td class='num'>75.51</td><td class='num'>5.73</td><td class='num'>0.998</td></tr>
+<tr><td>dnf5</td><td>False</td><td>minimal</td><td>Py disjoint</td><td class='num'>1.15</td><td class='num'>20.87</td><td class='num'>1.58</td><td class='num'>0.998</td></tr>
+<tr><td>dnf5</td><td>False</td><td>minimal</td><td>Py pkg_dict</td><td class='num'>1.33</td><td class='num'>2.19</td><td class='num'>0.17</td><td class='num'>0.996</td></tr>
+<tr><td>dnf5</td><td>False</td><td>minimal</td><td>Py json_dumps</td><td class='num'>1.07</td><td class='num'>35.56</td><td class='num'>2.71</td><td class='num'>1.000</td></tr>
+<tr><td>dnf5</td><td>False</td><td>minimal</td><td>Py write</td><td class='num'>0.80</td><td class='num'>6.11</td><td class='num'>0.47</td><td class='num'>1.000</td></tr>
+<tr><td>dnf5</td><td>False</td><td>minimal</td><td>Go Unmarshal</td><td class='num'>0.99</td><td class='num'>71.20</td><td class='num'>5.44</td><td class='num'>1.000</td></tr>
+<tr><td>dnf5</td><td>False</td><td>minimal</td><td>Go Full</td><td class='num'>0.99</td><td class='num'>70.00</td><td class='num'>5.35</td><td class='num'>1.000</td></tr></table>
+  <p class="note">not measured (OOM-killed at 4 GiB): dnf5 n = all (≈1.2 GB JSON), dnf4+filelists n = all. Sweep convert µs/pkg is an upper bound (random order); real: ~130 µs/pkg image depsolve, ~62 µs/pkg streaming dump (dnf4 full).</p>
+  <h3>sizes and encoders · <b>estimates</b> (no other wire format implemented)</h3>
+  <table class='gaps'><tr><th>solver</th><th>files</th><th>level</th><th>n</th><th>bytes</th><th>gzip-1 (est.)</th><th>msgpack (est.)</th><th>cbor (est.)</th><th>Py convert s</th><th>Py dict s</th><th>Py dumps s</th><th>Py write s</th><th>Py msgpack.packb s (est.)</th><th>Go Unmarshal s</th><th>Go Unmarshal+convert s</th></tr>
+<tr><td>dnf4</td><td>False</td><td>full</td><td class='num'>1000</td><td class='num'>2.56 MB</td><td class='num'>0.40 MB</td><td class='num'>2.11 MB</td><td class='num'>2.12 MB</td><td class='num'>0.199</td><td class='num'>0.015</td><td class='num'>0.013</td><td class='num'>0.003</td><td class='num'>0.009</td><td class='num'>0.027</td><td class='num'>0.028</td></tr>
+<tr><td>dnf4</td><td>False</td><td>full</td><td class='num'>30000</td><td class='num'>82.72 MB</td><td class='num'>10.52 MB</td><td class='num'>68.32 MB</td><td class='num'>68.51 MB</td><td class='num'>6.658</td><td class='num'>1.909</td><td class='num'>0.602</td><td class='num'>0.048</td><td class='num'>0.627</td><td class='num'>0.891</td><td class='num'>0.895</td></tr>
+<tr><td>dnf4</td><td>False</td><td>full</td><td class='num'>76354</td><td class='num'>207.15 MB</td><td class='num'>24.28 MB</td><td class='num'>171.33 MB</td><td class='num'>171.80 MB</td><td class='num'>17.160</td><td class='num'>4.566</td><td class='num'>1.468</td><td class='num'>0.097</td><td class='num'>1.412</td><td class='num'>2.108</td><td class='num'>2.114</td></tr>
+<tr><td>dnf4</td><td>False</td><td>minimal</td><td class='num'>1000</td><td class='num'>0.53 MB</td><td class='num'>0.08 MB</td><td class='num'>0.47 MB</td><td class='num'>0.47 MB</td><td class='num'>0.040</td><td class='num'>0.001</td><td class='num'>0.002</td><td class='num'>0.001</td><td class='num'>0.001</td><td class='num'>0.004</td><td class='num'>0.005</td></tr>
+<tr><td>dnf4</td><td>False</td><td>minimal</td><td class='num'>30000</td><td class='num'>15.90 MB</td><td class='num'>2.08 MB</td><td class='num'>14.07 MB</td><td class='num'>14.08 MB</td><td class='num'>1.208</td><td class='num'>0.065</td><td class='num'>0.101</td><td class='num'>0.008</td><td class='num'>0.070</td><td class='num'>0.159</td><td class='num'>0.156</td></tr>
+<tr><td>dnf4</td><td>False</td><td>minimal</td><td class='num'>76354</td><td class='num'>40.48 MB</td><td class='num'>5.04 MB</td><td class='num'>35.83 MB</td><td class='num'>35.84 MB</td><td class='num'>3.227</td><td class='num'>0.178</td><td class='num'>0.272</td><td class='num'>0.023</td><td class='num'>0.251</td><td class='num'>0.392</td><td class='num'>0.433</td></tr>
+<tr><td>dnf4</td><td>True</td><td>full</td><td class='num'>1000</td><td class='num'>11.31 MB</td><td class='num'>1.30 MB</td><td class='num'>10.62 MB</td><td class='num'>10.63 MB</td><td class='num'>0.523</td><td class='num'>0.015</td><td class='num'>0.032</td><td class='num'>0.010</td><td class='num'>0.024</td><td class='num'>0.081</td><td class='num'>0.082</td></tr>
+<tr><td>dnf4</td><td>True</td><td>minimal</td><td class='num'>1000</td><td class='num'>0.53 MB</td><td class='num'>0.08 MB</td><td class='num'>0.47 MB</td><td class='num'>0.47 MB</td><td class='num'>0.038</td><td class='num'>0.001</td><td class='num'>0.002</td><td class='num'>0.001</td><td class='num'>0.001</td><td class='num'>0.005</td><td class='num'>0.005</td></tr>
+<tr><td>dnf5</td><td>False</td><td>full</td><td class='num'>1000</td><td class='num'>15.12 MB</td><td class='num'>1.02 MB</td><td class='num'>14.49 MB</td><td class='num'>14.50 MB</td><td class='num'>0.302</td><td class='num'>0.015</td><td class='num'>0.040</td><td class='num'>0.010</td><td class='num'>0.040</td><td class='num'>0.099</td><td class='num'>0.100</td></tr>
+<tr><td>dnf5</td><td>False</td><td>full</td><td class='num'>30000</td><td class='num'>460.10 MB</td><td class='num'>29.51 MB</td><td class='num'>440.18 MB</td><td class='num'>440.34 MB</td><td class='num'>10.464</td><td class='num'>2.209</td><td class='num'>1.611</td><td class='num'>0.219</td><td class='num'>1.300</td><td class='num'>2.884</td><td class='num'>3.001</td></tr>
+<tr><td>dnf5</td><td>False</td><td>minimal</td><td class='num'>1000</td><td class='num'>13.09 MB</td><td class='num'>0.62 MB</td><td class='num'>12.85 MB</td><td class='num'>12.85 MB</td><td class='num'>0.061</td><td class='num'>0.001</td><td class='num'>0.029</td><td class='num'>0.009</td><td class='num'>0.014</td><td class='num'>0.077</td><td class='num'>0.073</td></tr>
+<tr><td>dnf5</td><td>False</td><td>minimal</td><td class='num'>30000</td><td class='num'>393.28 MB</td><td class='num'>18.37 MB</td><td class='num'>385.93 MB</td><td class='num'>385.91 MB</td><td class='num'>2.263</td><td class='num'>0.066</td><td class='num'>1.063</td><td class='num'>0.185</td><td class='num'>1.076</td><td class='num'>2.133</td><td class='num'>2.097</td></tr></table>
+  <h3>Go json.Unmarshal: encoding/json vs GOEXPERIMENT=jsonv2 · <b>estimate</b></h3>
+  <details class='gen'><summary>per size and benchmark</summary><table class='gaps'><tr><th>level</th><th>n</th><th>bench</th><th>encoding/json (v1) s</th><th>GOEXPERIMENT=jsonv2 s (estimate)</th><th>speedup</th></tr>
+<tr><td>full</td><td class='num'>10</td><td>Full</td><td class='num'>0.0003</td><td class='num'>0.0002</td><td class='num'>1.72x</td></tr>
+<tr><td>full</td><td class='num'>10</td><td>Unmarshal</td><td class='num'>0.0003</td><td class='num'>0.0001</td><td class='num'>2.11x</td></tr>
+<tr><td>full</td><td class='num'>30</td><td>Full</td><td class='num'>0.0008</td><td class='num'>0.0005</td><td class='num'>1.67x</td></tr>
+<tr><td>full</td><td class='num'>30</td><td>Unmarshal</td><td class='num'>0.0008</td><td class='num'>0.0004</td><td class='num'>1.93x</td></tr>
+<tr><td>full</td><td class='num'>100</td><td>Full</td><td class='num'>0.0025</td><td class='num'>0.0015</td><td class='num'>1.70x</td></tr>
+<tr><td>full</td><td class='num'>100</td><td>Unmarshal</td><td class='num'>0.0024</td><td class='num'>0.0014</td><td class='num'>1.78x</td></tr>
+<tr><td>full</td><td class='num'>300</td><td>Full</td><td class='num'>0.0081</td><td class='num'>0.0051</td><td class='num'>1.59x</td></tr>
+<tr><td>full</td><td class='num'>300</td><td>Unmarshal</td><td class='num'>0.0074</td><td class='num'>0.0040</td><td class='num'>1.87x</td></tr>
+<tr><td>full</td><td class='num'>1000</td><td>Full</td><td class='num'>0.0278</td><td class='num'>0.0167</td><td class='num'>1.66x</td></tr>
+<tr><td>full</td><td class='num'>1000</td><td>Unmarshal</td><td class='num'>0.0271</td><td class='num'>0.0142</td><td class='num'>1.91x</td></tr>
+<tr><td>full</td><td class='num'>3000</td><td>Full</td><td class='num'>0.0793</td><td class='num'>0.0479</td><td class='num'>1.66x</td></tr>
+<tr><td>full</td><td class='num'>3000</td><td>Unmarshal</td><td class='num'>0.0817</td><td class='num'>0.0423</td><td class='num'>1.93x</td></tr>
+<tr><td>full</td><td class='num'>10000</td><td>Full</td><td class='num'>0.2870</td><td class='num'>0.1738</td><td class='num'>1.65x</td></tr>
+<tr><td>full</td><td class='num'>10000</td><td>Unmarshal</td><td class='num'>0.3086</td><td class='num'>0.1474</td><td class='num'>2.09x</td></tr>
+<tr><td>full</td><td class='num'>30000</td><td>Full</td><td class='num'>0.8952</td><td class='num'>0.5190</td><td class='num'>1.72x</td></tr>
+<tr><td>full</td><td class='num'>30000</td><td>Unmarshal</td><td class='num'>0.8913</td><td class='num'>0.4691</td><td class='num'>1.90x</td></tr>
+<tr><td>full</td><td class='num'>76354</td><td>Full</td><td class='num'>2.1140</td><td class='num'>1.2951</td><td class='num'>1.63x</td></tr>
+<tr><td>full</td><td class='num'>76354</td><td>Unmarshal</td><td class='num'>2.1078</td><td class='num'>2.8053</td><td class='num'>0.75x</td></tr>
+<tr><td>minimal</td><td class='num'>10</td><td>Full</td><td class='num'>0.0001</td><td class='num'>0.0000</td><td class='num'>1.93x</td></tr>
+<tr><td>minimal</td><td class='num'>10</td><td>Unmarshal</td><td class='num'>0.0001</td><td class='num'>0.0000</td><td class='num'>1.31x</td></tr>
+<tr><td>minimal</td><td class='num'>30</td><td>Full</td><td class='num'>0.0002</td><td class='num'>0.0001</td><td class='num'>1.95x</td></tr>
+<tr><td>minimal</td><td class='num'>30</td><td>Unmarshal</td><td class='num'>0.0001</td><td class='num'>0.0001</td><td class='num'>1.57x</td></tr>
+<tr><td>minimal</td><td class='num'>100</td><td>Full</td><td class='num'>0.0005</td><td class='num'>0.0002</td><td class='num'>1.93x</td></tr>
+<tr><td>minimal</td><td class='num'>100</td><td>Unmarshal</td><td class='num'>0.0004</td><td class='num'>0.0002</td><td class='num'>1.80x</td></tr>
+<tr><td>minimal</td><td class='num'>300</td><td>Full</td><td class='num'>0.0014</td><td class='num'>0.0008</td><td class='num'>1.80x</td></tr>
+<tr><td>minimal</td><td class='num'>300</td><td>Unmarshal</td><td class='num'>0.0014</td><td class='num'>0.0007</td><td class='num'>1.83x</td></tr>
+<tr><td>minimal</td><td class='num'>1000</td><td>Full</td><td class='num'>0.0048</td><td class='num'>0.0027</td><td class='num'>1.74x</td></tr>
+<tr><td>minimal</td><td class='num'>1000</td><td>Unmarshal</td><td class='num'>0.0045</td><td class='num'>0.0026</td><td class='num'>1.73x</td></tr>
+<tr><td>minimal</td><td class='num'>3000</td><td>Full</td><td class='num'>0.0156</td><td class='num'>0.0089</td><td class='num'>1.75x</td></tr>
+<tr><td>minimal</td><td class='num'>3000</td><td>Unmarshal</td><td class='num'>0.0136</td><td class='num'>0.0077</td><td class='num'>1.76x</td></tr>
+<tr><td>minimal</td><td class='num'>10000</td><td>Full</td><td class='num'>0.0519</td><td class='num'>0.0267</td><td class='num'>1.94x</td></tr>
+<tr><td>minimal</td><td class='num'>10000</td><td>Unmarshal</td><td class='num'>0.0478</td><td class='num'>0.0302</td><td class='num'>1.58x</td></tr>
+<tr><td>minimal</td><td class='num'>30000</td><td>Full</td><td class='num'>0.1563</td><td class='num'>0.0832</td><td class='num'>1.88x</td></tr>
+<tr><td>minimal</td><td class='num'>30000</td><td>Unmarshal</td><td class='num'>0.1591</td><td class='num'>0.1160</td><td class='num'>1.37x</td></tr>
+<tr><td>minimal</td><td class='num'>76354</td><td>Full</td><td class='num'>0.4333</td><td class='num'>0.2259</td><td class='num'>1.92x</td></tr>
+<tr><td>minimal</td><td class='num'>76354</td><td>Unmarshal</td><td class='num'>0.3921</td><td class='num'>0.2766</td><td class='num'>1.42x</td></tr></table></details>
+  <div class="bar"><a class='btn' href='data/fits.md' download>fits.md</a><a class='btn' href='data/py_scaling_dnf4.jsonl' download>py_scaling_dnf4.jsonl</a><a class='btn' href='data/py_scaling_dnf5.jsonl' download>py_scaling_dnf5.jsonl</a><a class='btn' href='data/py_scaling_dnf4_files.jsonl' download>py_scaling_dnf4_files.jsonl</a><a class='btn' href='data/go_bench.txt' download>go_bench.txt</a><a class='btn' href='data/go_bench_jsonv2.txt' download>go_bench_jsonv2.txt</a></div>
+  <details class="gen"><summary>generate</summary><div class='code' data-src='cmd/3-run_rest.sh'></div><div class='code' data-src='cmd/6-go-bench.sh'></div><div class='code' data-src='cmd/4-analyze.sh'></div></details>
+</section>
+
+<section id="s-dump">
+  <h2>3 · whole repo · dump and search "*" · 76 354 packages · end to end</h2>
+  <table class='gaps'><tr><th>solver-metadata</th><th>cmd</th><th>runs ok</th><th>wall s (median, min–max)</th><th>py import</th><th>py repo load</th><th>py pkg_convert</th><th>py dict</th><th>py json.dumps</th><th>py write</th><th>Go Unmarshal</th><th>Go convert</th><th>payload MB</th><th>py RSS MiB</th><th>Go RSS MiB</th></tr>
+<tr><td>dnf4-full</td><td>dump</td><td>3/3</td><td class='num'>10.83 (10.68–11.56)</td><td class='num'>0.14</td><td class='num'>0.91</td><td class='num'>4.71</td><td class='num'>0.68</td><td class='num'>1.32</td><td class='num'>0.68</td><td class='num'>2.03</td><td class='num'>0.08</td><td class='num'>207</td><td class='num'>132</td><td class='num'>872</td></tr>
+<tr><td>dnf4-full</td><td>search</td><td>3/3</td><td class='num'>17.16 (16.35–17.32)</td><td class='num'>0.13</td><td class='num'>0.53</td><td class='num'>7.13</td><td class='num'>4.27</td><td class='num'>1.07</td><td class='num'>0.86</td><td class='num'>2.17</td><td class='num'>0.09</td><td class='num'>207</td><td class='num'>1656</td><td class='num'>872</td></tr>
+<tr><td>dnf4-minimal</td><td>dump</td><td>3/3</td><td class='num'>4.70 (4.34–4.88)</td><td class='num'>0.13</td><td class='num'>0.91</td><td class='num'>2.50</td><td class='num'>0.04</td><td class='num'>0.31</td><td class='num'>0.16</td><td class='num'>0.42</td><td class='num'>0.03</td><td class='num'>40</td><td class='num'>125</td><td class='num'>377</td></tr>
+<tr><td>dnf4-minimal</td><td>search</td><td>3/3</td><td class='num'>4.74 (4.68–4.86)</td><td class='num'>0.13</td><td class='num'>0.54</td><td class='num'>2.74</td><td class='num'>0.08</td><td class='num'>0.15</td><td class='num'>0.13</td><td class='num'>0.45</td><td class='num'>0.03</td><td class='num'>40</td><td class='num'>443</td><td class='num'>377</td></tr>
+<tr><td>dnf5-full</td><td>dump</td><td>0/3</td><td>OOM-killed at 4 GiB</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td>dnf5-full</td><td>search</td><td>0/3</td><td>OOM-killed at 4 GiB</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td>dnf5-minimal</td><td>dump</td><td>3/3</td><td class='num'>15.59 (15.52–15.72)</td><td class='num'>0.12</td><td class='num'>0.35</td><td class='num'>3.73</td><td class='num'>0.05</td><td class='num'>2.30</td><td class='num'>2.49</td><td class='num'>5.91</td><td class='num'>0.02</td><td class='num'>1001</td><td class='num'>115</td><td class='num'>3106</td></tr>
+<tr><td>dnf5-minimal</td><td>search</td><td>0/3</td><td>OOM-killed at 4 GiB</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr></table>
+  <p class="note">dnf5 minimal search and dnf5 full: child SIGKILLed → Go reports <code>Failed to unmarshal osbuild-depsolve-dnf error output "{\"solver\": \"dnf5\", \"packages\": [...</code></p>
+  <div class="bar"><a class='btn' href='data/dump-tables.md' download>dump-tables.md</a><a class='btn' href='data/dump-results.jsonl' download>dump-results.jsonl</a><a class='btn' href='data/dump-py.jsonl' download>dump-py.jsonl</a><a class='btn' href='data/dump-go.jsonl' download>dump-go.jsonl</a></div>
+</section>
+
+<section id="s-pipe">
+  <h2>4 · pipe · child writes payload, Go reads it (no JSON)</h2>
+  <table class='gaps'><tr><th>payload file</th><th>MB</th><th>pipe transfer ms (median)</th><th>MB/s</th><th>child process ms</th></tr>
+<tr><td>dnf4-full-000010</td><td class='num'>0.03</td><td class='num'>0.0</td><td class='num'>1085</td><td class='num'>14</td></tr>
+<tr><td>dnf4-full-000030</td><td class='num'>0.08</td><td class='num'>0.1</td><td class='num'>661</td><td class='num'>13</td></tr>
+<tr><td>dnf4-full-000100</td><td class='num'>0.24</td><td class='num'>0.4</td><td class='num'>675</td><td class='num'>14</td></tr>
+<tr><td>dnf4-full-000300</td><td class='num'>0.73</td><td class='num'>1.3</td><td class='num'>567</td><td class='num'>16</td></tr>
+<tr><td>dnf4-full-001000</td><td class='num'>2.56</td><td class='num'>6.3</td><td class='num'>407</td><td class='num'>22</td></tr>
+<tr><td>dnf4-full-003000</td><td class='num'>7.66</td><td class='num'>12.4</td><td class='num'>616</td><td class='num'>31</td></tr>
+<tr><td>dnf4-full-010000</td><td class='num'>27.58</td><td class='num'>55.3</td><td class='num'>499</td><td class='num'>86</td></tr>
+<tr><td>dnf4-full-030000</td><td class='num'>82.72</td><td class='num'>206.0</td><td class='num'>402</td><td class='num'>285</td></tr>
+<tr><td>dnf4-full-076354</td><td class='num'>207.16</td><td class='num'>436.8</td><td class='num'>474</td><td class='num'>635</td></tr>
+<tr><td>dnf5-full-000010</td><td class='num'>0.16</td><td class='num'>0.3</td><td class='num'>579</td><td class='num'>14</td></tr>
+<tr><td>dnf5-full-000030</td><td class='num'>0.46</td><td class='num'>0.6</td><td class='num'>716</td><td class='num'>14</td></tr>
+<tr><td>dnf5-full-000100</td><td class='num'>1.51</td><td class='num'>3.3</td><td class='num'>459</td><td class='num'>20</td></tr>
+<tr><td>dnf5-full-000300</td><td class='num'>4.51</td><td class='num'>12.3</td><td class='num'>366</td><td class='num'>30</td></tr>
+<tr><td>dnf5-full-001000</td><td class='num'>15.12</td><td class='num'>25.9</td><td class='num'>585</td><td class='num'>50</td></tr>
+<tr><td>dnf5-full-003000</td><td class='num'>45.35</td><td class='num'>105.4</td><td class='num'>430</td><td class='num'>158</td></tr>
+<tr><td>dnf5-full-010000</td><td class='num'>153.31</td><td class='num'>388.0</td><td class='num'>395</td><td class='num'>518</td></tr>
+<tr><td>dnf5-full-030000</td><td class='num'>460.10</td><td class='num'>828.5</td><td class='num'>555</td><td class='num'>1107</td></tr></table>
+  <div class="bar"><a class='btn' href='data/pipe.md' download>pipe.md</a></div>
+</section>
+
+<section id="s-prof">
+  <h2>5 · profiles · workstation-live-installer · full · no SBOM</h2>
+  <h3>cProfile · dnf5 depsolver · top by tottime</h3><pre class='cmd' style='max-height:520px'>Fri Oct 16 15:13:21 2026    /workspace/depsolve-perf/runs/profiles/py-workstation-dnf5.pstats
+
+         3057416 function calls (2845201 primitive calls) in 2.799 seconds
+
+   Ordered by: internal time
+   List reduced from 470 to 25 due to restriction &lt;25&gt;
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.407    0.407    0.407    0.407 {built-in method libdnf5._base.Goal_resolve}
+     2011    0.163    0.000    0.163    0.000 {built-in method libdnf5._rpm.Package_get_description}
+   102081    0.151    0.000    0.357    0.000 /workspace/depsolve-perf/osbuild/osbuild/solver/dnf5.py:59(_reldep_to_dependency)
+     2011    0.150    0.000    1.607    0.001 /workspace/depsolve-perf/osbuild/osbuild/solver/dnf5.py:67(_dnf_pkg_to_package)
+        1    0.133    0.133    0.133    0.133 {built-in method libdnf5._repo.RepoSackWeakPtr_load_repos}
+        3    0.122    0.041    0.122    0.041 /usr/lib64/python3.14/json/encoder.py:207(iterencode)
+     2011    0.102    0.000    0.102    0.000 {built-in method libdnf5._rpm.Package_get_remote_locations}
+   122191    0.101    0.000    0.375    0.000 /usr/lib64/python3.14/site-packages/libdnf5/common.py:1041(__next__)
+     2011    0.098    0.000    0.098    0.000 {built-in method libdnf5._rpm.Package_get_files}
+   4032/4    0.092    0.000    2.798    0.699 /workspace/depsolve-perf/bench/depsolve_timed.py:38(w)
+212206/4022    0.078    0.000    0.141    0.000 {built-in method builtins.hash}
+   204162    0.062    0.000    0.090    0.000 /workspace/depsolve-perf/osbuild/osbuild/solver/model.py:266(__hash__)
+   102081    0.058    0.000    0.058    0.000 {built-in method libdnf5._rpm.ReldepListIterator_value}
+   102081    0.056    0.000    0.102    0.000 /usr/lib64/python3.14/site-packages/libdnf5/rpm.py:1337(next)
+   122191    0.055    0.000    0.055    0.000 {built-in method libdnf5._rpm.ReldepListIterator___eq__}
+     2011    0.052    0.000    0.095    0.000 /workspace/depsolve-perf/osbuild/osbuild/solver/api/v2.py:58(_package_as_dict)
+   102081    0.047    0.000    0.047    0.000 {built-in method libdnf5._rpm.ReldepListIterator_next}
+    66406    0.046    0.000    0.064    0.000 /workspace/depsolve-perf/osbuild/osbuild/solver/model.py:39(__setattr__)
+   102081    0.046    0.000    0.046    0.000 {built-in method libdnf5._rpm.Reldep_get_name}
+     2011    0.045    0.000    0.045    0.000 {built-in method libdnf5._rpm.Package_get_reason}
+        9    0.040    0.004    0.040    0.004 {method &#x27;write&#x27; of &#x27;_io.TextIOWrapper&#x27; objects}
+    20110    0.035    0.000    0.053    0.000 {built-in method builtins.sorted}
+     4022    0.034    0.000    0.176    0.000 /workspace/depsolve-perf/osbuild/osbuild/solver/model.py:456(__hash__)
+   102081    0.032    0.000    0.032    0.000 /workspace/depsolve-perf/osbuild/osbuild/solver/api/v2.py:49(_dependency_as_dict)
+   122191    0.031    0.000    0.086    0.000 /usr/lib64/python3.14/site-packages/libdnf5/rpm.py:1340(__eq__)
+
+
+</pre>
+  <h3>cProfile · dnf4 depsolver · top by tottime</h3><pre class='cmd' style='max-height:520px'>Fri Oct 16 15:12:09 2026    /workspace/depsolve-perf/runs/profiles/py-workstation-dnf4.pstats
+
+         1617277 function calls (1405014 primitive calls) in 2.423 seconds
+
+   Ordered by: internal time
+   List reduced from 848 to 25 due to restriction &lt;25&gt;
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+     2027    0.297    0.000    0.297    0.000 {built-in method libdnf._transaction.Swdb_addItem}
+        2    0.289    0.145    0.289    0.145 {method &#x27;load_repo&#x27; of &#x27;_hawkey.Sack&#x27; objects}
+      399    0.219    0.001    0.219    0.001 {method &#x27;union&#x27; of &#x27;_hawkey.Query&#x27; objects}
+        2    0.158    0.079    0.158    0.079 {built-in method libdnf._repo.Repo_load}
+     2011    0.145    0.000    0.520    0.000 /workspace/depsolve-perf/osbuild/osbuild/solver/dnf.py:39(_dnf_pkg_to_package)
+      353    0.112    0.000    0.112    0.000 {method &#x27;apply&#x27; of &#x27;_hawkey.Query&#x27; objects}
+     2011    0.105    0.000    0.157    0.000 /workspace/depsolve-perf/osbuild/osbuild/solver/api/v2.py:58(_package_as_dict)
+   102081    0.099    0.000    0.123    0.000 /workspace/depsolve-perf/osbuild/osbuild/solver/dnf.py:23(_reldep_to_dependency)
+        2    0.066    0.033    0.066    0.033 {method &#x27;add_excludes&#x27; of &#x27;_hawkey.Sack&#x27; objects}
+212206/4022    0.063    0.000    0.118    0.000 {built-in method builtins.hash}
+        3    0.063    0.021    0.063    0.021 /usr/lib64/python3.14/json/encoder.py:207(iterencode)
+   204162    0.054    0.000    0.080    0.000 /workspace/depsolve-perf/osbuild/osbuild/solver/model.py:266(__hash__)
+    66406    0.045    0.000    0.065    0.000 /workspace/depsolve-perf/osbuild/osbuild/solver/model.py:39(__setattr__)
+     2011    0.043    0.000    0.043    0.000 {built-in method libdnf._repo.Repo_getMirrors}
+   102081    0.040    0.000    0.040    0.000 /workspace/depsolve-perf/osbuild/osbuild/solver/api/v2.py:49(_dependency_as_dict)
+       49    0.032    0.001    0.032    0.001 {method &#x27;get_best_solution&#x27; of &#x27;_hawkey.Subject&#x27; objects}
+    20135    0.027    0.000    0.046    0.000 {built-in method builtins.sorted}
+     2011    0.025    0.000    0.100    0.000 /workspace/depsolve-perf/osbuild/osbuild/solver/model.py:356(__init__)
+        1    0.025    0.025    0.025    0.025 {method &#x27;fromxml_f&#x27; of &#x27;_libpycomps.Comps&#x27; objects}
+        1    0.020    0.020    0.020    0.020 {built-in method libdnf._repo.Repo_loadCache}
+     4022    0.019    0.000    0.137    0.000 /workspace/depsolve-perf/osbuild/osbuild/solver/model.py:456(__hash__)
+   102081    0.018    0.000    0.018    0.000 /workspace/depsolve-perf/osbuild/osbuild/solver/model.py:272(__str__)
+        2    0.018    0.009    0.018    0.009 {built-in method gc.collect}
+        1    0.015    0.015    0.015    0.015 {method &#x27;run&#x27; of &#x27;_hawkey.Goal&#x27; objects}
+   104152    0.014    0.000    0.014    0.000 {method &#x27;strip&#x27; of &#x27;str&#x27; objects}
+
+
+</pre>
+  <h3>pprof · image-builder (dnf5) · top -cum</h3><pre class='cmd' style='max-height:520px'>File: image-builder
+Build ID: 02c307e1ea7fc5dd7ce23799a37a7244bc547c54
+Type: cpu
+Time: 2026-10-16 15:13:12 UTC
+Duration: 6.26s, Total samples = 4.05s (64.74%)
+Showing nodes accounting for 0.20s, 4.94% of 4.05s total
+Dropped 275 nodes (cum &lt;= 0.02s)
+Showing top 40 nodes out of 269
+      flat  flat%   sum%        cum   cum%
+         0     0%     0%      3.11s 76.79%  main.cmdManifest
+         0     0%     0%      3.08s 76.05%  github.com/spf13/cobra.(*Command).ExecuteC
+         0     0%     0%      3.08s 76.05%  github.com/spf13/cobra.(*Command).execute
+         0     0%     0%      3.06s 75.56%  github.com/spf13/cobra.(*Command).Execute (inline)
+         0     0%     0%      3.06s 75.56%  main.run
+         0     0%     0%      3.02s 74.57%  main.main
+         0     0%     0%      3.02s 74.57%  runtime.main
+         0     0%     0%      2.67s 65.93%  main.getOneImage
+         0     0%     0%      2.65s 65.43%  main.getImage
+         0     0%     0%      2.52s 62.22%  go.yaml.in/yaml/v3.(*Decoder).Decode
+         0     0%     0%      2.45s 60.49%  github.com/osbuild/image-builder/pkg/imagefilter.(*ImageFilter).Filter
+         0     0%     0%      1.63s 40.25%  github.com/osbuild/image-builder/pkg/distro/defs.(*Loader).loadDistros
+         0     0%     0%      1.60s 39.51%  github.com/osbuild/image-builder/pkg/distro/defs.(*Loader).ParseID
+         0     0%     0%      1.60s 39.51%  github.com/osbuild/image-builder/pkg/distroidparser.(*Parser).Parse
+         0     0%     0%      1.40s 34.57%  github.com/osbuild/image-builder/pkg/distrosort.Names
+         0     0%     0%      1.40s 34.57%  github.com/osbuild/image-builder/pkg/distrosort.Names.func1
+         0     0%     0%      1.40s 34.57%  slices.SortFunc[go.shape.[]string,go.shape.string] (inline)
+         0     0%     0%      1.40s 34.57%  slices.pdqsortCmpFunc[go.shape.string]
+     0.01s  0.25%  0.25%      1.33s 32.84%  go.yaml.in/yaml/v3.(*parser).parse
+         0     0%  0.25%      1.32s 32.59%  go.yaml.in/yaml/v3.(*parser).document
+     0.01s  0.25%  0.49%      1.32s 32.59%  go.yaml.in/yaml/v3.(*parser).mapping
+         0     0%  0.49%      1.32s 32.59%  go.yaml.in/yaml/v3.(*parser).parseChild (inline)
+         0     0%  0.49%      1.24s 30.62%  go.yaml.in/yaml/v3.(*parser).sequence
+     0.02s  0.49%  0.99%      1.20s 29.63%  go.yaml.in/yaml/v3.(*decoder).mapping
+     0.02s  0.49%  1.48%      1.20s 29.63%  go.yaml.in/yaml/v3.(*decoder).unmarshal
+         0     0%  1.48%      1.19s 29.38%  go.yaml.in/yaml/v3.(*decoder).document (inline)
+     0.06s  1.48%  2.96%      1.15s 28.40%  go.yaml.in/yaml/v3.(*decoder).mappingStruct
+     0.01s  0.25%  3.21%      1.12s 27.65%  go.yaml.in/yaml/v3.(*parser).peek
+     0.01s  0.25%  3.46%      1.11s 27.41%  go.yaml.in/yaml/v3.yaml_parser_parse
+         0     0%  3.46%      1.10s 27.16%  go.yaml.in/yaml/v3.yaml_parser_state_machine
+         0     0%  3.46%      1.08s 26.67%  github.com/osbuild/image-builder/pkg/distro/defs.NewWithLoader
+         0     0%  3.46%      1.07s 26.42%  github.com/osbuild/image-builder/pkg/distro/defs.DistroFactory
+         0     0%  3.46%      1.07s 26.42%  github.com/osbuild/image-builder/pkg/distro/defs.DistroFactory.DistroFactoryWithLoader.func1 (inline)
+         0     0%  3.46%      1.06s 26.17%  github.com/osbuild/image-builder/pkg/distrofactory.(*Factory).getDistro
+         0     0%  3.46%      1.05s 25.93%  github.com/osbuild/image-builder/pkg/distrofactory.(*Factory).GetDistro
+         0     0%  3.46%      1.05s 25.93%  go.yaml.in/yaml/v3.peek_token
+         0     0%  3.46%      1.03s 25.43%  go.yaml.in/yaml/v3.yaml_parser_fetch_more_tokens
+     0.04s  0.99%  4.44%      1.01s 24.94%  go.yaml.in/yaml/v3.yaml_parser_fetch_next_token
+         0     0%  4.44%      0.88s 21.73%  github.com/osbuild/image-builder/pkg/distro/defs.(*Loader).NewDistroYAML
+     0.02s  0.49%  4.94%      0.87s 21.48%  go.yaml.in/yaml/v3.(*decoder).sequence
+</pre>
+  <div class="bar"><a class='btn' href='data/pyspy-workstation-dnf5.svg' download>py-spy flamegraph dnf5</a><a class='btn' href='data/pyspy-workstation-dnf4.svg' download>py-spy flamegraph dnf4</a><a class='btn' href='data/ib-workstation-dnf4.top.txt' download>ib-workstation-dnf4.top.txt</a></div>
+  <details class="gen"><summary>generate</summary><div class='code' data-src='cmd/5-run_profiles.sh'></div></details>
+</section>
+
+<section id="s-cmd">
+  <h2>reproduce</h2>
+  <div class='code' data-src='cmd/0-build.sh'></div>
+  <div class='code' data-src='cmd/1-manifest-one.sh'></div>
+  <div class='code' data-src='cmd/2-matrix.sh'></div>
+  <div class='code' data-src='cmd/3-run_rest.sh'></div>
+  <div class='code' data-src='cmd/4-analyze.sh'></div>
+  <div class='code' data-src='cmd/5-run_profiles.sh'></div>
+  <div class='code' data-src='cmd/6-go-bench.sh'></div>
+</section>
+
+<section id="s-oq">
+  <h2>open questions</h2>
+  <table class='gaps'><tr><th>#</th><th>question</th><th>data</th></tr>
+  <tr><td>M1</td><td>keep full metadata for depsolve, no split requests?</td><td>+0.05–1.0 s vs SBOM 0.12–1.15 s; extra call ≥ 0.35 s start + 0.3–1.3 s repo load</td></tr>
+  <tr><td>M2</td><td><code>package_metadata</code> as API option, field selection, or minimal dump/search by default?</td><td>§3</td></tr>
+  <tr><td>M3</td><td>dnf5 <code>remote_locations</code>: all mirrors per package</td><td>75–81 % of bytes</td></tr>
+  <tr><td>M4</td><td><code>_dnf_pkg_to_package</code> cost: get_files without filelists, get_description, reldeps</td><td>§5</td></tr>
+  <tr><td>M5</td><td>chained transactions reconvert; disjoint sets hash full Packages</td><td>disjoint 3–79 ms</td></tr>
+  <tr><td>M6</td><td>dnf4 loads repos twice (update_cache + fill_sack)</td><td>Sack.load_repo ×2</td></tr>
+  <tr><td>M7</td><td>image-builder YAML defs reloaded in distrosort comparator</td><td>62 % / 35 % of Go CPU</td></tr>
+  <tr><td>M8</td><td>adopt jsonv2 when GA</td><td>1.6–2× (estimate)</td></tr>
+  <tr><td>M9</td><td>killed depsolver misreported as unmarshal error</td><td>§3</td></tr>
+  <tr><td>M10</td><td>changelogs not in V2 model; files need filelists</td><td>full_files row, §1</td></tr>
+  </table>
+</section>
+</main>
+<script src="../js/app.js"></script>
+<script>mountA(document);</script>
+</body>
+</html>

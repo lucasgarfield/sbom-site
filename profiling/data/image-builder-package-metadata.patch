@@ -1,0 +1,1059 @@
+From d27e2f18f31703f01c25d268b46391ad507d9af4 Mon Sep 17 00:00:00 2001
+From: "Lucas Garfield (depsolve-perf prototype)" <proto@local>
+Date: Fri, 16 Oct 2026 16:24:49 +0300
+Subject: [PATCH 1/4] depsolvednf: let callers choose the package metadata
+ level
+
+osbuild-depsolve-dnf V2 learned an optional `package_metadata` request
+argument ("full", the default, or "minimal"). Expose it on the Solver
+with SetPackageMetadata(), and add AddOptionalMetadata() to load extra
+repository metadata types such as "filelists" (which is what makes the
+depsolver return per-package file lists on Fedora 40+ and EL10+).
+
+Both are sent with depsolve, dump and search requests. When neither is
+set the requests are byte-for-byte identical to before.
+
+manifestgen reads three developer-only IMAGE_BUILDER_EXPERIMENTAL flags
+so `image-builder manifest` can exercise these paths without a new CLI
+option:
+
+  depsolve-package-metadata=full|minimal
+  depsolve-optional-metadata=filelists[+other...]
+  depsolve-no-sbom   (skip the depsolver-side SPDX SBOM)
+
+These exist to measure the cost of moving full RPM metadata from the
+Python depsolver into image-builder; they are not a supported interface.
+---
+ pkg/depsolvednf/api.go                   |  4 +
+ pkg/depsolvednf/depsolvednf.go           | 62 ++++++++++++++++
+ pkg/depsolvednf/package_metadata_test.go | 95 ++++++++++++++++++++++++
+ pkg/depsolvednf/v2.go                    | 13 +++-
+ pkg/manifestgen/manifestgen.go           | 30 ++++++++
+ 5 files changed, 202 insertions(+), 2 deletions(-)
+ create mode 100644 pkg/depsolvednf/package_metadata_test.go
+
+diff --git a/pkg/depsolvednf/api.go b/pkg/depsolvednf/api.go
+index 18b4d60b8..8ddfda706 100644
+--- a/pkg/depsolvednf/api.go
++++ b/pkg/depsolvednf/api.go
+@@ -55,6 +55,10 @@ type solverConfig struct {
+ 	rootDir          string
+ 	proxy            string
+ 	subscriptions    *rhsm.Subscriptions
++	packageMetadata  PackageMetadata
++	// extraOptionalMetadata are repository metadata types to load on top of
++	// the distro defaults (see depsolveOptionalMetadata()).
++	extraOptionalMetadata []string
+ }
+ 
+ // activeHandler is the currently active API handler implementation.
+diff --git a/pkg/depsolvednf/depsolvednf.go b/pkg/depsolvednf/depsolvednf.go
+index 5bf335601..249ac9ea5 100644
+--- a/pkg/depsolvednf/depsolvednf.go
++++ b/pkg/depsolvednf/depsolvednf.go
+@@ -158,6 +158,14 @@ type Solver struct {
+ 
+ 	sbomType sbom.StandardType
+ 
++	// Amount of RPM package metadata requested from osbuild-depsolve-dnf
++	// (empty means the depsolver default, which is PackageMetadataFull).
++	packageMetadata PackageMetadata
++
++	// Additional repository metadata types to load (e.g. "filelists"),
++	// on top of the distro defaults.
++	extraOptionalMetadata []string
++
+ 	// Stderr is the stderr output from osbuild-depsolve-dnf, if unset os.Stderr
+ 	// will be used.
+ 	//
+@@ -239,7 +247,23 @@ func (s *Solver) solverCfg() *solverConfig {
+ 		rootDir:          s.rootDir,
+ 		proxy:            s.proxy,
+ 		subscriptions:    s.subscriptions,
++		packageMetadata:  s.packageMetadata,
++
++		extraOptionalMetadata: slices.Clone(s.extraOptionalMetadata),
++	}
++}
++
++// depsolveOptionalMetadata returns the repository metadata types to load for
++// a depsolve request: the distro defaults plus any extra types requested with
++// Solver.AddOptionalMetadata().
++func depsolveOptionalMetadata(cfg *solverConfig) []string {
++	md := optionalMetadataForDistro(cfg.modulePlatformID)
++	for _, t := range cfg.extraOptionalMetadata {
++		if !slices.Contains(md, t) {
++			md = append(md, t)
++		}
+ 	}
++	return md
+ }
+ 
+ // hashRequest computes a SHA256 hash of the request raw data for caching.
+@@ -264,6 +288,44 @@ func collectRepos(pkgSets []rpmmd.PackageSet) []rpmmd.RepoConfig {
+ 	return repos
+ }
+ 
++// PackageMetadata selects how much RPM package metadata osbuild-depsolve-dnf
++// returns for every package in depsolve, dump and search responses.
++type PackageMetadata string
++
++const (
++	// PackageMetadataDefault leaves the choice to the depsolver (full).
++	PackageMetadataDefault PackageMetadata = ""
++	// PackageMetadataFull requests all package metadata the depsolver knows
++	// about (NEVRA, checksums, license, summary, description, vendor,
++	// packager, URL, source RPM, build time, sizes, reldeps, files, ...).
++	PackageMetadataFull PackageMetadata = "full"
++	// PackageMetadataMinimal requests only what is needed for a manifest:
++	// NEVRA, repo ID, location, remote locations and checksum.
++	PackageMetadataMinimal PackageMetadata = "minimal"
++)
++
++// ParsePackageMetadata parses a PackageMetadata level from a string.
++func ParsePackageMetadata(s string) (PackageMetadata, error) {
++	switch PackageMetadata(s) {
++	case PackageMetadataDefault, PackageMetadataFull, PackageMetadataMinimal:
++		return PackageMetadata(s), nil
++	}
++	return PackageMetadataDefault, fmt.Errorf("invalid package metadata level %q (must be %q or %q)", s, PackageMetadataFull, PackageMetadataMinimal)
++}
++
++// SetPackageMetadata sets how much package metadata the depsolver returns.
++func (s *Solver) SetPackageMetadata(level PackageMetadata) {
++	s.packageMetadata = level
++}
++
++// AddOptionalMetadata requests additional repository metadata types (e.g.
++// "filelists") to be loaded by the depsolver, on top of the distro defaults.
++// Loading "filelists" makes the depsolver return the file list of every
++// package.
++func (s *Solver) AddOptionalMetadata(types ...string) {
++	s.extraOptionalMetadata = append(s.extraOptionalMetadata, types...)
++}
++
+ // Set the SBOM type to generate with the depsolve.
+ func (s *Solver) SetSBOMType(sbomType sbom.StandardType) {
+ 	s.sbomType = sbomType
+diff --git a/pkg/depsolvednf/package_metadata_test.go b/pkg/depsolvednf/package_metadata_test.go
+new file mode 100644
+index 000000000..79bb62fe9
+--- /dev/null
++++ b/pkg/depsolvednf/package_metadata_test.go
+@@ -0,0 +1,95 @@
++package depsolvednf
++
++import (
++	"encoding/json"
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++	"github.com/stretchr/testify/require"
++
++	"github.com/osbuild/image-builder/pkg/rpmmd"
++	"github.com/osbuild/image-builder/pkg/sbom"
++)
++
++func TestParsePackageMetadata(t *testing.T) {
++	for _, s := range []string{"", "full", "minimal"} {
++		lvl, err := ParsePackageMetadata(s)
++		require.NoError(t, err)
++		assert.Equal(t, PackageMetadata(s), lvl)
++	}
++	_, err := ParsePackageMetadata("everything")
++	assert.Error(t, err)
++}
++
++func TestV2RequestsCarryPackageMetadataAndOptionalMetadata(t *testing.T) {
++	repo := rpmmd.RepoConfig{Name: "baseos", BaseURLs: []string{"https://example.org/baseos"}}
++	pkgSets := []rpmmd.PackageSet{{Include: []string{"bash"}, Repositories: []rpmmd.RepoConfig{repo}}}
++	h := newV2Handler()
++
++	type args struct {
++		PackageMetadata  string   `json:"package_metadata"`
++		OptionalMetadata []string `json:"optional-metadata"`
++	}
++	decode := func(raw []byte) args {
++		var req struct {
++			Arguments args `json:"arguments"`
++		}
++		require.NoError(t, json.Unmarshal(raw, &req))
++		return req.Arguments
++	}
++
++	t.Run("default omits the field", func(t *testing.T) {
++		cfg := &solverConfig{modulePlatformID: "platform:f44", arch: "x86_64", releaseVer: "44", cacheDir: "/c"}
++		raw, err := h.makeDepsolveRequest(cfg, pkgSets, sbom.StandardTypeNone)
++		require.NoError(t, err)
++		assert.NotContains(t, string(raw), "package_metadata")
++		assert.NotContains(t, string(raw), "optional-metadata")
++	})
++
++	t.Run("minimal and filelists on all commands", func(t *testing.T) {
++		cfg := &solverConfig{
++			modulePlatformID: "platform:el9", arch: "x86_64", releaseVer: "9", cacheDir: "/c",
++			packageMetadata:       PackageMetadataMinimal,
++			extraOptionalMetadata: []string{"filelists", "other"},
++		}
++		raw, err := h.makeDepsolveRequest(cfg, pkgSets, sbom.StandardTypeNone)
++		require.NoError(t, err)
++		a := decode(raw)
++		assert.Equal(t, "minimal", a.PackageMetadata)
++		// el9 already loads filelists by default, it must not be duplicated
++		assert.Equal(t, []string{"filelists", "other"}, a.OptionalMetadata)
++
++		raw, err = h.makeDumpRequest(cfg, []rpmmd.RepoConfig{repo})
++		require.NoError(t, err)
++		a = decode(raw)
++		assert.Equal(t, "minimal", a.PackageMetadata)
++		assert.Equal(t, []string{"filelists", "other"}, a.OptionalMetadata)
++
++		raw, err = h.makeSearchRequest(cfg, []rpmmd.RepoConfig{repo}, []string{"bash"})
++		require.NoError(t, err)
++		a = decode(raw)
++		assert.Equal(t, "minimal", a.PackageMetadata)
++	})
++}
++
++// A "minimal" response only carries the manifest fields; everything else
++// must come out as zero values without errors.
++func TestV2ParseMinimalDepsolveResult(t *testing.T) {
++	out := []byte(`{"solver": "dnf5", "transactions": [[{
++		"name": "bash", "epoch": 0, "version": "5.2", "release": "1.fc44", "arch": "x86_64",
++		"repo_id": "r1", "location": "Packages/b/bash.rpm",
++		"remote_locations": ["https://example.org/Packages/b/bash.rpm"],
++		"checksum": {"algorithm": "sha256", "value": "abcd"}}]],
++		"repos": {"r1": {"id": "r1", "name": "r1", "baseurl": ["https://example.org"]}},
++		"modules": {}}`)
++	res, err := newV2Handler().parseDepsolveResult(out)
++	require.NoError(t, err)
++	require.Len(t, res.Transactions, 1)
++	require.Len(t, res.Transactions[0], 1)
++	p := res.Transactions[0][0]
++	assert.Equal(t, "bash", p.Name)
++	assert.Equal(t, "sha256:abcd", p.Checksum.String())
++	assert.Empty(t, p.License)
++	assert.Empty(t, p.Provides)
++	assert.True(t, p.BuildTime.IsZero())
++}
+diff --git a/pkg/depsolvednf/v2.go b/pkg/depsolvednf/v2.go
+index f456a342d..d11344b14 100644
+--- a/pkg/depsolvednf/v2.go
++++ b/pkg/depsolvednf/v2.go
+@@ -165,6 +165,10 @@ type v2Arguments struct {
+ 
+ 	// Optionally request an SBOM from depsolving
+ 	Sbom *v2SbomRequest `json:"sbom,omitempty"`
++
++	// Amount of package metadata to return ("full" or "minimal").
++	// Omitted means the depsolver default ("full").
++	PackageMetadata string `json:"package_metadata,omitempty"`
+ }
+ 
+ // v2TransactionArgs contains arguments for a single depsolve transaction.
+@@ -253,7 +257,8 @@ func (h *v2Handler) makeDepsolveRequest(cfg *solverConfig, pkgSets []rpmmd.Packa
+ 		Repos:            dnfRepos,
+ 		RootDir:          cfg.rootDir,
+ 		Transactions:     transactions,
+-		OptionalMetadata: optionalMetadataForDistro(cfg.modulePlatformID),
++		OptionalMetadata: depsolveOptionalMetadata(cfg),
++		PackageMetadata:  string(cfg.packageMetadata),
+ 	}
+ 
+ 	req := v2Request{
+@@ -288,7 +293,9 @@ func (h *v2Handler) makeDumpRequest(cfg *solverConfig, repos []rpmmd.RepoConfig)
+ 		CacheDir:         cfg.cacheDir,
+ 		Proxy:            cfg.proxy,
+ 		Arguments: v2Arguments{
+-			Repos: dnfRepos,
++			Repos:            dnfRepos,
++			OptionalMetadata: cfg.extraOptionalMetadata,
++			PackageMetadata:  string(cfg.packageMetadata),
+ 		},
+ 	}
+ 	return json.Marshal(req)
+@@ -312,6 +319,8 @@ func (h *v2Handler) makeSearchRequest(cfg *solverConfig, repos []rpmmd.RepoConfi
+ 			Search: &v2SearchArgs{
+ 				Packages: packages,
+ 			},
++			OptionalMetadata: cfg.extraOptionalMetadata,
++			PackageMetadata:  string(cfg.packageMetadata),
+ 		},
+ 	}
+ 	return json.Marshal(req)
+diff --git a/pkg/manifestgen/manifestgen.go b/pkg/manifestgen/manifestgen.go
+index 02795ecbf..b9d4d1bb8 100644
+--- a/pkg/manifestgen/manifestgen.go
++++ b/pkg/manifestgen/manifestgen.go
+@@ -17,6 +17,7 @@ import (
+ 	"github.com/osbuild/image-builder/pkg/container"
+ 	"github.com/osbuild/image-builder/pkg/depsolvednf"
+ 	"github.com/osbuild/image-builder/pkg/distro"
++	"github.com/osbuild/image-builder/pkg/experimentalflags"
+ 	"github.com/osbuild/image-builder/pkg/flatpak"
+ 	"github.com/osbuild/image-builder/pkg/manifest"
+ 	"github.com/osbuild/image-builder/pkg/osbuild"
+@@ -348,9 +349,38 @@ func DefaultDepsolve(solver *depsolvednf.Solver, cacheDir string, depsolveWarnin
+ 	// type. Once we have more types than Spdx of course
+ 	// we need to add a option to select the type.
+ 	solver.SetSBOMType(sbom.StandardTypeSpdx)
++	if err := applyDepsolveExperimentalFlags(solver); err != nil {
++		return nil, err
++	}
+ 	return solver.DepsolveAll(packageSets)
+ }
+ 
++// applyDepsolveExperimentalFlags applies developer-only depsolver options
++// from IMAGE_BUILDER_EXPERIMENTAL. They exist to measure the cost of moving
++// RPM package metadata from osbuild-depsolve-dnf into image-builder and are
++// not a supported interface:
++//
++//	depsolve-package-metadata=full|minimal  amount of package metadata returned
++//	depsolve-optional-metadata=filelists    extra repo metadata types ("+"-separated)
++//	depsolve-no-sbom                         do not ask the depsolver for an SBOM
++//	                                         (only valid without --with-sbom)
++func applyDepsolveExperimentalFlags(solver *depsolvednf.Solver) error {
++	if v := experimentalflags.String("depsolve-package-metadata"); v != "" {
++		lvl, err := depsolvednf.ParsePackageMetadata(v)
++		if err != nil {
++			return fmt.Errorf("IMAGE_BUILDER_EXPERIMENTAL: %w", err)
++		}
++		solver.SetPackageMetadata(lvl)
++	}
++	if v := experimentalflags.String("depsolve-optional-metadata"); v != "" {
++		solver.AddOptionalMetadata(strings.Split(v, "+")...)
++	}
++	if experimentalflags.Bool("depsolve-no-sbom") {
++		solver.SetSBOMType(sbom.StandardTypeNone)
++	}
++	return nil
++}
++
+ type (
+ 	DepsolveFunc func(solver *depsolvednf.Solver, cacheDir string, depsolveWarningsOutput io.Writer, packageSets map[string][]rpmmd.PackageSet, d distro.Distro, arch string) (map[string]depsolvednf.DepsolveResult, error)
+ 
+-- 
+2.47.3
+
+
+From 7bd6e1557b809a8daac6e4112889da80caa512ba Mon Sep 17 00:00:00 2001
+From: "Lucas Garfield (depsolve-perf prototype)" <proto@local>
+Date: Fri, 16 Oct 2026 16:27:30 +0300
+Subject: [PATCH 2/4] depsolvednf: add developer-only tracing of depsolver
+ round trips
+
+To find out where time goes when the full RPM metadata is moved from
+osbuild-depsolve-dnf into image-builder, add opt-in instrumentation:
+
+  IMAGE_BUILDER_DEPSOLVE_TRACE=<file>   append one JSON line per call
+  IMAGE_BUILDER_DEPSOLVE_CAPTURE=<dir>  save raw request/response bytes
+
+Each record has the request/response sizes, the time spent marshalling
+the request, the depsolver process time (start to exit) with the arrival
+time of the first and last stdout byte, json.Unmarshal into the v2 wire
+structs, conversion into rpmmd types, SBOM document creation, the rest
+of the post-processing, the total, the depsolver's max RSS and CPU time
+from rusage, the Go process max RSS and allocation delta, and the field
+coverage of the returned packages (computed after the timers stop).
+
+When neither variable is set the helpers are no-ops and run() behaves as
+before. While tracing, depsolver calls are serialized.
+---
+ pkg/depsolvednf/depsolvednf.go |  64 +++++++-
+ pkg/depsolvednf/trace.go       | 269 +++++++++++++++++++++++++++++++++
+ pkg/depsolvednf/v2.go          |   6 +
+ 3 files changed, 336 insertions(+), 3 deletions(-)
+ create mode 100644 pkg/depsolvednf/trace.go
+
+diff --git a/pkg/depsolvednf/depsolvednf.go b/pkg/depsolvednf/depsolvednf.go
+index 249ac9ea5..3d352ab11 100644
+--- a/pkg/depsolvednf/depsolvednf.go
++++ b/pkg/depsolvednf/depsolvednf.go
+@@ -345,11 +345,21 @@ func (s *Solver) Depsolve(pkgSets []rpmmd.PackageSet, sbomType sbom.StandardType
+ 		return nil, err
+ 	}
+ 
++	tr := beginTrace("depsolve", s.packageMetadata)
++	traceDone := false
++	defer func() {
++		if !traceDone {
++			tr.abort()
++		}
++	}()
++
+ 	cfg := s.solverCfg()
++	marshalStart := time.Now()
+ 	reqData, err := activeHandler.makeDepsolveRequest(cfg, pkgSets, sbomType)
+ 	if err != nil {
+ 		return nil, fmt.Errorf("makeDepsolveRequest failed: %w", err)
+ 	}
++	tr.setRequest(reqData, time.Since(marshalStart))
+ 
+ 	// collect all repos for error reporting
+ 	allRepos := collectRepos(pkgSets)
+@@ -358,10 +368,11 @@ func (s *Solver) Depsolve(pkgSets []rpmmd.PackageSet, sbomType sbom.StandardType
+ 	s.cache.locker.RLock()
+ 	defer s.cache.locker.RUnlock()
+ 
+-	output, err := run(s.depsolveDNFCmd, reqData, s.Stderr)
++	output, err := runTraced(s.depsolveDNFCmd, reqData, s.Stderr, tr)
+ 	if err != nil {
+ 		return nil, parseError(output, allRepos, err)
+ 	}
++	postDone := traceStage(func(t *callTrace) *int64 { return &t.PostNs })
+ 
+ 	// touch repos to now
+ 	now := time.Now().Local()
+@@ -383,11 +394,16 @@ func (s *Solver) Depsolve(pkgSets []rpmmd.PackageSet, sbomType sbom.StandardType
+ 
+ 	var sbomDoc *sbom.Document
+ 	if sbomType != sbom.StandardTypeNone {
++		sbomDone := traceStage(func(t *callTrace) *int64 { return &t.SBOMDocNs })
+ 		sbomDoc, err = sbom.NewDocument(sbomType, resultRaw.SBOMRaw)
++		sbomDone()
+ 		if err != nil {
+ 			return nil, fmt.Errorf("creating SBOM document failed: %w", err)
+ 		}
+ 	}
++	postDone()
++	traceDone = true
++	tr.finish(resultRaw.Transactions, len(resultRaw.SBOMRaw))
+ 
+ 	return &DepsolveResult{
+ 		Transactions: resultRaw.Transactions,
+@@ -415,11 +431,21 @@ func (s *Solver) DepsolveAll(pkgSetsMap map[string][]rpmmd.PackageSet) (map[stri
+ // FetchMetadata returns the list of all the available packages in repos and
+ // their info.
+ func (s *Solver) FetchMetadata(repos []rpmmd.RepoConfig) (rpmmd.PackageList, error) {
++	tr := beginTrace("dump", s.packageMetadata)
++	traceDone := false
++	defer func() {
++		if !traceDone {
++			tr.abort()
++		}
++	}()
++
+ 	cfg := s.solverCfg()
++	marshalStart := time.Now()
+ 	reqData, err := activeHandler.makeDumpRequest(cfg, repos)
+ 	if err != nil {
+ 		return nil, err
+ 	}
++	tr.setRequest(reqData, time.Since(marshalStart))
+ 
+ 	// get non-exclusive read lock
+ 	s.cache.locker.RLock()
+@@ -431,10 +457,11 @@ func (s *Solver) FetchMetadata(repos []rpmmd.RepoConfig) (rpmmd.PackageList, err
+ 		return pkgs, nil
+ 	}
+ 
+-	rawRes, err := run(s.depsolveDNFCmd, reqData, s.Stderr)
++	rawRes, err := runTraced(s.depsolveDNFCmd, reqData, s.Stderr, tr)
+ 	if err != nil {
+ 		return nil, parseError(rawRes, repos, err)
+ 	}
++	postDone := traceStage(func(t *callTrace) *int64 { return &t.PostNs })
+ 
+ 	// touch repos to now
+ 	now := time.Now().Local()
+@@ -448,6 +475,9 @@ func (s *Solver) FetchMetadata(repos []rpmmd.RepoConfig) (rpmmd.PackageList, err
+ 	if err != nil {
+ 		return nil, err
+ 	}
++	postDone()
++	traceDone = true
++	tr.finish([]rpmmd.PackageList{res.Packages}, 0)
+ 
+ 	// XXX: Cache and expose the whole operation result instead of just the packages in the future.
+ 
+@@ -463,11 +493,21 @@ func (s *Solver) FetchMetadata(repos []rpmmd.RepoConfig) (rpmmd.PackageList, err
+ 
+ // SearchMetadata searches for packages and returns a list of the info for matches.
+ func (s *Solver) SearchMetadata(repos []rpmmd.RepoConfig, packages []string) (rpmmd.PackageList, error) {
++	tr := beginTrace("search", s.packageMetadata)
++	traceDone := false
++	defer func() {
++		if !traceDone {
++			tr.abort()
++		}
++	}()
++
+ 	cfg := s.solverCfg()
++	marshalStart := time.Now()
+ 	reqData, err := activeHandler.makeSearchRequest(cfg, repos, packages)
+ 	if err != nil {
+ 		return nil, err
+ 	}
++	tr.setRequest(reqData, time.Since(marshalStart))
+ 
+ 	// get non-exclusive read lock
+ 	s.cache.locker.RLock()
+@@ -479,10 +519,11 @@ func (s *Solver) SearchMetadata(repos []rpmmd.RepoConfig, packages []string) (rp
+ 		return pkgs, nil
+ 	}
+ 
+-	rawRes, err := run(s.depsolveDNFCmd, reqData, s.Stderr)
++	rawRes, err := runTraced(s.depsolveDNFCmd, reqData, s.Stderr, tr)
+ 	if err != nil {
+ 		return nil, parseError(rawRes, repos, err)
+ 	}
++	postDone := traceStage(func(t *callTrace) *int64 { return &t.PostNs })
+ 
+ 	// touch repos to now
+ 	now := time.Now().Local()
+@@ -496,6 +537,9 @@ func (s *Solver) SearchMetadata(repos []rpmmd.RepoConfig, packages []string) (rp
+ 	if err != nil {
+ 		return nil, err
+ 	}
++	postDone()
++	traceDone = true
++	tr.finish([]rpmmd.PackageList{res.Packages}, 0)
+ 
+ 	// XXX: Cache and expose the whole operation result instead of just the packages in the future.
+ 
+@@ -659,6 +703,10 @@ func parseError(data []byte, repos []rpmmd.RepoConfig, cmdError error) Error {
+ }
+ 
+ func run(dnfJsonCmd []string, reqData []byte, stderr io.Writer) ([]byte, error) {
++	return runTraced(dnfJsonCmd, reqData, stderr, nil)
++}
++
++func runTraced(dnfJsonCmd []string, reqData []byte, stderr io.Writer, tr *callTrace) ([]byte, error) {
+ 	if len(dnfJsonCmd) == 0 {
+ 		dnfJsonCmd = []string{findDepsolveDnf()}
+ 	}
+@@ -683,7 +731,16 @@ func run(dnfJsonCmd []string, reqData []byte, stderr io.Writer) ([]byte, error)
+ 	}
+ 	stdout := new(bytes.Buffer)
+ 	cmd.Stdout = stdout
++	var tw *timingWriter
++	if tr != nil {
++		tw = &timingWriter{w: stdout}
++		cmd.Stdout = tw
++	}
+ 
++	procStart := time.Now()
++	if tw != nil {
++		tw.start = procStart
++	}
+ 	err = cmd.Start()
+ 	if err != nil {
+ 		return nil, fmt.Errorf("starting %s failed: %w", ex, err)
+@@ -697,6 +754,7 @@ func run(dnfJsonCmd []string, reqData []byte, stderr io.Writer) ([]byte, error)
+ 
+ 	err = cmd.Wait()
+ 	output := stdout.Bytes()
++	tr.setProcess(output, cmd.ProcessState, time.Since(procStart), tw)
+ 	if err != nil {
+ 		return output, fmt.Errorf("running the depsolver failed: %w", err)
+ 	}
+diff --git a/pkg/depsolvednf/trace.go b/pkg/depsolvednf/trace.go
+new file mode 100644
+index 000000000..5f94a8538
+--- /dev/null
++++ b/pkg/depsolvednf/trace.go
+@@ -0,0 +1,269 @@
++package depsolvednf
++
++// Developer-only instrumentation of the osbuild-depsolve-dnf round trip.
++//
++// Set IMAGE_BUILDER_DEPSOLVE_TRACE=<file> to append one JSON line per
++// depsolver call (depsolve, dump, search) with per-stage timings, payload
++// sizes, resource usage of the depsolver process and the field coverage of
++// the returned packages. Set IMAGE_BUILDER_DEPSOLVE_CAPTURE=<dir> to also
++// save the raw request and response bytes of every call (for replaying them
++// in benchmarks).
++//
++// When neither variable is set, all helpers here are no-ops. Tracing
++// serializes depsolver calls (it is not meant for concurrent production use).
++
++import (
++	"encoding/json"
++	"fmt"
++	"os"
++	"path/filepath"
++	"runtime"
++	"sync"
++	"syscall"
++	"time"
++
++	"github.com/osbuild/image-builder/pkg/rpmmd"
++)
++
++const (
++	traceEnv   = "IMAGE_BUILDER_DEPSOLVE_TRACE"
++	captureEnv = "IMAGE_BUILDER_DEPSOLVE_CAPTURE"
++)
++
++// callTrace holds the measurements of one depsolver call. All durations are
++// in nanoseconds.
++type callTrace struct {
++	Command         string `json:"command"`
++	PackageMetadata string `json:"package_metadata"`
++	Seq             int    `json:"seq"`
++
++	RequestBytes  int `json:"request_bytes"`
++	ResponseBytes int `json:"response_bytes"`
++
++	// Go: building and marshalling the request
++	MarshalRequestNs int64 `json:"marshal_request_ns"`
++	// Go: from cmd.Start() until cmd.Wait() returned (the whole Python process)
++	ProcessNs int64 `json:"process_ns"`
++	// Go: time from cmd.Start() until the first and last stdout byte arrived
++	FirstByteNs int64 `json:"first_byte_ns"`
++	LastByteNs  int64 `json:"last_byte_ns"`
++	// Go: json.Unmarshal() of the response into the v2 wire structs
++	UnmarshalNs int64 `json:"unmarshal_ns"`
++	// Go: conversion of the v2 wire structs into rpmmd types
++	ConvertNs int64 `json:"convert_ns"`
++	// Go: everything after the process exited (cache touch, parse, RHSM, SBOM doc)
++	PostNs int64 `json:"post_ns"`
++	// Go: sbom.NewDocument() (depsolve only, when an SBOM was requested)
++	SBOMDocNs int64 `json:"sbom_doc_ns"`
++	// Go: the whole Solver method
++	TotalNs int64 `json:"total_ns"`
++
++	// Python process resource usage
++	ChildMaxRSSKiB int64 `json:"child_maxrss_kib"`
++	ChildUserNs    int64 `json:"child_user_ns"`
++	ChildSysNs     int64 `json:"child_sys_ns"`
++	// Go process after the call
++	SelfMaxRSSKiB  int64  `json:"self_maxrss_kib"`
++	GoHeapAlloc    uint64 `json:"go_heap_alloc"`
++	GoTotalAlloc   uint64 `json:"go_total_alloc_delta"`
++	goTotalAlloc0  uint64
++	start          time.Time
++	SBOMBytes      int            `json:"sbom_bytes"`
++	Packages       int            `json:"packages"`
++	Transactions   []int          `json:"transactions,omitempty"`
++	RelDeps        int            `json:"reldeps"`
++	Files          int            `json:"files"`
++	FieldCoverage  map[string]int `json:"field_coverage"`
++	CaptureRequest string         `json:"capture_request,omitempty"`
++}
++
++var (
++	traceMu    sync.Mutex
++	traceSeq   int
++	traceFile  = os.Getenv(traceEnv)
++	captureDir = os.Getenv(captureEnv)
++	// activeTrace is only non-nil between beginTrace() and finish()
++	activeTrace *callTrace
++)
++
++func tracingEnabled() bool {
++	return traceFile != "" || captureDir != ""
++}
++
++// beginTrace starts tracing a depsolver call; returns nil if disabled.
++func beginTrace(command string, level PackageMetadata) *callTrace {
++	if !tracingEnabled() {
++		return nil
++	}
++	traceMu.Lock()
++	traceSeq++
++	var ms runtime.MemStats
++	runtime.ReadMemStats(&ms)
++	if level == PackageMetadataDefault {
++		level = PackageMetadataFull
++	}
++	t := &callTrace{Command: command, PackageMetadata: string(level), Seq: traceSeq, start: time.Now(), goTotalAlloc0: ms.TotalAlloc}
++	activeTrace = t
++	return t
++}
++
++// traceStage returns a function that adds the elapsed time to *field of the
++// active trace. It is a no-op if tracing is disabled.
++func traceStage(field func(*callTrace) *int64) func() {
++	t := activeTrace
++	if t == nil {
++		return func() {}
++	}
++	start := time.Now()
++	return func() { *field(t) += time.Since(start).Nanoseconds() }
++}
++
++func (t *callTrace) setRequest(req []byte, marshal time.Duration) {
++	if t == nil {
++		return
++	}
++	t.RequestBytes = len(req)
++	t.MarshalRequestNs = marshal.Nanoseconds()
++	if captureDir != "" {
++		name := filepath.Join(captureDir, fmt.Sprintf("%d-%d-%s-%s.request.json", os.Getpid(), t.Seq, t.Command, t.PackageMetadata))
++		if err := os.WriteFile(name, req, 0o644); err == nil {
++			t.CaptureRequest = name
++		}
++	}
++}
++
++func (t *callTrace) setProcess(out []byte, ps *os.ProcessState, procDur time.Duration, w *timingWriter) {
++	if t == nil {
++		return
++	}
++	t.ResponseBytes = len(out)
++	t.ProcessNs = procDur.Nanoseconds()
++	if w != nil && !w.first.IsZero() {
++		t.FirstByteNs = w.first.Sub(w.start).Nanoseconds()
++		t.LastByteNs = w.last.Sub(w.start).Nanoseconds()
++	}
++	if ps != nil {
++		if ru, ok := ps.SysUsage().(*syscall.Rusage); ok {
++			t.ChildMaxRSSKiB = ru.Maxrss
++			t.ChildUserNs = time.Duration(ru.Utime.Nano()).Nanoseconds()
++			t.ChildSysNs = time.Duration(ru.Stime.Nano()).Nanoseconds()
++		}
++	}
++	if captureDir != "" {
++		name := filepath.Join(captureDir, fmt.Sprintf("%d-%d-%s-%s.response.json", os.Getpid(), t.Seq, t.Command, t.PackageMetadata))
++		_ = os.WriteFile(name, out, 0o644)
++	}
++}
++
++// finish computes the summary statistics (outside of the timed stages) and
++// appends the record to the trace file.
++func (t *callTrace) finish(transactions []rpmmd.PackageList, sbomBytes int) {
++	if t == nil {
++		return
++	}
++	defer traceMu.Unlock()
++	activeTrace = nil
++	t.TotalNs = time.Since(t.start).Nanoseconds()
++
++	var ms runtime.MemStats
++	runtime.ReadMemStats(&ms)
++	t.GoHeapAlloc = ms.HeapAlloc
++	t.GoTotalAlloc = ms.TotalAlloc - t.goTotalAlloc0
++	var ru syscall.Rusage
++	if err := syscall.Getrusage(syscall.RUSAGE_SELF, &ru); err == nil {
++		t.SelfMaxRSSKiB = ru.Maxrss
++	}
++	t.SBOMBytes = sbomBytes
++
++	t.FieldCoverage = map[string]int{}
++	cov := func(name string, ok bool) {
++		if ok {
++			t.FieldCoverage[name]++
++		}
++	}
++	for _, pl := range transactions {
++		t.Transactions = append(t.Transactions, len(pl))
++		for i := range pl {
++			p := &pl[i]
++			t.Packages++
++			cov("name", p.Name != "")
++			cov("version", p.Version != "")
++			cov("release", p.Release != "")
++			cov("arch", p.Arch != "")
++			cov("epoch_nonzero", p.Epoch != 0)
++			cov("summary", p.Summary != "")
++			cov("description", p.Description != "")
++			cov("license", p.License != "")
++			cov("vendor", p.Vendor != "")
++			cov("packager", p.Packager != "")
++			cov("url", p.URL != "")
++			cov("group", p.Group != "")
++			cov("source_rpm", p.SourceRpm != "")
++			cov("build_time", !p.BuildTime.IsZero())
++			cov("download_size", p.DownloadSize != 0)
++			cov("install_size", p.InstallSize != 0)
++			cov("checksum", p.Checksum.Value != "")
++			cov("header_checksum", p.HeaderChecksum.Value != "")
++			cov("repo_id", p.RepoID != "")
++			cov("location", p.Location != "")
++			cov("remote_locations", len(p.RemoteLocations) > 0)
++			cov("reason", p.Reason != "")
++			cov("provides", len(p.Provides) > 0)
++			cov("requires", len(p.Requires) > 0)
++			cov("requires_pre", len(p.RequiresPre) > 0)
++			cov("regular_requires", len(p.RegularRequires) > 0)
++			cov("conflicts", len(p.Conflicts) > 0)
++			cov("obsoletes", len(p.Obsoletes) > 0)
++			cov("recommends", len(p.Recommends) > 0)
++			cov("suggests", len(p.Suggests) > 0)
++			cov("supplements", len(p.Supplements) > 0)
++			cov("enhances", len(p.Enhances) > 0)
++			cov("files", len(p.Files) > 0)
++			t.RelDeps += len(p.Provides) + len(p.Requires) + len(p.RequiresPre) + len(p.RegularRequires) +
++				len(p.Conflicts) + len(p.Obsoletes) + len(p.Recommends) + len(p.Suggests) +
++				len(p.Supplements) + len(p.Enhances)
++			t.Files += len(p.Files)
++		}
++	}
++
++	if traceFile == "" {
++		return
++	}
++	line, err := json.Marshal(t)
++	if err != nil {
++		return
++	}
++	f, err := os.OpenFile(traceFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
++	if err != nil {
++		return
++	}
++	defer f.Close()
++	_, _ = f.Write(append(line, '\n'))
++}
++
++// abort releases the trace lock without writing a record (error paths).
++func (t *callTrace) abort() {
++	if t == nil {
++		return
++	}
++	activeTrace = nil
++	traceMu.Unlock()
++}
++
++// timingWriter records when the first and the last chunk of the depsolver
++// output arrived.
++type timingWriter struct {
++	w     interface{ Write([]byte) (int, error) }
++	start time.Time
++	first time.Time
++	last  time.Time
++}
++
++func (tw *timingWriter) Write(p []byte) (int, error) {
++	now := time.Now()
++	if tw.first.IsZero() {
++		tw.first = now
++	}
++	tw.last = now
++	return tw.w.Write(p)
++}
+diff --git a/pkg/depsolvednf/v2.go b/pkg/depsolvednf/v2.go
+index d11344b14..145aaec52 100644
+--- a/pkg/depsolvednf/v2.go
++++ b/pkg/depsolvednf/v2.go
+@@ -328,9 +328,12 @@ func (h *v2Handler) makeSearchRequest(cfg *solverConfig, repos []rpmmd.RepoConfi
+ 
+ func (h *v2Handler) parseDepsolveResult(output []byte) (*depsolveResultRaw, error) {
+ 	var result v2DepsolveResult
++	unmarshalDone := traceStage(func(t *callTrace) *int64 { return &t.UnmarshalNs })
+ 	if err := json.Unmarshal(output, &result); err != nil {
+ 		return nil, fmt.Errorf("decoding depsolve result failed: %w", err)
+ 	}
++	unmarshalDone()
++	defer traceStage(func(t *callTrace) *int64 { return &t.ConvertNs })()
+ 
+ 	// Convert repos first, to enable adding a reference to the RepoConfig to each package
+ 	repos, repoMap := h.toRPMMDRepoConfigs(result.Repos)
+@@ -393,9 +396,12 @@ func (h *v2Handler) parseSearchResult(output []byte) (*SearchResult, error) {
+ // parsePackageListResult parses the common dump/search response structure.
+ func (h *v2Handler) parsePackageListResult(output []byte, operation string) (rpmmd.PackageList, []rpmmd.RepoConfig, string, error) {
+ 	var result v2PackageListResult
++	unmarshalDone := traceStage(func(t *callTrace) *int64 { return &t.UnmarshalNs })
+ 	if err := json.Unmarshal(output, &result); err != nil {
+ 		return nil, nil, "", fmt.Errorf("decoding %s result failed: %w", operation, err)
+ 	}
++	unmarshalDone()
++	defer traceStage(func(t *callTrace) *int64 { return &t.ConvertNs })()
+ 
+ 	repos, repoMap := h.toRPMMDRepoConfigs(result.Repos)
+ 
+-- 
+2.47.3
+
+
+From 6634b1a8dfcf63e2a1f4f95c7864294b563f55c2 Mon Sep 17 00:00:00 2001
+From: "Lucas Garfield (depsolve-perf prototype)" <proto@local>
+Date: Fri, 16 Oct 2026 16:27:30 +0300
+Subject: [PATCH 3/4] image-builder: add developer-only pprof hooks
+
+IMAGE_BUILDER_CPUPROFILE=<file> writes a CPU profile of the whole run,
+IMAGE_BUILDER_MEMPROFILE=<file> an allocation profile at exit. Used to
+profile `image-builder manifest`; not a supported interface.
+---
+ cmd/image-builder/main.go    |  2 ++
+ cmd/image-builder/profile.go | 41 ++++++++++++++++++++++++++++++++++++
+ 2 files changed, 43 insertions(+)
+ create mode 100644 cmd/image-builder/profile.go
+
+diff --git a/cmd/image-builder/main.go b/cmd/image-builder/main.go
+index b057bb972..804cfd8ce 100644
+--- a/cmd/image-builder/main.go
++++ b/cmd/image-builder/main.go
+@@ -1022,7 +1022,9 @@ func main() {
+ 	if strings.HasSuffix(os.Args[0], "bootc-image-builder") {
+ 		err = bibRun()
+ 	} else {
++		stopProfiling := startProfiling()
+ 		err = run()
++		stopProfiling()
+ 	}
+ 	if err != nil {
+ 		log.Fatalf("error: %s\n", err)
+diff --git a/cmd/image-builder/profile.go b/cmd/image-builder/profile.go
+new file mode 100644
+index 000000000..d18f8f94d
+--- /dev/null
++++ b/cmd/image-builder/profile.go
+@@ -0,0 +1,41 @@
++package main
++
++// Developer-only profiling hooks, enabled by environment variables:
++//
++//	IMAGE_BUILDER_CPUPROFILE=<file>   write a pprof CPU profile of the whole run
++//	IMAGE_BUILDER_MEMPROFILE=<file>   write a pprof heap (alloc) profile at exit
++//
++// They are used to profile `image-builder manifest`; they are not a
++// supported interface.
++
++import (
++	"os"
++	"runtime"
++	"runtime/pprof"
++)
++
++func startProfiling() (stop func()) {
++	stop = func() {}
++	if path := os.Getenv("IMAGE_BUILDER_MEMPROFILE"); path != "" {
++		runtime.MemProfileRate = 64 * 1024
++	}
++	var cpuFile *os.File
++	if path := os.Getenv("IMAGE_BUILDER_CPUPROFILE"); path != "" {
++		f, err := os.Create(path)
++		if err == nil && pprof.StartCPUProfile(f) == nil {
++			cpuFile = f
++		}
++	}
++	return func() {
++		if cpuFile != nil {
++			pprof.StopCPUProfile()
++			cpuFile.Close()
++		}
++		if path := os.Getenv("IMAGE_BUILDER_MEMPROFILE"); path != "" {
++			if f, err := os.Create(path); err == nil {
++				_ = pprof.Lookup("allocs").WriteTo(f, 0)
++				f.Close()
++			}
++		}
++	}
++}
+-- 
+2.47.3
+
+
+From 58760d43de2a765f595b2ab32684e98ebcd34caa Mon Sep 17 00:00:00 2001
+From: "Lucas Garfield (depsolve-perf prototype)" <proto@local>
+Date: Fri, 16 Oct 2026 16:41:20 +0300
+Subject: [PATCH 4/4] depsolvednf: add benchmarks for parsing captured V2
+ responses
+
+BenchmarkV2ParseUnmarshal measures json.Unmarshal of a depsolver response
+into the v2 wire structs, BenchmarkV2ParseFull the whole parse including
+the conversion into rpmmd types. Both run against real responses
+captured with IMAGE_BUILDER_DEPSOLVE_CAPTURE and selected with
+DEPSOLVE_BENCH_FILES (a glob); they are skipped when it is not set.
+---
+ pkg/depsolvednf/v2_bench_test.go | 97 ++++++++++++++++++++++++++++++++
+ 1 file changed, 97 insertions(+)
+ create mode 100644 pkg/depsolvednf/v2_bench_test.go
+
+diff --git a/pkg/depsolvednf/v2_bench_test.go b/pkg/depsolvednf/v2_bench_test.go
+new file mode 100644
+index 000000000..2aef8bf91
+--- /dev/null
++++ b/pkg/depsolvednf/v2_bench_test.go
+@@ -0,0 +1,97 @@
++package depsolvednf
++
++import (
++	"encoding/json"
++	"os"
++	"path/filepath"
++	"sort"
++	"strings"
++	"testing"
++)
++
++// Benchmarks for the Go side of the depsolver round trip, run against real
++// captured depsolver responses (see IMAGE_BUILDER_DEPSOLVE_CAPTURE):
++//
++//	DEPSOLVE_BENCH_FILES='/path/to/*.response.json' go test -run XXX -bench V2Parse ./pkg/depsolvednf/
++//
++// Files whose name contains "dump" or "search" are parsed as package list
++// responses, all others as depsolve responses. The benchmarks are skipped when
++// DEPSOLVE_BENCH_FILES is not set.
++
++func benchFiles(b *testing.B) []string {
++	pattern := os.Getenv("DEPSOLVE_BENCH_FILES")
++	if pattern == "" {
++		b.Skip("DEPSOLVE_BENCH_FILES not set")
++	}
++	var files []string
++	for _, p := range strings.Fields(pattern) {
++		m, err := filepath.Glob(p)
++		if err != nil {
++			b.Fatal(err)
++		}
++		files = append(files, m...)
++	}
++	sort.Strings(files)
++	if len(files) == 0 {
++		b.Skipf("no files match %q", pattern)
++	}
++	return files
++}
++
++func isPackageList(name string) bool {
++	return strings.Contains(name, "dump") || strings.Contains(name, "search")
++}
++
++// BenchmarkV2ParseUnmarshal measures only json.Unmarshal into the v2 wire structs.
++func BenchmarkV2ParseUnmarshal(b *testing.B) {
++	for _, f := range benchFiles(b) {
++		data, err := os.ReadFile(f)
++		if err != nil {
++			b.Fatal(err)
++		}
++		b.Run(filepath.Base(f), func(b *testing.B) {
++			b.SetBytes(int64(len(data)))
++			b.ReportAllocs()
++			for b.Loop() {
++				if isPackageList(f) {
++					var r v2PackageListResult
++					if err := json.Unmarshal(data, &r); err != nil {
++						b.Fatal(err)
++					}
++				} else {
++					var r v2DepsolveResult
++					if err := json.Unmarshal(data, &r); err != nil {
++						b.Fatal(err)
++					}
++				}
++			}
++		})
++	}
++}
++
++// BenchmarkV2ParseFull measures the whole response handling: json.Unmarshal
++// plus conversion into rpmmd types.
++func BenchmarkV2ParseFull(b *testing.B) {
++	h := newV2Handler()
++	for _, f := range benchFiles(b) {
++		data, err := os.ReadFile(f)
++		if err != nil {
++			b.Fatal(err)
++		}
++		b.Run(filepath.Base(f), func(b *testing.B) {
++			b.SetBytes(int64(len(data)))
++			b.ReportAllocs()
++			for b.Loop() {
++				if isPackageList(f) {
++					if _, err := h.parseDumpResult(data); err != nil {
++						b.Fatal(err)
++					}
++				} else {
++					if _, err := h.parseDepsolveResult(data); err != nil {
++						b.Fatal(err)
++					}
++				}
++			}
++		})
++	}
++}
+-- 
+2.47.3
+

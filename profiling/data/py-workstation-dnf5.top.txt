@@ -1,0 +1,35 @@
+Fri Oct 16 15:13:21 2026    /workspace/depsolve-perf/runs/profiles/py-workstation-dnf5.pstats
+
+         3057416 function calls (2845201 primitive calls) in 2.799 seconds
+
+   Ordered by: internal time
+   List reduced from 470 to 25 due to restriction <25>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.407    0.407    0.407    0.407 {built-in method libdnf5._base.Goal_resolve}
+     2011    0.163    0.000    0.163    0.000 {built-in method libdnf5._rpm.Package_get_description}
+   102081    0.151    0.000    0.357    0.000 /workspace/depsolve-perf/osbuild/osbuild/solver/dnf5.py:59(_reldep_to_dependency)
+     2011    0.150    0.000    1.607    0.001 /workspace/depsolve-perf/osbuild/osbuild/solver/dnf5.py:67(_dnf_pkg_to_package)
+        1    0.133    0.133    0.133    0.133 {built-in method libdnf5._repo.RepoSackWeakPtr_load_repos}
+        3    0.122    0.041    0.122    0.041 /usr/lib64/python3.14/json/encoder.py:207(iterencode)
+     2011    0.102    0.000    0.102    0.000 {built-in method libdnf5._rpm.Package_get_remote_locations}
+   122191    0.101    0.000    0.375    0.000 /usr/lib64/python3.14/site-packages/libdnf5/common.py:1041(__next__)
+     2011    0.098    0.000    0.098    0.000 {built-in method libdnf5._rpm.Package_get_files}
+   4032/4    0.092    0.000    2.798    0.699 /workspace/depsolve-perf/bench/depsolve_timed.py:38(w)
+212206/4022    0.078    0.000    0.141    0.000 {built-in method builtins.hash}
+   204162    0.062    0.000    0.090    0.000 /workspace/depsolve-perf/osbuild/osbuild/solver/model.py:266(__hash__)
+   102081    0.058    0.000    0.058    0.000 {built-in method libdnf5._rpm.ReldepListIterator_value}
+   102081    0.056    0.000    0.102    0.000 /usr/lib64/python3.14/site-packages/libdnf5/rpm.py:1337(next)
+   122191    0.055    0.000    0.055    0.000 {built-in method libdnf5._rpm.ReldepListIterator___eq__}
+     2011    0.052    0.000    0.095    0.000 /workspace/depsolve-perf/osbuild/osbuild/solver/api/v2.py:58(_package_as_dict)
+   102081    0.047    0.000    0.047    0.000 {built-in method libdnf5._rpm.ReldepListIterator_next}
+    66406    0.046    0.000    0.064    0.000 /workspace/depsolve-perf/osbuild/osbuild/solver/model.py:39(__setattr__)
+   102081    0.046    0.000    0.046    0.000 {built-in method libdnf5._rpm.Reldep_get_name}
+     2011    0.045    0.000    0.045    0.000 {built-in method libdnf5._rpm.Package_get_reason}
+        9    0.040    0.004    0.040    0.004 {method 'write' of '_io.TextIOWrapper' objects}
+    20110    0.035    0.000    0.053    0.000 {built-in method builtins.sorted}
+     4022    0.034    0.000    0.176    0.000 /workspace/depsolve-perf/osbuild/osbuild/solver/model.py:456(__hash__)
+   102081    0.032    0.000    0.032    0.000 /workspace/depsolve-perf/osbuild/osbuild/solver/api/v2.py:49(_dependency_as_dict)
+   122191    0.031    0.000    0.086    0.000 /usr/lib64/python3.14/site-packages/libdnf5/rpm.py:1340(__eq__)
+
+
