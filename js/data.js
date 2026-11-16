@@ -91,8 +91,6 @@
   const QCARDS = {
     "creationInfo.@organization": { title: "Should the SBOM name Red Hat as a creator?",
       text: "The SBOM lists only the tools that created it; there is no Organization creator. ProdSec guidance asks for \u201cOrganization: Red Hat\u201d in Red Hat SBOMs, and image-builder is also used outside Red Hat. How should an SBOM from a Red Hat build be marked as created by Red Hat? One option: the caller passes the creator, e.g. image-builder --sbom-org \"Organization: Red Hat\" in Red Hat's pipelines. Would that be acceptable?" },
-    "creationInfo.created": { title: "Is a build-time SBOM what ProdSec expects?",
-      text: "This timestamp is when the image build finished: the SBOM is written at build time, before the image is released. Release details such as repository IDs, download locations and product CPEs are not known at that point. Should a later release step add them, or does ProdSec expect them in this SBOM?" },
     "root.name": { title: "What stable name should the disk image package carry?",
       text: "The image package is named after the image: distro, image type and architecture (centos-9-qcow2-x86_64). ProdSec's archive guidance asks for a stable name without the product version or platform. What name should a disk image carry so it stays the same across releases and architectures?" },
     "root.@versionInfo": { title: "What version should a disk image carry, and who supplies it?",
