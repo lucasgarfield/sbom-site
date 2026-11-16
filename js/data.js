@@ -1,6 +1,6 @@
 // Field notes for the sample SBOM. Keys are logical paths computed by app.js:
 //   top-level "name", "creationInfo.created", "creationInfo.creators[1]";
-//   "root.<field>" = the disk image package; "rpm.<field>" = openssl-libs;
+//   "root.<field>" = the disk image package; "rpm.<field>" = first RPM (packages[1]);
 //   "rel.CONTAINS.<field>", "rel.DESCRIBES.<field>"; "[]" = array member.
 (function () {
   const RH = "https://redhatproductsecurity.github.io/security-data-guidelines/";
@@ -31,7 +31,7 @@
     "creationInfo.creators[0]": { what: "The SBOM library used by image-builder, with its version.", req: [r(S.rhArchive, "\"Additional creators are allowed.\"")] },
     "creationInfo.creators[1]": { what: "image-builder and its version (this sample was built from a development snapshot).", req: [r(S.rhDoc, "Must identify the tool and its version, e.g. \"Tool: SBOMer 1.2.3\".")] },
     "creationInfo.created": { what: "When the SBOM was written, in UTC, right after the image build finished.", req: [r(S.rhDoc, "UTC timestamps must use the YYYY-MM-DDThh:mm:ssZ format.")] },
-    "packages": { what: "475 packages: the disk image itself plus the 474 RPMs installed in it, each listed once. Build-only packages are not included. Only the image and one RPM are expanded here.", req: [r(S.rhImage, "An image SBOM \"must also list out all the components included in that image\".")] },
+    "packages": { what: "475 packages: the disk image itself plus the 474 RPMs installed in it, each listed once. Build-only packages are not included. Only the image and the first RPM are expanded here.", req: [r(S.rhImage, "An image SBOM \"must also list out all the components included in that image\".")] },
     "relationships": { what: "474 CONTAINS (image → RPM) and 1 DESCRIBES (document → image). No dependency relationships between RPMs.", req: [r(S.rhOverview, "A component dependency graph is out of scope; relationships are limited to direct ones such as an image and the packages it includes.")] },
 
     "root": { what: "The disk image (qcow2). This is the package the document DESCRIBES. It has no purl, versionInfo or supplier.", req: [r(S.rhArchive, "No disk/VM image section found. Closest published shape (generic archive): name, versionInfo, supplier, downloadLocation, packageFileName, purl, SHA-256.")] },
@@ -44,7 +44,7 @@
     "root.checksums[].algorithm": { what: "SHA-256.", req: [r(S.rhArchive, "SHA-256 required.")] },
     "root.checksums[].checksumValue": { what: "SHA-256 of the qcow2 file exactly as built. This is the real digest of the image built for this sample.", req: [r(S.rhArchive, "SHA-256 of the file itself.")] },
 
-    "rpm": { what: "One RPM, shown as an example (openssl-libs, which has an epoch). All 474 RPMs have the same fields; a few have no homepage. CentOS RPMs carry no supplier; Red Hat RPMs get \"Organization: Red Hat\".", req: [r(S.rhRPM, "ProdSec RPM package example (openssl-libs).")] },
+    "rpm": { what: "The first RPM in the package list, shown as an example. All 474 RPMs have the same fields; a few have no homepage. CentOS RPMs carry no supplier; Red Hat RPMs get \"Organization: Red Hat\".", req: [r(S.rhRPM, "ProdSec RPM package example.")] },
     "rpm.name": { what: "RPM name.", req: [r(S.rhPkgs, "Recommended to use the purl name.")] },
     "rpm.SPDXID": { what: "ID of the RPM within this document, derived from its purl.", req: [r(S.rhPkgs, "Unique within the document; only used to link relationships.")] },
     "rpm.versionInfo": { what: "RPM version-release. The epoch is in the purl, not here.", req: [r(S.rhRPM, "Example: \"versionInfo\": \"3.0.7-18.el9_2\".")] },
@@ -62,7 +62,7 @@
 
     "rel.CONTAINS": { what: "The image CONTAINS this RPM. One such relationship per RPM.", req: [r(S.rhImage, "List all components and \"create relationships to the architecture-specific image that they are included in\" (CONTAINS).")] },
     "rel.CONTAINS.spdxElementId": { what: "The disk image.", req: [r(S.spdxRel, "§11.1")] },
-    "rel.CONTAINS.relatedSpdxElement": { what: "The RPM (openssl-libs here).", req: [r(S.spdxRel, "§11.1")] },
+    "rel.CONTAINS.relatedSpdxElement": { what: "The RPM (here the first RPM in the list).", req: [r(S.spdxRel, "§11.1")] },
     "rel.CONTAINS.relationshipType": { what: "CONTAINS.", req: [r(S.rhImage, "CONTAINS from the image to each included package.")] },
     "rel.DESCRIBES": { what: "The document DESCRIBES the disk image.", req: [r(S.rhArchive, "\"The document must DESCRIBES this archive package, and the package must also appear in packages[].\"")] },
     "rel.DESCRIBES.spdxElementId": { what: "The document.", req: [r(S.spdxRel, "§11.1")] },
@@ -87,25 +87,34 @@
     "rpm": ["rpm.@supplier", "rpm.@license", "rpm.@annotations", "rpm.@srpm"],
   };
 
-  // Open questions for ProdSec, shown as a second card for the fields mapped in QFIELDS.
-  const QUESTIONS = {
-    disk: { title: "How should a disk image be identified?",
-      text: "The disk image package has a name, file name and SHA-256, but no purl, version or primary purpose. We found no Red Hat guidance for disk or VM images. Which purl type, naming and version should a disk image use (for example pkg:generic following the archive rules, or pkg:oci if images ship as OCI artifacts)?" },
-    repoid: { title: "Who adds repository_id to RPM purls?",
-      text: "RPM purls carry arch and epoch, but no repository_id. ProdSec guidance places repository_id in release-time SBOMs. Should it be added when the image is built, or later, when the image is released and its repositories are known?" },
-    org: { title: "Who sets \u201cOrganization: Red Hat\u201d?",
-      text: "The SBOM has no Organization creator, and the disk image has no supplier. image-builder is also used outside Red Hat, so it does not add \u201cRed Hat\u201d on its own. For Red Hat builds, where should these values come from?" },
-    license: { title: "Are SBOMs without licenses acceptable?",
-      text: "No package in the SBOM has a license field. Many RHEL 9 RPM license tags use legacy Fedora (Callaway) names that are not valid SPDX expressions. Is leaving licenses out acceptable for now?" },
-    release: { title: "What happens to this SBOM after the build?",
-      text: "This is a build-time SBOM, written when the image build finishes. Release details such as repository_id, download locations, product CPEs and the Organization are not known at that point. Which release step should add them and publish the SBOM?" },
+  // Open questions for ProdSec, one card per field (keyed by field path).
+  const QCARDS = {
+    "creationInfo.@organization": { title: "Should the SBOM name Red Hat as a creator?",
+      text: "The SBOM lists only the tools that created it; there is no Organization creator. ProdSec guidance asks for \u201cOrganization: Red Hat\u201d in Red Hat SBOMs, and image-builder is also used outside Red Hat. How should an SBOM from a Red Hat build be marked as created by Red Hat?" },
+    "creationInfo.created": { title: "Is a build-time SBOM what ProdSec expects?",
+      text: "This timestamp is when the image build finished: the SBOM is written at build time, before the image is released. Release details such as repository IDs, download locations and product CPEs are not known at that point. Should a later release step add them, or does ProdSec expect them in this SBOM?" },
+    "root.name": { title: "What stable name should the disk image package carry?",
+      text: "The image package is named after the image: distro, image type and architecture (centos-9-qcow2-x86_64). ProdSec's archive guidance asks for a stable name without the product version or platform. What name should a disk image carry so it stays the same across releases and architectures?" },
+    "root.@versionInfo": { title: "What version should a disk image carry, and who supplies it?",
+      text: "The image package has no versionInfo. A disk image has no version of its own today; the closest values are the distro release and the build or compose ID. Which version does ProdSec want here, and should the system that requests the build provide it?" },
+    "root.@purl": { title: "Which purl should identify a disk image?",
+      text: "The image package has no purl, so it does not meet ProdSec's \u201cat least one purl\u201d rule. We found no Red Hat guidance on purls for disk or VM images. Which purl type and form should a qcow2, raw image or ISO use?" },
+    "root.@primaryPackagePurpose": { title: "Which primaryPackagePurpose fits a disk image?",
+      text: "The image package has no primaryPackagePurpose. SPDX offers values such as OPERATING-SYSTEM, ARCHIVE, FILE and INSTALL. Which value, if any, does ProdSec want for disk images and installer ISOs?" },
+    "root.@supplier": { title: "Should the disk image name Red Hat as its supplier?",
+      text: "The image package has no supplier. ProdSec guidance requires \u201cOrganization: Red Hat\u201d on components Red Hat distributes. Should every disk image built from RHEL content carry it, or only images that Red Hat itself ships?" },
+    "root.@license": { title: "Does the disk image package need a license field?",
+      text: "The image package has no license field. For container images, ProdSec guidance says licensing should usually be NOASSERTION, because licenses belong to the packages inside. Should a disk image state NOASSERTION, or can the field stay absent?" },
+    "rpm.externalRefs[].referenceLocator": { title: "Who adds repository_id to this RPM's purl?",
+      text: "This purl carries arch and epoch, but no repository_id. ProdSec guidance places repository_id in release-time SBOMs. Should it be added when the image is built, or later, when the image is released and its repositories are known?" },
+    "rpm.@supplier": { title: "Should RPMs from other vendors have a supplier?",
+      text: "This CentOS Stream RPM has no supplier; only RPMs from Red Hat get \u201cOrganization: Red Hat\u201d. ProdSec guidance only covers components Red Hat distributes. Should RPMs from other vendors (CentOS, Fedora, third-party repositories) name a supplier?" },
+    "rpm.@license": { title: "Can RPM licenses be left out for now?",
+      text: "No RPM in this SBOM has a license field. Many RHEL 9 RPM license tags use legacy Fedora (Callaway) names, which are not valid SPDX expressions. Is leaving licenses out acceptable for now?" },
+    "rpm.@annotations": { title: "Are RPM header checksums needed?",
+      text: "Each RPM has one checksum: the SHA-256 of the RPM file. ProdSec's RPM example also carries the signature header MD5 (sigmd5) and the header SHA-256 as annotations. Does ProdSec need these in disk image SBOMs?" },
+    "rpm.@srpm": { title: "Should the SBOM list source RPMs?",
+      text: "The SBOM lists only the binary RPMs installed in the image, without their source RPMs. ProdSec guidance says SRPMs should be separate packages linked with GENERATED_FROM. Is that needed in a disk image SBOM, or is the binary RPM's purl enough to find its sources?" },
   };
-  const QFIELDS = {
-    "root.name": "disk", "root.@versionInfo": "disk", "root.@purl": "disk", "root.@primaryPackagePurpose": "disk",
-    "rpm.externalRefs[].referenceLocator": "repoid",
-    "creationInfo.@organization": "org", "root.@supplier": "org",
-    "root.@license": "license", "rpm.@license": "license",
-    "creationInfo.created": "release",
-  };
-  window.SBOM_PAGE = { NOTES, GHOSTS, QUESTIONS, QFIELDS, REP_RPM: "openssl-libs" };
+  window.SBOM_PAGE = { NOTES, GHOSTS, QCARDS };
 })();

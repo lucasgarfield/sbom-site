@@ -49,9 +49,9 @@
   }
 
   function bubble(path) {
-    if (!path || !P.QFIELDS[path]) return null;
+    if (!path || !P.QCARDS[path]) return null;
     const b = el("span", "qbubble", "?");
-    b.title = "Open question: " + P.QUESTIONS[P.QFIELDS[path]].title;
+    b.title = "Open question: " + P.QCARDS[path].title;
     return b;
   }
 
@@ -227,9 +227,8 @@
     panel.innerHTML = "";
     panel.appendChild(noteContent(path, n));
     const qcard = $("#qcard");
-    const qk = P.QFIELDS[path];
-    if (qk) {
-      const q = P.QUESTIONS[qk];
+    const q = P.QCARDS[path];
+    if (q) {
       qcard.innerHTML = "";
       const t = el("div", "qcard-label", "Open question for ProdSec");
       qcard.appendChild(t);
@@ -276,7 +275,7 @@
     const desc = rels.findIndex((r) => r.relationshipType === "DESCRIBES");
     const rootId = desc >= 0 ? rels[desc].relatedSpdxElement : null;
     ctx.rootIdx = pk.findIndex((p) => p.SPDXID === rootId);
-    ctx.repIdx = pk.findIndex((p) => p.name === P.REP_RPM);
+    ctx.repIdx = pk.findIndex((p, i) => i !== ctx.rootIdx); // first RPM in array order
     const repId = ctx.repIdx >= 0 ? pk[ctx.repIdx].SPDXID : null;
     ctx.describesIdx = desc;
     ctx.containsIdx = rels.findIndex((r) => r.relationshipType === "CONTAINS" && r.relatedSpdxElement === repId);
