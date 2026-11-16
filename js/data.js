@@ -88,31 +88,7 @@
   };
 
   // Open questions for ProdSec, one card per field (keyed by field path).
-  const QCARDS = {
-    "creationInfo.@organization": { title: "Should the SBOM name Red Hat as a creator?",
-      text: "The SBOM lists only the tools that created it; there is no Organization creator. ProdSec guidance asks for \u201cOrganization: Red Hat\u201d in Red Hat SBOMs, and image-builder is also used outside Red Hat. How should an SBOM from a Red Hat build be marked as created by Red Hat? One option: the caller passes the creator, e.g. image-builder --sbom-org \"Organization: Red Hat\" in Red Hat's pipelines. Would that be acceptable?" },
-    "root.name": { title: "What stable name should the disk image package carry?",
-      text: "The image package is named after the image: distro, image type and architecture (centos-9-qcow2-x86_64). ProdSec's archive guidance asks for a stable name without the product version or platform. What name should a disk image carry so it stays the same across releases and architectures?" },
-    "root.@versionInfo": { title: "What version should a disk image carry, and who supplies it?",
-      text: "The image package has no versionInfo. A disk image has no version of its own today; the closest values are the distro release and the build or compose ID. Which version does ProdSec want here, and should the system that requests the build provide it?" },
-    "root.@purl": { title: "Which purl should identify a disk image?",
-      text: "The image package has no purl, so it does not meet ProdSec's \u201cat least one purl\u201d rule. We found no Red Hat guidance on purls for disk or VM images. Which purl type and form should a qcow2, raw image or ISO use?" },
-    "root.@primaryPackagePurpose": { title: "Which primaryPackagePurpose fits a disk image?",
-      text: "The image package has no primaryPackagePurpose. SPDX offers values such as OPERATING-SYSTEM, ARCHIVE, FILE and INSTALL. Which value, if any, does ProdSec want for disk images and installer ISOs?" },
-    "root.@supplier": { title: "Should the disk image name Red Hat as its supplier?",
-      text: "The image package has no supplier. ProdSec guidance requires \u201cOrganization: Red Hat\u201d on components Red Hat distributes. Should every disk image built from RHEL content carry it, or only images that Red Hat itself ships?" },
-    "root.@license": { title: "Does the disk image package need a license field?",
-      text: "The image package has no license field. For container images, ProdSec guidance says licensing should usually be NOASSERTION, because licenses belong to the packages inside. Should a disk image state NOASSERTION, or can the field stay absent?" },
-    "rpm.externalRefs[].referenceLocator": { title: "Can disk image SBOMs leave out repository_id?",
-      text: "This purl carries arch and epoch, but no repository_id. Red Hat's build-time RPM SBOMs don't carry it either; it's only added at release time, when the advisory ships. Adding it at build time would mean mapping each repository URL to an ID through repository-to-cpe.json, and that mapping is ambiguous: 3,336 of its 20,478 paths map to more than one ID. Is it acceptable to leave repository_id out of disk image SBOMs?" },
-    "rpm.@supplier": { title: "Can RPMs name their vendor as supplier?",
-      text: "This CentOS Stream RPM has no supplier; only RPMs from Red Hat get \u201cOrganization: Red Hat\u201d. Every RPM header has a Vendor tag (here \u201cCentOS\u201d), so we could emit \u201cOrganization: <Vendor>\u201d as the supplier for RPMs from other vendors, and leave it out when Vendor is empty. Is that acceptable?" },
-    "rpm.@license": { title: "Can RPM licenses be left out for now?",
-      text: "No RPM in this SBOM has a license field. Many RHEL 9 RPM license tags use legacy Fedora (Callaway) names, which are not valid SPDX expressions. Options:\n1. Leave the field absent.\n2. State NOASSERTION.\n3. Carry the raw tags as LicenseRef entries defined in hasExtractedLicensingInfos, as osbuild's SBOMs do. Our preference is not this one.\nWhich does ProdSec prefer for now?" },
-    "rpm.@annotations": { title: "Are RPM header checksums needed?",
-      text: "Each RPM has one checksum: the SHA-256 of the RPM file. ProdSec's RPM example also carries the signature header MD5 (sigmd5) and the header SHA-256 as annotations. Does ProdSec need these in disk image SBOMs?" },
-    "rpm.@srpm": { title: "Should the SBOM list source RPMs?",
-      text: "The SBOM lists only the binary RPMs installed in the image, without their source RPMs. ProdSec guidance says SRPMs should be separate packages linked with GENERATED_FROM. Is that needed in a disk image SBOM, or is the binary RPM's purl enough to find its sources?" },
-  };
+  const QCARDS = {};
+
   window.SBOM_PAGE = { NOTES, GHOSTS, QCARDS };
 })();
