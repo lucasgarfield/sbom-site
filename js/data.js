@@ -110,7 +110,7 @@
     "rpm.@supplier": { title: "Can RPMs name their vendor as supplier?",
       text: "This CentOS Stream RPM has no supplier; only RPMs from Red Hat get \u201cOrganization: Red Hat\u201d. Every RPM header has a Vendor tag (here \u201cCentOS\u201d), so we could emit \u201cOrganization: <Vendor>\u201d as the supplier for RPMs from other vendors, and leave it out when Vendor is empty. Is that acceptable?" },
     "rpm.@license": { title: "Can RPM licenses be left out for now?",
-      text: "No RPM in this SBOM has a license field. Many RHEL 9 RPM license tags use legacy Fedora (Callaway) names, which are not valid SPDX expressions. Is leaving licenses out acceptable for now?" },
+      text: "No RPM in this SBOM has a license field. Many RHEL 9 RPM license tags use legacy Fedora (Callaway) names, which are not valid SPDX expressions. Options:\n1. Leave the field absent.\n2. State NOASSERTION.\n3. Carry the raw tags as LicenseRef entries defined in hasExtractedLicensingInfos, as osbuild's SBOMs do. Our preference is not this one.\nWhich does ProdSec prefer for now?" },
     "rpm.@annotations": { title: "Are RPM header checksums needed?",
       text: "Each RPM has one checksum: the SHA-256 of the RPM file. ProdSec's RPM example also carries the signature header MD5 (sigmd5) and the header SHA-256 as annotations. Does ProdSec need these in disk image SBOMs?" },
     "rpm.@srpm": { title: "Should the SBOM list source RPMs?",
