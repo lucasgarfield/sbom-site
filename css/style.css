@@ -32,7 +32,8 @@ a { color: var(--accent); }
 .ghost-text::before { content: "⊘ "; font-style: normal; }
 .gap-line { color: #666; cursor: pointer; font-style: italic; }
 .gap-line:hover { background: #f0f0f0; }
-.note { position: sticky; top: 16px; border: 1px solid var(--line); border-top: 4px solid #8aa4bf; border-radius: 6px; padding: 12px 16px 14px; max-height: calc(100vh - 32px); overflow-y: auto; font-size: 16px; }
+.side { position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow-y: auto; }
+.note { border: 1px solid var(--line); border-top: 4px solid #8aa4bf; border-radius: 6px; padding: 12px 16px 14px; font-size: 16px; }
 .hint { color: var(--muted); margin: 0; }
 .note-head { margin: 0 0 6px; }
 .note-path { font: 700 15px var(--mono); }
@@ -42,3 +43,10 @@ a { color: var(--accent); }
 .note-list li { margin: 4px 0; }
 .src-link { font-size: 14.5px; }
 @media (max-width: 1100px) { .viewer { grid-template-columns: 1fr; } .note { position: static; } }
+.qbubble { display: inline-block; width: 18px; height: 18px; line-height: 18px; margin-left: 10px; border-radius: 50%; background: #f5c000; color: #2b1d00; font: 700 12px/18px var(--sans); text-align: center; vertical-align: 1px; font-style: normal; }
+.qcard { margin-top: 14px; border: 1px solid #e8c34a; border-left: 6px solid #f0ab00; background: #fff8e1; border-radius: 6px; padding: 12px 16px 14px; font-size: 16px; }
+.qcard[hidden] { display: none; }
+.qcard-label { font-size: 12.5px; text-transform: uppercase; letter-spacing: .05em; color: #7a5a00; font-weight: 700; }
+.qcard-title { font-size: 18px; margin: 4px 0 6px; }
+.qcard-text { margin: 0; }
+@media (max-width: 1100px) { .side { position: static; max-height: none; } }

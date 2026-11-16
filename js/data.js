@@ -86,5 +86,26 @@
     "root": ["root.@versionInfo", "root.@supplier", "root.@purl", "root.@primaryPackagePurpose", "root.@license"],
     "rpm": ["rpm.@supplier", "rpm.@license", "rpm.@annotations", "rpm.@srpm"],
   };
-  window.SBOM_PAGE = { NOTES, GHOSTS, REP_RPM: "openssl-libs" };
+
+  // Open questions for ProdSec, shown as a second card for the fields mapped in QFIELDS.
+  const QUESTIONS = {
+    disk: { title: "How should a disk image be identified?",
+      text: "The disk image package has a name, file name and SHA-256, but no purl, version or primary purpose. We found no Red Hat guidance for disk or VM images. Which purl type, naming and version should a disk image use (for example pkg:generic following the archive rules, or pkg:oci if images ship as OCI artifacts)?" },
+    repoid: { title: "Who adds repository_id to RPM purls?",
+      text: "RPM purls carry arch and epoch, but no repository_id. ProdSec guidance places repository_id in release-time SBOMs. Should it be added when the image is built, or later, when the image is released and its repositories are known?" },
+    org: { title: "Who sets \u201cOrganization: Red Hat\u201d?",
+      text: "The SBOM has no Organization creator, and the disk image has no supplier. image-builder is also used outside Red Hat, so it does not add \u201cRed Hat\u201d on its own. For Red Hat builds, where should these values come from?" },
+    license: { title: "Are SBOMs without licenses acceptable?",
+      text: "No package in the SBOM has a license field. Many RHEL 9 RPM license tags use legacy Fedora (Callaway) names that are not valid SPDX expressions. Is leaving licenses out acceptable for now, and what should we emit later?" },
+    release: { title: "What happens to this SBOM after the build?",
+      text: "This is a build-time SBOM, written when the image build finishes. Release details such as repository_id, download locations, product CPEs and the Organization are not known at that point. Which release step should add them and publish the SBOM?" },
+  };
+  const QFIELDS = {
+    "root.name": "disk", "root.@versionInfo": "disk", "root.@purl": "disk", "root.@primaryPackagePurpose": "disk",
+    "rpm.externalRefs[].referenceLocator": "repoid",
+    "creationInfo.@organization": "org", "root.@supplier": "org",
+    "root.@license": "license", "rpm.@license": "license",
+    "creationInfo.created": "release",
+  };
+  window.SBOM_PAGE = { NOTES, GHOSTS, QUESTIONS, QFIELDS, REP_RPM: "openssl-libs" };
 })();

@@ -48,6 +48,13 @@
     return parentPath + "." + key;
   }
 
+  function bubble(path) {
+    if (!path || !P.QFIELDS[path]) return null;
+    const b = el("span", "qbubble", "?");
+    b.title = "Open question: " + P.QUESTIONS[P.QFIELDS[path]].title;
+    return b;
+  }
+
   function line(depth, path) {
     const d = el("div", "ln");
     d.style.paddingLeft = (depth * 2 + 2) + "ch";
@@ -93,6 +100,7 @@
       if (key !== null) { d.appendChild(keySpan(key)); d.appendChild(el("span", "p", ": ")); }
       d.appendChild(scalarSpan(v));
       appendTail(d, last, path);
+      const qb = bubble(path); if (qb) d.appendChild(qb);
       container.appendChild(d);
       return;
     }
@@ -110,6 +118,7 @@
     appendTail(open, true, path);
     const lastComma = !last;
     if (lastComma) open.appendChild(el("span", "p comma-collapsed", ","));
+    const qb = bubble(path); if (qb) open.appendChild(qb);
     node.appendChild(open);
 
     const kids = el("div", "kids");
@@ -150,6 +159,7 @@
     const d = line(depth, path);
     d.classList.add("ghost");
     d.appendChild(el("span", "ghost-text", "not emitted: " + P.NOTES[path].label));
+    const qb = bubble(path); if (qb) d.appendChild(qb);
     return d;
   }
 
@@ -216,6 +226,19 @@
     const panel = $("#note-body");
     panel.innerHTML = "";
     panel.appendChild(noteContent(path, n));
+    const qcard = $("#qcard");
+    const qk = P.QFIELDS[path];
+    if (qk) {
+      const q = P.QUESTIONS[qk];
+      qcard.innerHTML = "";
+      const t = el("div", "qcard-label", "Open question for ProdSec");
+      qcard.appendChild(t);
+      qcard.appendChild(el("h3", "qcard-title", q.title));
+      qcard.appendChild(el("p", "qcard-text", q.text));
+      qcard.hidden = false;
+    } else {
+      qcard.hidden = true;
+    }
     const target = document.getElementById(slug(path));
     if (selectedEl) selectedEl.classList.remove("selected");
     if (target) { target.classList.add("selected"); selectedEl = target; }
