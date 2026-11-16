@@ -2,361 +2,171 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>osbuild SBOM · sbom-grader</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>image-builder SBOM MVP: sample SPDX 2.3 SBOM for ProdSec review</title>
 <link rel="icon" href="data:,">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<nav id="toolbar"><a href="#grader" data-ch="grader">1 · sbom-grader</a><a href="#mequal" data-ch="mequal">2 · mequal</a><a href="#cisa" data-ch="cisa">3 · CISA 2026</a><a href="#prodsec" data-ch="prodsec">4 · ProdSec guidelines</a><a href="#konflux" data-ch="konflux">5 · Konflux · Conforma</a><a href="#iso" data-ch="iso">A · ISO</a><a href="#trustify" data-ch="trustify">B · Trustify</a><a href="#bootc" data-ch="bootc">C · bootc</a></nav>
-<main>
-<template data-ch="grader">
-<section id="s-main">
-  <h2>osbuild main · Fedora 44 qcow2 · image-os SBOM</h2>
-  <div class="bar"><a class="btn" href="data/main.image-os.spdx.json" download>main.image-os.spdx.json</a></div>
-  <div class="viewer" data-left="data/main.image-os.spdx.json"></div>
-  <details class="gen"><summary>generate</summary><div class="code" data-src="cmd/generate-main.sh"></div></details>
-</section>
-
-<section id="s-grader-main">
-  <h2>sbom-grader · main</h2>
-  <div class="code" data-src="cmd/grader-main.sh"></div>
-  <pre class="term" data-src="data/grader-main.html"></pre>
-</section>
-
-<section id="s-patch1">
-  <h2>osbuild patch 1</h2>
-  <div class="bar"><a class="btn" href="data/osbuild-p1.patch" download>osbuild-p1.patch</a></div>
-  <div class="patch" data-src="data/osbuild-p1.patch"></div>
-</section>
-
-<section id="s-ib">
-  <h2>image-builder · disk sha256</h2>
-  <div class="bar"><a class="btn" href="data/image-builder-disk-sha256.patch" download>image-builder-disk-sha256.patch</a></div>
-  <div class="patch" data-src="data/image-builder-disk-sha256.patch"></div>
-</section>
-
-<section id="s-grader-p1">
-  <h2>sbom-grader · patch 1</h2>
-  <p class="note">The disk sha256 here is a stand-in: <code>manifest</code> is much faster than <code>build</code>. <code>build --with-sbom</code> writes the real one.</p>
-  <div class="bar"><a class="btn" href="data/p1.image-os.spdx.json" download>p1.image-os.spdx.json</a></div>
-  <details class="gen"><summary>generate</summary><div class="code" data-src="cmd/generate-p1.sh"></div></details>
-  <div class="code" data-src="cmd/grader-p1.sh"></div>
-  <pre class="term" data-src="data/grader-p1.html"></pre>
-</section>
-
-<section id="s-diff">
-  <h2>main ↔ patch 1</h2>
-  <div class="viewer" data-left="data/main.image-os.spdx.json" data-right="data/p1.image-os.spdx.json"></div>
-</section>
-
-
-</template>
-<template data-ch="mequal">
-<section id="s-b-cdx">
-  <h2>mequal · ProdSec CycloneDX policies</h2>
-  <div class="bar pins">
-    <a class="btn" target="_blank" href="https://github.com/sbomer-project/mequal/tree/386a4d05d499674e7c23b9b0b2507a660543beee">sbomer-project/mequal@386a4d0</a>
-    <a class="btn" target="_blank" href="https://github.com/sbomer-project/mequal-prodsec-policies/tree/d3c38e775c37af6461aa9a59df6a6018c3aa0080">sbomer-project/mequal-prodsec-policies@d3c38e7</a>
-    <a class="btn" target="_blank" href="https://github.com/sbomer-project/mequal-helpers/tree/273f8c7b2e26935215bf95497da2b80fc499a40a">sbomer-project/mequal-helpers@273f8c7</a>
+<header class="top">
+  <div class="wrap">
+    <p class="eyebrow">osbuild / image-builder · SBOM MVP · prepared 2026-11-16 for Red Hat Product Security</p>
+    <h1>Sample SPDX 2.3 SBOM from <code>image-builder build --with-sbom</code></h1>
+    <p class="lede">
+      image-builder can write an SPDX 2.3 SBOM next to a disk image it builds. The SBOM describes the image file
+      and the RPMs installed in it. This page shows one real SBOM, field by field, with where each value comes from,
+      the Red Hat guidance it should meet, and the questions we need ProdSec to answer.
+    </p>
+    <div class="facts">
+      <div><span class="fk">Scope (MVP)</span>Package-based disk images only (qcow2, raw, ISO, …). Refused for bootc and ostree images, for <code>--with-extra</code>, and for builds with more than one output artifact.</div>
+      <div><span class="fk">Contents</span>The image file plus every RPM in the image's payload depsolve (buildroot RPMs excluded), each once, sorted by NEVRA.</div>
+      <div><span class="fk">Code</span><a href="https://github.com/lucasgarfield/image-builder/tree/d87a70fbd71eccf42a1fc1571a2aca0f332e094a" target="_blank" rel="noopener">lucasgarfield/image-builder, branch <code>sbom</code> @ <code>d87a70fbd</code></a> (2026-11-13). Not merged upstream yet.</div>
+    </div>
   </div>
-  <div class="cdx-policies"></div>
+</header>
+
+<nav class="bar">
+  <div class="wrap">
+    <a href="#questions-sec">Open questions</a>
+    <a href="#viewer-sec">SBOM</a>
+    <a href="#generated-sec">How it was generated</a>
+    <a href="#validation-sec">Validation</a>
+    <a href="#compare-sec">Compared with RHEL SBOM</a>
+    <a href="#fields-sec">All field notes</a>
+    <a href="#sources-sec">Sources</a>
+    <a class="raw" href="data/centos-9-qcow2-x86_64.spdx.json" target="_blank" rel="noopener">Raw JSON ↗</a>
+  </div>
+</nav>
+
+<main class="wrap">
+
+<section id="questions-sec">
+  <h2>Open questions for ProdSec</h2>
+  <p class="intro">Each question has our current choice and the options we see. The field links jump to the affected lines in the SBOM below; amber badges in the SBOM mark the same fields.</p>
+  <ol id="qtoc" class="qtoc"></ol>
+  <div id="questions"></div>
 </section>
 
-<section id="s-b-parity">
-  <h2>CycloneDX → SPDX 2.3</h2>
-  <div class="parity"></div>
+<section id="viewer-sec">
+  <h2>The SBOM</h2>
+  <div class="legend">
+    <span><span class="badge badge-q">Q1</span> field tied to an open question</span>
+    <span><span class="badge badge-ok">✓ note</span> matches published guidance</span>
+    <span><span class="badge badge-info">note</span> informational</span>
+    <span><span class="ghost-sample">not emitted: …</span> field the code does not write (drawn here only, not in the file)</span>
+  </div>
+  <p class="intro">
+    Exactly the bytes image-builder wrote, pretty-printed: <span id="stat-pk">…</span> packages, <span id="stat-rel">…</span> relationships.
+    The root image package and one RPM (<code>openssl-libs</code>) are expanded; the rest are folded. Click any annotated line or badge.
+    <button id="btn-expand" type="button" class="btn">Unfold all packages</button>
+  </p>
+  <div class="viewer">
+    <div id="json" class="json" aria-label="SBOM JSON">Loading…</div>
+    <aside id="note" class="note">
+      <div class="note-title">Field note</div>
+      <div id="note-body"></div>
+    </aside>
+  </div>
 </section>
 
-<section id="s-b-links">
-  <h2>patched mequal</h2>
-  <table class="gaps links">
-    <tr><th>repo</th><th>branch</th><th>PR</th></tr>
-    <tr><td class="rid">lucasgarfield/mequal-prodsec-policies</td><td><a target="_blank" href="https://github.com/lucasgarfield/mequal-prodsec-policies/tree/spdx-2-3-policies">spdx-2-3-policies</a> <a target="_blank" href="https://github.com/lucasgarfield/mequal-prodsec-policies/commit/778e2f9854a168a9ee57bae501c02a8ea582bcaf">778e2f9</a></td><td><a target="_blank" href="https://github.com/lucasgarfield/mequal-prodsec-policies/pull/1">#1</a></td></tr>
-    <tr><td class="rid">lucasgarfield/mequal</td><td><a target="_blank" href="https://github.com/lucasgarfield/mequal/tree/spdx-prodsec-policies">spdx-prodsec-policies</a> <a target="_blank" href="https://github.com/lucasgarfield/mequal/commit/048d4501437ac009aeef76b74df082d8e3dc9e30">048d450</a></td><td><a target="_blank" href="https://github.com/lucasgarfield/mequal/pull/1">#1</a></td></tr>
+<section id="generated-sec">
+  <h2>How it was generated</h2>
+  <table class="kv">
+    <tr><th>Build type</th><td><strong>Real build.</strong> The image was built by osbuild and the SBOM's image checksum is the SHA-256 of that qcow2 file. Nothing on this page is a stand-in.</td></tr>
+    <tr><th>Command</th><td><code>sudo image-builder build qcow2 --distro centos-9 --with-sbom --output-dir out</code></td></tr>
+    <tr><th>Binary</th><td>Built from <a href="https://github.com/lucasgarfield/image-builder/tree/d87a70fbd71eccf42a1fc1571a2aca0f332e094a" target="_blank" rel="noopener"><code>d87a70fbd71eccf42a1fc1571a2aca0f332e094a</code></a> with <code>go build -ldflags "-X main.version=v90.0.0-37-gd87a70fbd" ./cmd/image-builder</code> (version string from <code>git describe</code>).</td></tr>
+    <tr><th>Build host</th><td>Fedora 44 VM, osbuild 193. Repositories: CentOS Stream 9 public mirrors (image-builder defaults).</td></tr>
+    <tr><th>Built</th><td>2026-11-16, 14:21–14:24 (UTC+2). SBOM <code>created</code>: 2026-11-16T12:24:42Z.</td></tr>
+    <tr><th>Image</th><td><code>centos-9-qcow2-x86_64.qcow2</code>, 1,277,886,464 bytes, sha256 <code class="wrapcode">434b1bd67016ee4965fc02fca8abd911efd9623954a39728f3c84244531d0e20</code></td></tr>
+    <tr><th>SBOM file</th><td><a href="data/centos-9-qcow2-x86_64.spdx.json" target="_blank" rel="noopener"><code>centos-9-qcow2-x86_64.spdx.json</code></a>, 528,269 bytes, sha256 <code class="wrapcode">df2ebe174a0f39fd07cae9ae2fed5544966260cdc14dabc84b31d01d48702e16</code>. Unmodified output.</td></tr>
+    <tr><th>Why CentOS Stream</th><td>RHEL repositories need a subscription on the build host. For a RHEL image the code maps vendor “Red Hat, Inc.” to <code>pkg:rpm/redhat/…</code> and adds <code>supplier: Organization: Red Hat</code> to those RPMs; everything else is the same.</td></tr>
+    <tr><th>Code path</th><td>
+      <a href="https://github.com/lucasgarfield/image-builder/blob/d87a70fbd71eccf42a1fc1571a2aca0f332e094a/pkg/manifestgen/manifestgen.go#L267-L298" target="_blank" rel="noopener">manifestgen payloadPackages</a> →
+      <a href="https://github.com/lucasgarfield/image-builder/blob/d87a70fbd71eccf42a1fc1571a2aca0f332e094a/cmd/image-builder/main.go#L949-L956" target="_blank" rel="noopener">build finishes</a> →
+      <a href="https://github.com/lucasgarfield/image-builder/blob/d87a70fbd71eccf42a1fc1571a2aca0f332e094a/cmd/image-builder/sbom.go#L15-L72" target="_blank" rel="noopener">writeImageSBOM</a> (hash image, then
+      <a href="https://github.com/lucasgarfield/image-builder/blob/d87a70fbd71eccf42a1fc1571a2aca0f332e094a/pkg/sbom/sbom.go#L73-L121" target="_blank" rel="noopener">sbom.Generate</a>) →
+      <a href="https://github.com/protobom/protobom/blob/v0.6.2/pkg/native/serializers/serializer_spdx23.go" target="_blank" rel="noopener">protobom v0.6.2 SPDX 2.3 writer</a>.
+      <code>task build-image --with-sbom</code> uses the same writer with the package list saved by <code>task init</code>.
+    </td></tr>
   </table>
-  <div class="bar"><a class="btn" href="data/prodsec-spdx.patch" download>prodsec-spdx.patch</a></div>
 </section>
 
-<section id="s-b-run-p1">
-  <h2>mequal · patch 1</h2>
-  <div class="bar"><a class="btn" href="data/p1.image-os.spdx.json" download>p1.image-os.spdx.json</a><a class="btn" href="data/prodsec-spdx.patch" download>prodsec-spdx.patch</a></div>
-  <div class="code" data-src="cmd/mequal-p1.sh"></div>
-  <pre class="term" data-src="data/mequal-p1.html"></pre>
+<section id="validation-sec">
+  <h2>Validation (run 2026-11-16)</h2>
+  <table class="kv">
+    <tr><th>JSON parse</th><td><span class="pass">pass</span></td></tr>
+    <tr><th>SPDX 2.3 JSON schema</th><td><span class="pass">pass</span>, 0 errors: official schema at <a href="https://raw.githubusercontent.com/spdx/spdx-spec/v2.3/schemas/spdx-schema.json" target="_blank" rel="noopener">spdx-spec v2.3</a>, and ProdSec's copy <code>sbom/spdx-2.3-schema.json</code> in <a href="https://github.com/RedHatProductSecurity/security-data-guidelines" target="_blank" rel="noopener">security-data-guidelines</a> (python-jsonschema, Draft 7).</td></tr>
+    <tr><th>spdx-tools</th><td><span class="pass">valid</span>: <code>pyspdxtools -i</code> (<a href="https://github.com/spdx/tools-python" target="_blank" rel="noopener">spdx-tools</a> 0.8.5), exit 0.</td></tr>
+    <tr><th>SBOM-Grader</th><td><span class="warn">grade D</span> with <a href="https://pypi.org/project/sbomgrader/" target="_blank" rel="noopener">sbomgrader</a> 0.2.5, the tool ProdSec's <a href="https://redhatproductsecurity.github.io/security-data-guidelines/sbom-details/#compliance-validation" target="_blank" rel="noopener">Compliance Validation</a> section names.
+      It has no disk-image profile, so we used <code>--content-type generic</code> (build and release cookbooks; same result).
+      All MUST rules pass. SHOULD failures: <a href="#f-root-not-versionInfo">versionInfo</a>, <a href="#f-root-not-purl">externalRef (purl)</a> and <a href="#f-root-not-supplier">supplier</a> on <code>packages[0]</code>, the root image (Q1, Q3).
+      The grader reports only the first failing element; the 474 CentOS RPMs have no supplier either (Q4).
+      The release cookbook reports “RPM packages have a repository_id qualifier” as passing although no purl has one; we did not investigate why.</td></tr>
+  </table>
 </section>
 
-<section id="s-b-gaps">
-  <h2>gaps · patch 1</h2>
-  <div class="gaps-box"><div class="viewer" data-left="data/p1.image-os.spdx.json"></div></div>
+<section id="compare-sec">
+  <h2>Compared with Red Hat's published RHEL SBOM</h2>
+  <p class="intro">Not like-for-like: <a href="https://security.access.redhat.com/data/sbom/v1/spdx/rhel-9.6.z.json.bz2" target="_blank" rel="noopener">rhel-9.6.z</a> is a release-time product SBOM (created 2026-10-20, 265,033 packages); ours is a build-time SBOM for one image. Values below were read from that file.</p>
+  <table class="cmp">
+    <thead><tr><th>Field</th><th>RHEL 9.6.z product SBOM</th><th>This image SBOM</th></tr></thead>
+    <tbody>
+      <tr><td>creators</td><td><code>Organization: Red Hat Product Security (secalert@redhat.com)</code> only</td><td>Two <code>Tool:</code> entries, no Organization (Q3)</td></tr>
+      <tr><td>documentNamespace</td><td><code>https://security.access.redhat.com/data/sbom/v1/spdx/rhel-9.6.z/2026-10-20/&lt;sha256&gt;</code></td><td><code>https://osbuild.org/spdxdocs/&lt;name&gt;-&lt;uuid4&gt;</code> (Q6)</td></tr>
+      <tr><td>Root package</td><td>Product: name <code>rhel-9.6.z</code>, supplier Red Hat, CPEs, no purl</td><td>Disk image: name, file name, SHA-256; no purl/version/supplier (Q1)</td></tr>
+      <tr><td>RPM purl</td><td><code>pkg:rpm/redhat/…?arch=…&amp;repository_id=…</code></td><td><code>pkg:rpm/centos/…?arch=…&amp;epoch=…</code>, no repository_id (Q2)</td></tr>
+      <tr><td>RPM supplier</td><td><code>Organization: Red Hat</code></td><td>Only for Red Hat-vendor RPMs; none here (Q4)</td></tr>
+      <tr><td>RPM checksums / packageFileName</td><td>Absent on all 46,816 RPM entries</td><td>SHA-256 of the RPM file; NVRA file name</td></tr>
+      <tr><td>RPM licenses</td><td>Absent on all 46,816 RPM entries</td><td>Absent (Q5)</td></tr>
+    </tbody>
+  </table>
 </section>
 
-<section id="s-b-patch2">
-  <h2>osbuild patch 2</h2>
-  <div class="table-box" data-src="data/p2-map.json"></div>
-  <h3>not fixed in osbuild</h3>
-  <div class="table-box" data-src="data/p2-unfixable.json"></div>
-  <div class="bar"><a class="btn" href="data/osbuild-p2.patch" download>osbuild-p2.patch</a></div>
-  <div class="patch" data-src="data/osbuild-p2.patch"></div>
+<section id="fields-sec">
+  <h2>All field notes</h2>
+  <p class="intro">The same notes as the side panel, in one table. Field paths: <code>root.*</code> is the disk image package, <code>rpm.*</code> the representative RPM, <code>rel.*</code> relationships; “(not emitted)” rows are fields the code does not write.</p>
+  <table id="fields" class="fields">
+    <thead><tr><th>Field</th><th></th><th>What it is</th><th>Code</th><th>Guidance</th></tr></thead>
+    <tbody></tbody>
+  </table>
 </section>
 
-<section id="s-b-run-p2">
-  <h2>mequal · patch 2</h2>
-  <div class="bar"><a class="btn" href="data/p2.image-os.spdx.json" download>p2.image-os.spdx.json</a></div>
-  <details class="gen"><summary>generate</summary><div class="code" data-src="cmd/generate-p2.sh"></div></details>
-  <div class="code" data-src="cmd/mequal-p2.sh"></div>
-  <pre class="term" data-src="data/mequal-p2.html"></pre>
+<section id="sources-sec">
+  <h2>Sources</h2>
+  <p class="intro">All links checked on 2026-11-16. Quotes are from the ProdSec pages as published at commit
+    <a href="https://github.com/RedHatProductSecurity/security-data-guidelines/tree/493e5efe29c5bb796bd38a43406dfc2e951c4b78" target="_blank" rel="noopener"><code>493e5ef</code></a> (2026-11-12).
+    We found <strong>no published ProdSec guidance for disk or VM images</strong>; notes that cite the generic-archive or container-image sections use them as the closest match.</p>
+  <ul class="sources">
+    <li><strong>Red Hat Product Security</strong>:
+      <a href="https://redhatproductsecurity.github.io/security-data-guidelines/sbom/" target="_blank" rel="noopener">SBOM Overview</a> ·
+      <a href="https://redhatproductsecurity.github.io/security-data-guidelines/sbom-details/" target="_blank" rel="noopener">SBOM Details</a> ·
+      <a href="https://redhatproductsecurity.github.io/security-data-guidelines/purl/" target="_blank" rel="noopener">purl guidance</a> ·
+      <a href="https://security.access.redhat.com/data/meta/v1/repository-to-cpe.json" target="_blank" rel="noopener">repository-to-cpe.json</a> ·
+      <a href="https://security.access.redhat.com/data/sbom/v1/" target="_blank" rel="noopener">published SBOMs</a> ·
+      <a href="https://access.redhat.com/articles/5554431" target="_blank" rel="noopener">Security Data changelog</a></li>
+    <li><strong>Konflux</strong>:
+      <a href="https://konflux-ci.dev/docs/metadata/sboms/" target="_blank" rel="noopener">Inspecting artifact SBOMs</a> ·
+      <a href="https://konflux-ci.dev/mobster/sboms/sbom_lifecycle/" target="_blank" rel="noopener">Mobster SBOM lifecycle</a> ·
+      <a href="https://konflux-ci.dev/mobster/sboms/oci_artifact/" target="_blank" rel="noopener">Mobster OCI artifact SBOM</a></li>
+    <li><strong>Conforma (Enterprise Contract)</strong>:
+      <a href="https://conforma.dev/docs/policy/packages/release_sbom_spdx.html" target="_blank" rel="noopener">sbom_spdx rules</a> (valid, contains_packages, contains_files, matches_image, …) ·
+      <a href="https://conforma.dev/docs/policy/packages/release_rpm_repos.html" target="_blank" rel="noopener">rpm_repos rules</a> (repository_id required; “Currently this is rule enforced only for SBOM components created by cachi2.”)</li>
+    <li><strong>SPDX 2.3</strong>:
+      <a href="https://spdx.github.io/spdx-spec/v2.3.1/document-creation-information/" target="_blank" rel="noopener">§6 Document creation</a> ·
+      <a href="https://spdx.github.io/spdx-spec/v2.3.1/package-information/" target="_blank" rel="noopener">§7 Package</a> ·
+      <a href="https://spdx.github.io/spdx-spec/v2.3.1/relationships-between-SPDX-elements/" target="_blank" rel="noopener">§11 Relationships</a> ·
+      <a href="https://spdx.github.io/spdx-spec/v2.3.1/annotations/" target="_blank" rel="noopener">§12 Annotations</a></li>
+    <li><strong>purl spec</strong>:
+      <a href="https://packageurl.org/docs/purl-spec/types/definitions/rpm-definition" target="_blank" rel="noopener">rpm</a> ·
+      <a href="https://packageurl.org/docs/purl-spec/types/definitions/generic-definition" target="_blank" rel="noopener">generic</a> ·
+      <a href="https://packageurl.org/docs/purl-spec/types/definitions/oci-definition" target="_blank" rel="noopener">oci</a></li>
+    <li><strong>Licensing</strong>: <a href="https://docs.fedoraproject.org/en-US/legal/update-existing-packages/" target="_blank" rel="noopener">Fedora Legal: Callaway-to-SPDX migration</a> (“In July 2022 Fedora adopted the use of SPDX license expressions in place of the legacy Callaway system”)</li>
+  </ul>
 </section>
 
-<section id="s-b-grader-p2">
-  <h2>sbom-grader · patch 2</h2>
-  <div class="grade-banner"><span class="g-lbl">sbom-grader · patch 2</span><span class="g-val" data-grade-src="data/grader-p2.html">…</span></div>
-  <div class="code" data-src="cmd/grader-p2.sh"></div>
-  <pre class="term" data-src="data/grader-p2.html"></pre>
-</section>
-
-<section id="s-b-diff">
-  <h2>patch 1 ↔ patch 2</h2>
-  <div class="viewer" data-left="data/p1.image-os.spdx.json" data-right="data/p2.image-os.spdx.json"></div>
-</section>
-</template>
-<template data-ch="cisa">
-<section id="s-c-table">
-  <h2>CISA 2026 SBOM minimum elements</h2>
-  <div class="cisa-pin"></div>
-  <div class="cisa-sum"></div>
-  <div class="cisa-box"></div>
-</section>
-<section id="s-c-patch3">
-  <h2>image-builder patch 3</h2>
-  <div class="table-box" data-src="data/p3-map.json"></div>
-  <div class="bar"><a class="btn" href="data/image-builder-p3.patch" download>image-builder-p3.patch</a></div>
-  <div class="patch" data-src="data/image-builder-p3.patch"></div>
-</section>
-<section id="s-c-grader-p3">
-  <h2>sbom-grader · patch 3</h2>
-  <div class="grade-banner"><span class="g-lbl">sbom-grader · patch 3</span><span class="g-val" data-grade-src="data/grader-p3.html">…</span></div>
-  <div class="bar"><a class="btn" href="data/p3.image-os.spdx.json" download>p3.image-os.spdx.json</a><a class="btn" href="data/p3.buildroot-build.spdx.json" download>p3.buildroot-build.spdx.json</a></div>
-  <details class="gen"><summary>generate</summary><div class="code" data-src="cmd/generate-p3.sh"></div></details>
-  <div class="code" data-src="cmd/grader-p3.sh"></div>
-  <pre class="term" data-src="data/grader-p3.html"></pre>
-</section>
-<section id="s-c-mequal-p3">
-  <h2>mequal · patch 3</h2>
-  <div class="code" data-src="cmd/mequal-p3.sh"></div>
-  <pre class="term" data-src="data/mequal-p3.html"></pre>
-</section>
-<section id="s-c-sbom-p3">
-  <h2>image-builder · patch 3 SBOM</h2>
-  <div class="viewer" data-left="data/p3.image-os.spdx.json"></div>
-</section>
-<section id="s-c-buildroot">
-  <h2>build root SBOM · patch 3 · DocumentRef-buildroot-build</h2>
-  <div class="viewer" data-left="data/p3.buildroot-build.spdx.json"></div>
-</section>
-<section id="s-c-diff">
-  <h2>patch 2 ↔ patch 3</h2>
-  <div class="viewer" data-left="data/p2.image-os.spdx.json" data-right="data/p3.image-os.spdx.json"></div>
-</section>
-<section id="s-c-sbom">
-  <h2>image-builder · patch 2 SBOM</h2>
-  <div class="viewer" data-left="data/p2.image-os.spdx.json"></div>
-</section>
-</template>
-<template data-ch="prodsec">
-<section id="s-d-table">
-  <h2>Red Hat ProdSec SBOM guidelines · disk images</h2>
-  <div class="cisa-pin ps-pin"></div>
-  <div class="cisa-sum ps-sum"></div>
-  <div class="ps-box"></div>
-</section>
-<section id="s-d-diffs">
-  <h2>disk image ≠ container</h2>
-  <div class="ps-diffs"></div>
-</section>
-<section id="s-d-proposal">
-  <h2>proposal · disk image SBOM (excerpt)</h2>
-  <div class="bar"><a class="btn" href="data/prodsec-proposal.json" download>prodsec-proposal.json</a></div>
-  <div class="ps-deltas"></div>
-  <div class="viewer" data-left="data/prodsec-proposal.json"></div>
-</section>
-<section id="s-d-merge">
-  <h2>bootc + payload SBOMs · who merges</h2>
-  <div class="ps-merge"></div>
-</section>
-<section id="s-d-sbom">
-  <h2>image-builder · patch 3 SBOM</h2>
-  <div class="viewer" data-left="data/p3.image-os.spdx.json"></div>
-</section>
-</template>
-<template data-ch="konflux">
-<section id="s-e-policy">
-  <h2>policy · sbom_spdx.matches_image</h2>
-  <p class="note">Rule from <a href="https://github.com/conforma/policy/blob/cecfaed639e800c95e5bcc445e993ebba2e99d0d/policy/release/sbom_spdx/sbom_spdx.rego#L160-L179">conforma/policy sbom_spdx.rego</a>, collection <code>@redhat_security</code>. <a href="https://github.com/conforma/config/blob/49f7bb9e77204347882040a7f0a424fac35ca665/redhat/policy.yaml#L40-L41">conforma/config redhat</a> includes <code>@redhat</code>; this policy includes only this rule.</p>
-  <div class="code" data-src="cmd/konflux-policy.yaml"></div>
-  <div class="code" data-src="data/konflux/rule-matches_image.rego"></div>
-  <div class="code" data-src="data/konflux/lib-image-parse.rego"></div>
-</section>
-<section id="s-e-push">
-  <h2>push · sign · attest</h2>
-  <p class="note"><code>disk.qcow2</code> is placeholder bytes, not a disk image. Its sha256 is the SBOM root checksum (jq step in <code>cmd/generate-p3.sh</code>).</p>
-  <div class="code" data-src="cmd/konflux-1-push.sh"></div>
-  <div class="code" data-src="cmd/konflux-2-sign.sh"></div>
-</section>
-<section id="s-e-raw">
-  <h2>ec · raw image-builder SBOM</h2>
-  <div class="code" data-src="cmd/konflux-3-ec-raw.sh"></div>
-  <pre class="term" data-src="data/konflux/ec-raw.html"></pre>
-  <p class="note">Vacuous pass: the SBOM is found (below), but <code>name</code> = <code>sbom-by-osbuild-194</code> has no <code>/</code>, so <code>image.parse</code> is undefined and the deny rule never fires.</p>
-  <pre class="term" data-src="data/konflux/policy-input-raw.html"></pre>
-</section>
-<section id="s-e-control">
-  <h2>ec · control: name = repo@&lt;file sha256&gt;</h2>
-  <p class="note">The raw SBOM knows the file sha256, not the OCI manifest digest.</p>
-  <div class="code" data-src="cmd/konflux-3b-control.sh"></div>
-  <pre class="term" data-src="data/konflux/ec-control.html"></pre>
-</section>
-<section id="s-e-mobster">
-  <h2>mobster · upstream vs fork</h2>
-  <div class="code" data-src="cmd/konflux-4-mobster.sh"></div>
-  <pre class="term" data-src="data/konflux/mobster.html"></pre>
-  <div class="bar"><a class="btn" href="https://github.com/lucasgarfield/mobster/tree/oci-artifact-from-sbom">lucasgarfield/mobster · oci-artifact-from-sbom</a><a class="btn" href="https://github.com/lucasgarfield/mobster/pull/1">PR #1 (fork)</a><a class="btn" href="data/konflux/mobster-fork.patch" download>mobster-fork.patch</a></div>
-  <div class="patch" data-src="data/konflux/mobster-fork.patch"></div>
-</section>
-<section id="s-e-wrapped">
-  <h2>ec · wrapped SBOM</h2>
-  <div class="code" data-src="cmd/konflux-5-ec-wrapped.sh"></div>
-  <pre class="term" data-src="data/konflux/ec-wrapped.html"></pre>
-</section>
-<section id="s-e-grader">
-  <h2>sbom-grader · wrapped</h2>
-  <div class="grade-banner"><span class="g-lbl">sbom-grader · wrapped</span><span class="g-val" data-grade-src="data/konflux/grader-wrapped.html">…</span></div>
-  <p class="note">raw (patch 3): A. wrapped: B, because the <code>pkg:oci</code> purl from mobster has no <code>tag</code> qualifier.</p>
-  <div class="code" data-src="cmd/grader-wrapped.sh"></div>
-  <pre class="term" data-src="data/konflux/grader-wrapped.html"></pre>
-</section>
-<section id="s-e-mequal">
-  <h2>mequal · wrapped</h2>
-  <p class="note">Same 4 tips as patch 3. No errors or warnings.</p>
-  <div class="code" data-src="cmd/mequal-wrapped.sh"></div>
-  <pre class="term" data-src="data/konflux/mequal-wrapped.html"></pre>
-</section>
-<section id="s-e-trustify">
-  <h2>Trustify 0.3.5 · ingest</h2>
-  <p class="note">No advisories loaded, so 0 advisories means no data, not no vulnerabilities.</p>
-  <div class="code" data-src="cmd/konflux-6-trustify.sh"></div>
-  <pre class="term" data-src="data/konflux/trustify.html"></pre>
-</section>
-<section id="s-e-diff">
-  <h2>raw ↔ wrapped</h2>
-  <div class="bar"><a class="btn" href="data/konflux/wrapped.spdx.json" download>wrapped.spdx.json</a><a class="btn" href="data/konflux/upstream.spdx.json" download>upstream.spdx.json</a></div>
-  <div class="viewer" data-left="data/p3.image-os.spdx.json" data-right="data/konflux/wrapped.spdx.json"></div>
-</section>
-<section id="s-e-upstream">
-  <h2>upstream mobster SBOM (no content)</h2>
-  <div class="viewer" data-left="data/konflux/upstream.spdx.json"></div>
-</section>
-</template>
-<template data-ch="iso">
-<section id="s-f-inputs">
-  <h2>ISO · two package SBOMs, one root</h2>
-  <p class="note">The anaconda-tree (installer runtime) and os (installed payload) SBOMs have the same root name and purl.</p>
-  <details class="gen"><summary>generate</summary><div class="code" data-src="cmd/generate-iso.sh"></div></details>
-  <div class="bar"><a class="btn" href="data/iso/fedora-44-minimal-installer-x86_64.image-anaconda-tree.spdx.json" download>image-anaconda-tree.spdx.json</a><a class="btn" href="data/iso/fedora-44-minimal-installer-x86_64.image-os.spdx.json" download>image-os.spdx.json</a><a class="btn" href="data/iso/fedora-44-minimal-installer-x86_64.buildroot-build.spdx.json" download>buildroot-build.spdx.json</a></div>
-  <div class="table-box" data-src="data/iso/iso-inputs.json"></div>
-</section>
-<section id="s-f-merge">
-  <h2>merge · iso-merge.sh</h2>
-  <p class="note">Prototype in jq. ISO root (FILE) CONTAINS two OPERATING-SYSTEM trees; packages deduplicated by SPDXID. No ISO is built: the root sha256 is a placeholder.</p>
-  <div class="code" data-src="cmd/iso-merge.sh"></div>
-  <div class="bar"><a class="btn" href="data/iso/iso.spdx.json" download>iso.spdx.json</a></div>
-</section>
-<section id="s-f-grader">
-  <h2>sbom-grader · iso.spdx.json</h2>
-  <div class="grade-banner"><span class="g-lbl">sbom-grader · ISO merged</span><span class="g-val" data-grade-src="data/iso/grader-iso.html">…</span></div>
-  <p class="note">The only failure: the two tree packages have no checksums, because they are logical trees, not files.</p>
-  <div class="code" data-src="cmd/grader-iso.sh"></div>
-  <pre class="term" data-src="data/iso/grader-iso.html"></pre>
-</section>
-<section id="s-f-mequal">
-  <h2>mequal · iso.spdx.json</h2>
-  <div class="code" data-src="cmd/mequal-iso.sh"></div>
-  <pre class="term" data-src="data/iso/mequal-iso.html"></pre>
-</section>
-<section id="s-f-sbom">
-  <h2>iso.spdx.json</h2>
-  <div class="viewer" data-left="data/iso/iso.spdx.json"></div>
-</section>
-</template>
-<template data-ch="trustify">
-<section id="s-g-compare">
-  <h2>Trustify 0.3.5 · main vs patched</h2>
-  <p class="note">Real Red Hat CSAF advisories loaded: the latest RHSA from a package search for glibc, openssl, curl, systemd and sudo (the openssl search returns an rsyslog-openssl RHSA). The control has one glibc purl rewritten to Red Hat form, one release before the RHSA fix.</p>
-  <div class="table-box" data-src="data/trustify/compare.json"></div>
-</section>
-<section id="s-g-run">
-  <h2>run</h2>
-  <div class="code" data-src="cmd/trustify-compare.sh"></div>
-  <pre class="term" data-src="data/trustify/out.html"></pre>
-</section>
-<section id="s-g-osv">
-  <h2>OSV · Fedora</h2>
-  <p class="note">OSV has no Fedora ecosystem.</p>
-  <pre class="term" data-src="data/trustify/osv.html"></pre>
-</section>
-</template>
-<template data-ch="bootc">
-<section id="s-h-registry">
-  <h2>registry · quay.io/coreos-devel/fedora-coreos:rawhide</h2>
-  <div class="code" data-src="cmd/bootc-0-registry.sh"></div>
-  <pre class="term" data-src="data/bootc/registry.html"></pre>
-  <p class="note">The index referrers have no SPDX artifactType, so the prototype ignores them.</p>
-</section>
-<section id="s-h-patch">
-  <h2>image-builder · bootc SBOM prototype</h2>
-  <p class="note">Local branch <code>bootc-registry-sbom</code> on patch 3 (61b7f932e, b50d9cc8a). Lookup order: OCI referrers, then cosign <code>.sbom</code> tag; platform digest before index digest. <code>--bootc-ref-sbom</code> / <code>--bootc-payload-ref-sbom</code> take a file or a registry ref. Unit tests: 4 new, pass. Full suite: same 17 pre-existing failures as the base.</p>
-  <div class="bar"><a class="btn" href="data/image-builder-bootc-sbom.patch" download>image-builder-bootc-sbom.patch</a></div>
-  <div class="patch" data-src="data/image-builder-bootc-sbom.patch"></div>
-</section>
-<section id="s-h-run">
-  <h2>manifest · lookup and overrides</h2>
-  <div class="code" data-src="cmd/bootc-manifest.sh"></div>
-  <pre class="term" data-src="data/bootc/run.html"></pre>
-</section>
-<section id="s-h-grader">
-  <h2>sbom-grader · bootc qcow2 image SBOM</h2>
-  <div class="grade-banner"><span class="g-lbl">sbom-grader · bootc image SBOM</span><span class="g-val" data-grade-src="data/bootc/grader.html">…</span></div>
-  <p class="note">The image SBOM has one package; the container packages are in the referenced document.</p>
-  <div class="code" data-src="cmd/bootc-grade.sh"></div>
-  <pre class="term" data-src="data/bootc/grader.html"></pre>
-  <pre class="term" data-src="data/bootc/mequal.html"></pre>
-</section>
-<section id="s-h-trustify">
-  <h2>Trustify · cross-document CONTAINS</h2>
-  <div class="code" data-src="cmd/bootc-trustify.sh"></div>
-  <pre class="term" data-src="data/bootc/trustify.html"></pre>
-</section>
-<section id="s-h-sbom">
-  <h2>bootc qcow2 image SBOM</h2>
-  <div class="viewer" data-left="data/bootc/bootc.image-os.spdx.json"></div>
-</section>
-<section id="s-h-installer">
-  <h2>bootc-installer image SBOM · bootc-ref + bootc-payload-ref</h2>
-  <div class="viewer" data-left="data/bootc/bootc-fedora-44-bootc-installer-x86_64.image-os.spdx.json"></div>
-</section>
-<section id="s-h-container">
-  <h2>container SBOM from the registry (amd64 .sbom tag)</h2>
-  <div class="bar"><a class="btn" href="data/bootc/bootc-fedora-44-qcow2-x86_64.bootc-ref.spdx.json" download>bootc-ref.spdx.json</a><a class="btn" href="data/bootc/override-index.bootc-ref.spdx.json" download>index .sbom (override run)</a></div>
-  <div class="viewer" data-left="data/bootc/bootc-fedora-44-qcow2-x86_64.bootc-ref.spdx.json"></div>
-</section>
-</template>
-<div id="chapter"></div>
 </main>
-<script src="js/jsonview.js"></script>
+<footer class="wrap foot">Prepared by Lucas Garfield (osbuild). Static page; source data is the unmodified SBOM in <code>data/</code>.</footer>
+<script src="js/data.js"></script>
 <script src="js/app.js"></script>
-<script src="js/rego.js"></script>
-<script src="js/partb.js"></script>
-<script src="js/cisa.js"></script>
-<script src="js/prodsec.js"></script>
-<script src="js/router.js"></script>
 </body>
 </html>
