@@ -96,7 +96,7 @@
     org: { title: "Who sets \u201cOrganization: Red Hat\u201d?",
       text: "The SBOM has no Organization creator, and the disk image has no supplier. image-builder is also used outside Red Hat, so it does not add \u201cRed Hat\u201d on its own. For Red Hat builds, where should these values come from?" },
     license: { title: "Are SBOMs without licenses acceptable?",
-      text: "No package in the SBOM has a license field. Many RHEL 9 RPM license tags use legacy Fedora (Callaway) names that are not valid SPDX expressions. Is leaving licenses out acceptable for now, and what should we emit later?" },
+      text: "No package in the SBOM has a license field. Many RHEL 9 RPM license tags use legacy Fedora (Callaway) names that are not valid SPDX expressions. Is leaving licenses out acceptable for now?" },
     release: { title: "What happens to this SBOM after the build?",
       text: "This is a build-time SBOM, written when the image build finishes. Release details such as repository_id, download locations, product CPEs and the Organization are not known at that point. Which release step should add them and publish the SBOM?" },
   };
