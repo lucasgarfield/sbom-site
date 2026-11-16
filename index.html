@@ -3,169 +3,23 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>image-builder SBOM MVP: sample SPDX 2.3 SBOM for ProdSec review</title>
+<title>image-builder SBOM (SPDX 2.3) – sample qcow2, CentOS Stream 9</title>
 <link rel="icon" href="data:,">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<header class="top">
-  <div class="wrap">
-    <p class="eyebrow">osbuild / image-builder · SBOM MVP · prepared 2026-11-16 for Red Hat Product Security</p>
-    <h1>Sample SPDX 2.3 SBOM from <code>image-builder build --with-sbom</code></h1>
-    <p class="lede">
-      image-builder can write an SPDX 2.3 SBOM next to a disk image it builds. The SBOM describes the image file
-      and the RPMs installed in it. This page shows one real SBOM, field by field, with where each value comes from,
-      the Red Hat guidance it should meet, and the questions we need ProdSec to answer.
-    </p>
-    <div class="facts">
-      <div><span class="fk">Scope (MVP)</span>Package-based disk images only (qcow2, raw, ISO, …). Refused for bootc and ostree images, for <code>--with-extra</code>, and for builds with more than one output artifact.</div>
-      <div><span class="fk">Contents</span>The image file plus every RPM in the image's payload depsolve (buildroot RPMs excluded), each once, sorted by NEVRA.</div>
-      <div><span class="fk">Code</span><a href="https://github.com/lucasgarfield/image-builder/tree/d87a70fbd71eccf42a1fc1571a2aca0f332e094a" target="_blank" rel="noopener">lucasgarfield/image-builder, branch <code>sbom</code> @ <code>d87a70fbd</code></a> (2026-11-13). Not merged upstream yet.</div>
-    </div>
-  </div>
-</header>
-
-<nav class="bar">
-  <div class="wrap">
-    <a href="#questions-sec">Open questions</a>
-    <a href="#viewer-sec">SBOM</a>
-    <a href="#generated-sec">How it was generated</a>
-    <a href="#validation-sec">Validation</a>
-    <a href="#compare-sec">Compared with RHEL SBOM</a>
-    <a href="#fields-sec">All field notes</a>
-    <a href="#sources-sec">Sources</a>
-    <a class="raw" href="data/centos-9-qcow2-x86_64.spdx.json" target="_blank" rel="noopener">Raw JSON ↗</a>
-  </div>
-</nav>
-
 <main class="wrap">
-
-<section id="questions-sec">
-  <h2>Open questions for ProdSec</h2>
-  <p class="intro">Each question has our current choice and the options we see. The field links jump to the affected lines in the SBOM below; amber badges in the SBOM mark the same fields.</p>
-  <ol id="qtoc" class="qtoc"></ol>
-  <div id="questions"></div>
-</section>
-
-<section id="viewer-sec">
-  <h2>The SBOM</h2>
-  <div class="legend">
-    <span><span class="badge badge-q">Q1</span> field tied to an open question</span>
-    <span><span class="badge badge-ok">✓ note</span> matches published guidance</span>
-    <span><span class="badge badge-info">note</span> informational</span>
-    <span><span class="ghost-sample">not emitted: …</span> field the code does not write (drawn here only, not in the file)</span>
+  <div class="titlebar">
+    <h1>image-builder SBOM (SPDX 2.3) – sample qcow2, CentOS Stream 9</h1>
+    <a href="data/centos-9-qcow2-x86_64.spdx.json" target="_blank" rel="noopener">Raw JSON ↗</a>
   </div>
-  <p class="intro">
-    Exactly the bytes image-builder wrote, pretty-printed: <span id="stat-pk">…</span> packages, <span id="stat-rel">…</span> relationships.
-    The root image package and one RPM (<code>openssl-libs</code>) are expanded; the rest are folded. Click any annotated line or badge.
-    <button id="btn-expand" type="button" class="btn">Unfold all packages</button>
-  </p>
   <div class="viewer">
     <div id="json" class="json" aria-label="SBOM JSON">Loading…</div>
     <aside id="note" class="note">
-      <div class="note-title">Field note</div>
-      <div id="note-body"></div>
+      <div id="note-body"><p class="hint">Click a field to see what it is.</p></div>
     </aside>
   </div>
-</section>
-
-<section id="generated-sec">
-  <h2>How it was generated</h2>
-  <table class="kv">
-    <tr><th>Build type</th><td><strong>Real build.</strong> The image was built by osbuild and the SBOM's image checksum is the SHA-256 of that qcow2 file. Nothing on this page is a stand-in.</td></tr>
-    <tr><th>Command</th><td><code>sudo image-builder build qcow2 --distro centos-9 --with-sbom --output-dir out</code></td></tr>
-    <tr><th>Binary</th><td>Built from <a href="https://github.com/lucasgarfield/image-builder/tree/d87a70fbd71eccf42a1fc1571a2aca0f332e094a" target="_blank" rel="noopener"><code>d87a70fbd71eccf42a1fc1571a2aca0f332e094a</code></a> with <code>go build -ldflags "-X main.version=v90.0.0-37-gd87a70fbd" ./cmd/image-builder</code> (version string from <code>git describe</code>).</td></tr>
-    <tr><th>Build host</th><td>Fedora 44 VM, osbuild 193. Repositories: CentOS Stream 9 public mirrors (image-builder defaults).</td></tr>
-    <tr><th>Built</th><td>2026-11-16, 14:21–14:24 (UTC+2). SBOM <code>created</code>: 2026-11-16T12:24:42Z.</td></tr>
-    <tr><th>Image</th><td><code>centos-9-qcow2-x86_64.qcow2</code>, 1,277,886,464 bytes, sha256 <code class="wrapcode">434b1bd67016ee4965fc02fca8abd911efd9623954a39728f3c84244531d0e20</code></td></tr>
-    <tr><th>SBOM file</th><td><a href="data/centos-9-qcow2-x86_64.spdx.json" target="_blank" rel="noopener"><code>centos-9-qcow2-x86_64.spdx.json</code></a>, 528,269 bytes, sha256 <code class="wrapcode">df2ebe174a0f39fd07cae9ae2fed5544966260cdc14dabc84b31d01d48702e16</code>. Unmodified output.</td></tr>
-    <tr><th>Why CentOS Stream</th><td>RHEL repositories need a subscription on the build host. For a RHEL image the code maps vendor “Red Hat, Inc.” to <code>pkg:rpm/redhat/…</code> and adds <code>supplier: Organization: Red Hat</code> to those RPMs; everything else is the same.</td></tr>
-    <tr><th>Code path</th><td>
-      <a href="https://github.com/lucasgarfield/image-builder/blob/d87a70fbd71eccf42a1fc1571a2aca0f332e094a/pkg/manifestgen/manifestgen.go#L267-L298" target="_blank" rel="noopener">manifestgen payloadPackages</a> →
-      <a href="https://github.com/lucasgarfield/image-builder/blob/d87a70fbd71eccf42a1fc1571a2aca0f332e094a/cmd/image-builder/main.go#L949-L956" target="_blank" rel="noopener">build finishes</a> →
-      <a href="https://github.com/lucasgarfield/image-builder/blob/d87a70fbd71eccf42a1fc1571a2aca0f332e094a/cmd/image-builder/sbom.go#L15-L72" target="_blank" rel="noopener">writeImageSBOM</a> (hash image, then
-      <a href="https://github.com/lucasgarfield/image-builder/blob/d87a70fbd71eccf42a1fc1571a2aca0f332e094a/pkg/sbom/sbom.go#L73-L121" target="_blank" rel="noopener">sbom.Generate</a>) →
-      <a href="https://github.com/protobom/protobom/blob/v0.6.2/pkg/native/serializers/serializer_spdx23.go" target="_blank" rel="noopener">protobom v0.6.2 SPDX 2.3 writer</a>.
-      <code>task build-image --with-sbom</code> uses the same writer with the package list saved by <code>task init</code>.
-    </td></tr>
-  </table>
-</section>
-
-<section id="validation-sec">
-  <h2>Validation (run 2026-11-16)</h2>
-  <table class="kv">
-    <tr><th>JSON parse</th><td><span class="pass">pass</span></td></tr>
-    <tr><th>SPDX 2.3 JSON schema</th><td><span class="pass">pass</span>, 0 errors: official schema at <a href="https://raw.githubusercontent.com/spdx/spdx-spec/v2.3/schemas/spdx-schema.json" target="_blank" rel="noopener">spdx-spec v2.3</a>, and ProdSec's copy <code>sbom/spdx-2.3-schema.json</code> in <a href="https://github.com/RedHatProductSecurity/security-data-guidelines" target="_blank" rel="noopener">security-data-guidelines</a> (python-jsonschema, Draft 7).</td></tr>
-    <tr><th>spdx-tools</th><td><span class="pass">valid</span>: <code>pyspdxtools -i</code> (<a href="https://github.com/spdx/tools-python" target="_blank" rel="noopener">spdx-tools</a> 0.8.5), exit 0.</td></tr>
-    <tr><th>SBOM-Grader</th><td><span class="warn">grade D</span> with <a href="https://pypi.org/project/sbomgrader/" target="_blank" rel="noopener">sbomgrader</a> 0.2.5, the tool ProdSec's <a href="https://redhatproductsecurity.github.io/security-data-guidelines/sbom-details/#compliance-validation" target="_blank" rel="noopener">Compliance Validation</a> section names.
-      It has no disk-image profile, so we used <code>--content-type generic</code> (build and release cookbooks; same result).
-      All MUST rules pass. SHOULD failures: <a href="#f-root-not-versionInfo">versionInfo</a>, <a href="#f-root-not-purl">externalRef (purl)</a> and <a href="#f-root-not-supplier">supplier</a> on <code>packages[0]</code>, the root image (Q1, Q3).
-      The grader reports only the first failing element; the 474 CentOS RPMs have no supplier either (Q4).
-      The release cookbook reports “RPM packages have a repository_id qualifier” as passing although no purl has one; we did not investigate why.</td></tr>
-  </table>
-</section>
-
-<section id="compare-sec">
-  <h2>Compared with Red Hat's published RHEL SBOM</h2>
-  <p class="intro">Not like-for-like: <a href="https://security.access.redhat.com/data/sbom/v1/spdx/rhel-9.6.z.json.bz2" target="_blank" rel="noopener">rhel-9.6.z</a> is a release-time product SBOM (created 2026-10-20, 265,033 packages); ours is a build-time SBOM for one image. Values below were read from that file.</p>
-  <table class="cmp">
-    <thead><tr><th>Field</th><th>RHEL 9.6.z product SBOM</th><th>This image SBOM</th></tr></thead>
-    <tbody>
-      <tr><td>creators</td><td><code>Organization: Red Hat Product Security (secalert@redhat.com)</code> only</td><td>Two <code>Tool:</code> entries, no Organization (Q3)</td></tr>
-      <tr><td>documentNamespace</td><td><code>https://security.access.redhat.com/data/sbom/v1/spdx/rhel-9.6.z/2026-10-20/&lt;sha256&gt;</code></td><td><code>https://osbuild.org/spdxdocs/&lt;name&gt;-&lt;uuid4&gt;</code> (Q6)</td></tr>
-      <tr><td>Root package</td><td>Product: name <code>rhel-9.6.z</code>, supplier Red Hat, CPEs, no purl</td><td>Disk image: name, file name, SHA-256; no purl/version/supplier (Q1)</td></tr>
-      <tr><td>RPM purl</td><td><code>pkg:rpm/redhat/…?arch=…&amp;repository_id=…</code></td><td><code>pkg:rpm/centos/…?arch=…&amp;epoch=…</code>, no repository_id (Q2)</td></tr>
-      <tr><td>RPM supplier</td><td><code>Organization: Red Hat</code></td><td>Only for Red Hat-vendor RPMs; none here (Q4)</td></tr>
-      <tr><td>RPM checksums / packageFileName</td><td>Absent on all 46,816 RPM entries</td><td>SHA-256 of the RPM file; NVRA file name</td></tr>
-      <tr><td>RPM licenses</td><td>Absent on all 46,816 RPM entries</td><td>Absent (Q5)</td></tr>
-    </tbody>
-  </table>
-</section>
-
-<section id="fields-sec">
-  <h2>All field notes</h2>
-  <p class="intro">The same notes as the side panel, in one table. Field paths: <code>root.*</code> is the disk image package, <code>rpm.*</code> the representative RPM, <code>rel.*</code> relationships; “(not emitted)” rows are fields the code does not write.</p>
-  <table id="fields" class="fields">
-    <thead><tr><th>Field</th><th></th><th>What it is</th><th>Code</th><th>Guidance</th></tr></thead>
-    <tbody></tbody>
-  </table>
-</section>
-
-<section id="sources-sec">
-  <h2>Sources</h2>
-  <p class="intro">All links checked on 2026-11-16. Quotes are from the ProdSec pages as published at commit
-    <a href="https://github.com/RedHatProductSecurity/security-data-guidelines/tree/493e5efe29c5bb796bd38a43406dfc2e951c4b78" target="_blank" rel="noopener"><code>493e5ef</code></a> (2026-11-12).
-    We found <strong>no published ProdSec guidance for disk or VM images</strong>; notes that cite the generic-archive or container-image sections use them as the closest match.</p>
-  <ul class="sources">
-    <li><strong>Red Hat Product Security</strong>:
-      <a href="https://redhatproductsecurity.github.io/security-data-guidelines/sbom/" target="_blank" rel="noopener">SBOM Overview</a> ·
-      <a href="https://redhatproductsecurity.github.io/security-data-guidelines/sbom-details/" target="_blank" rel="noopener">SBOM Details</a> ·
-      <a href="https://redhatproductsecurity.github.io/security-data-guidelines/purl/" target="_blank" rel="noopener">purl guidance</a> ·
-      <a href="https://security.access.redhat.com/data/meta/v1/repository-to-cpe.json" target="_blank" rel="noopener">repository-to-cpe.json</a> ·
-      <a href="https://security.access.redhat.com/data/sbom/v1/" target="_blank" rel="noopener">published SBOMs</a> ·
-      <a href="https://access.redhat.com/articles/5554431" target="_blank" rel="noopener">Security Data changelog</a></li>
-    <li><strong>Konflux</strong>:
-      <a href="https://konflux-ci.dev/docs/metadata/sboms/" target="_blank" rel="noopener">Inspecting artifact SBOMs</a> ·
-      <a href="https://konflux-ci.dev/mobster/sboms/sbom_lifecycle/" target="_blank" rel="noopener">Mobster SBOM lifecycle</a> ·
-      <a href="https://konflux-ci.dev/mobster/sboms/oci_artifact/" target="_blank" rel="noopener">Mobster OCI artifact SBOM</a></li>
-    <li><strong>Conforma (Enterprise Contract)</strong>:
-      <a href="https://conforma.dev/docs/policy/packages/release_sbom_spdx.html" target="_blank" rel="noopener">sbom_spdx rules</a> (valid, contains_packages, contains_files, matches_image, …) ·
-      <a href="https://conforma.dev/docs/policy/packages/release_rpm_repos.html" target="_blank" rel="noopener">rpm_repos rules</a> (repository_id required; “Currently this is rule enforced only for SBOM components created by cachi2.”)</li>
-    <li><strong>SPDX 2.3</strong>:
-      <a href="https://spdx.github.io/spdx-spec/v2.3.1/document-creation-information/" target="_blank" rel="noopener">§6 Document creation</a> ·
-      <a href="https://spdx.github.io/spdx-spec/v2.3.1/package-information/" target="_blank" rel="noopener">§7 Package</a> ·
-      <a href="https://spdx.github.io/spdx-spec/v2.3.1/relationships-between-SPDX-elements/" target="_blank" rel="noopener">§11 Relationships</a> ·
-      <a href="https://spdx.github.io/spdx-spec/v2.3.1/annotations/" target="_blank" rel="noopener">§12 Annotations</a></li>
-    <li><strong>purl spec</strong>:
-      <a href="https://packageurl.org/docs/purl-spec/types/definitions/rpm-definition" target="_blank" rel="noopener">rpm</a> ·
-      <a href="https://packageurl.org/docs/purl-spec/types/definitions/generic-definition" target="_blank" rel="noopener">generic</a> ·
-      <a href="https://packageurl.org/docs/purl-spec/types/definitions/oci-definition" target="_blank" rel="noopener">oci</a></li>
-    <li><strong>Licensing</strong>: <a href="https://docs.fedoraproject.org/en-US/legal/update-existing-packages/" target="_blank" rel="noopener">Fedora Legal: Callaway-to-SPDX migration</a> (“In July 2022 Fedora adopted the use of SPDX license expressions in place of the legacy Callaway system”)</li>
-  </ul>
-</section>
-
 </main>
-<footer class="wrap foot">Prepared by Lucas Garfield (osbuild). Static page; source data is the unmodified SBOM in <code>data/</code>.</footer>
 <script src="js/data.js"></script>
 <script src="js/app.js"></script>
 </body>

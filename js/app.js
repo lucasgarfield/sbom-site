@@ -13,8 +13,7 @@
     return e;
   };
   const slug = (p) => "f-" + p.replace(/\[\]/g, "-arr").replace(/@/g, "not-").replace(/[^A-Za-z0-9-]+/g, "-");
-  const qSlug = (id) => "q-" + id.toLowerCase();
-  const disp = (p) => p.replace(/\.@(.*)$/, ".$1 (not emitted)");
+    const disp = (p) => p.replace(/\.@(.*)$/, ".$1 (not emitted)");
 
   let ctx = {}; // rootIdx, repIdx, describesIdx, containsIdx
 
@@ -25,17 +24,6 @@
     a.target = "_blank";
     a.rel = "noopener";
     return a;
-  }
-
-  function badgeFor(path) {
-    const n = P.NOTES[path];
-    if (!n) return null;
-    const b = el("button", "badge " + (n.status === "q" ? "badge-q" : n.status === "ok" ? "badge-ok" : "badge-info"));
-    b.type = "button";
-    b.textContent = n.status === "q" ? n.q : n.status === "ok" ? "✓ note" : "note";
-    b.title = n.status === "q" ? "Open question " + n.q + ": click for details" : "Click for field details";
-    b.addEventListener("click", (ev) => { ev.stopPropagation(); select(path, true); });
-    return b;
   }
 
   // ------------------------------------------------------------ JSON renderer
@@ -65,7 +53,6 @@
     d.style.paddingLeft = (depth * 2 + 2) + "ch";
     if (path && P.NOTES[path]) {
       d.classList.add("has-note");
-      if (P.NOTES[path].status === "q") d.classList.add("has-q");
       d.dataset.path = path;
       // first occurrence wins the anchor id
       if (!document.getElementById(slug(path))) d.id = slug(path);
@@ -85,8 +72,6 @@
 
   function appendTail(d, last, path) {
     if (!last) d.appendChild(el("span", "p", ","));
-    const b = path ? badgeFor(path) : null;
-    if (b) d.appendChild(b);
   }
 
   function summaryFor(v) {
@@ -124,7 +109,7 @@
     open.appendChild(tailWhenCollapsed);
     appendTail(open, true, path);
     const lastComma = !last;
-    if (lastComma) { const c = el("span", "p comma-collapsed", ","); open.insertBefore(c, open.querySelector(".badge")); }
+    if (lastComma) open.appendChild(el("span", "p comma-collapsed", ","));
     node.appendChild(open);
 
     const kids = el("div", "kids");
@@ -140,13 +125,12 @@
         renderBigArray(kids, v, depth + 1, path);
       } else if (isArr) {
         v.forEach((item, i) => render(kids, item, null, depth + 1, i === v.length - 1, childPath(path, null, i)));
+        (P.GHOSTS[path] || []).forEach((g) => kids.appendChild(ghostLine(depth + 1, g)));
       } else {
         const keys = Object.keys(v);
-        const ghosts = path && P.GHOSTS[path] ? P.GHOSTS[path] : [];
         keys.forEach((k, i) => render(kids, v[k], k, depth + 1, i === keys.length - 1, childPath(path, k)));
-        ghosts.forEach((g) => kids.appendChild(ghostLine(depth + 1, g)));
+        (P.GHOSTS[path] || []).forEach((g) => kids.appendChild(ghostLine(depth + 1, g)));
       }
-      if (isArr && P.GHOSTS[path]) P.GHOSTS[path].forEach((g) => kids.appendChild(ghostLine(depth + 1, g)));
     };
 
     const setCollapsed = (c) => {
@@ -163,12 +147,9 @@
   }
 
   function ghostLine(depth, path) {
-    const n = P.NOTES[path];
     const d = line(depth, path);
     d.classList.add("ghost");
-    d.appendChild(el("span", "ghost-text", "not emitted: " + n.label));
-    const b = badgeFor(path);
-    if (b) d.appendChild(b);
+    d.appendChild(el("span", "ghost-text", "not emitted: " + P.NOTES[path].label));
     return d;
   }
 
@@ -213,19 +194,10 @@
     const f = document.createDocumentFragment();
     const head = el("div", "note-head");
     head.appendChild(el("code", "note-path", disp(path)));
-    const st = el("span", "chip " + (n.status === "q" ? "chip-q" : n.status === "ok" ? "chip-ok" : "chip-info"),
-      n.status === "q" ? "Open question " + n.q : n.status === "ok" ? "Matches guidance" : "Informational");
-    head.appendChild(st);
     f.appendChild(head);
     f.appendChild(el("p", "note-what", n.what));
-    if (n.code && n.code.length) {
-      f.appendChild(el("h4", "", "Where it comes from"));
-      const ul = el("ul", "note-list");
-      n.code.forEach((c) => { const li = el("li"); li.appendChild(link(c, "code-link")); ul.appendChild(li); });
-      f.appendChild(ul);
-    }
     if (n.req && n.req.length) {
-      f.appendChild(el("h4", "", "Requirement / guidance"));
+      f.appendChild(el("h4", "", "Red Hat / SPDX guidance"));
       const ul = el("ul", "note-list");
       n.req.forEach((r) => {
         const li = el("li");
@@ -234,11 +206,6 @@
         ul.appendChild(li);
       });
       f.appendChild(ul);
-    }
-    if (n.status === "q") {
-      const a = el("a", "q-jump", "→ " + n.q + " in Open questions");
-      a.href = "#" + qSlug(n.q);
-      f.appendChild(a);
     }
     return f;
   }
@@ -249,7 +216,6 @@
     const panel = $("#note-body");
     panel.innerHTML = "";
     panel.appendChild(noteContent(path, n));
-    $("#note").classList.toggle("note-q", n.status === "q");
     const target = document.getElementById(slug(path));
     if (selectedEl) selectedEl.classList.remove("selected");
     if (target) { target.classList.add("selected"); selectedEl = target; }
@@ -271,77 +237,8 @@
     return true;
   }
 
-  // ------------------------------------------------------------ questions + table
-  function renderQuestions() {
-    const box = $("#questions");
-    P.QUESTIONS.forEach((q) => {
-      const card = el("article", "qcard");
-      card.id = qSlug(q.id);
-      const h = el("h3");
-      h.appendChild(el("span", "qid", q.id));
-      h.appendChild(document.createTextNode(" " + q.title));
-      card.appendChild(h);
-      card.appendChild(el("p", "qq", q.question));
-      const cur = el("p", "qcur");
-      cur.appendChild(el("strong", "", "Today: "));
-      cur.appendChild(document.createTextNode(q.current));
-      card.appendChild(cur);
-      const ol = el("ol", "qopts");
-      q.options.forEach((o) => ol.appendChild(el("li", "", o)));
-      const optH = el("p", "qopt-h", "Options");
-      card.appendChild(optH);
-      card.appendChild(ol);
-      const foot = el("div", "qfoot");
-      const fl = el("span", "qfields");
-      fl.appendChild(el("span", "lbl", "In the JSON: "));
-      [...new Set(q.fields)].forEach((f) => {
-        const a = el("a", "field-link", disp(f));
-        a.href = "#" + slug(f);
-        fl.appendChild(a);
-      });
-      foot.appendChild(fl);
-      const rl = el("span", "qrefs");
-      rl.appendChild(el("span", "lbl", "Sources: "));
-      q.refs.forEach((r, i) => { if (i) rl.appendChild(document.createTextNode(" · ")); rl.appendChild(link(r)); });
-      foot.appendChild(rl);
-      card.appendChild(foot);
-      box.appendChild(card);
-    });
-    const toc = $("#qtoc");
-    P.QUESTIONS.forEach((q) => {
-      const li = el("li");
-      const a = el("a", "", q.id + " " + q.title);
-      a.href = "#" + qSlug(q.id);
-      li.appendChild(a);
-      toc.appendChild(li);
-    });
-  }
-
-  function renderFieldTable() {
-    const tb = $("#fields tbody");
-    Object.keys(P.NOTES).forEach((path) => {
-      const n = P.NOTES[path];
-      const tr = el("tr", n.status === "q" ? "row-q" : "");
-      const td1 = el("td");
-      const a = el("a", "field-link", disp(path));
-      a.href = "#" + slug(path);
-      td1.appendChild(a);
-      const td2 = el("td");
-      td2.appendChild(el("span", "chip " + (n.status === "q" ? "chip-q" : n.status === "ok" ? "chip-ok" : "chip-info"), n.status === "q" ? n.q : n.status === "ok" ? "OK" : "info"));
-      const td3 = el("td", "", n.what);
-      const td4 = el("td");
-      (n.code || []).forEach((c, i) => { if (i) td4.appendChild(el("br")); td4.appendChild(link(c, "code-link")); });
-      const td5 = el("td");
-      (n.req || []).forEach((r, i) => { if (i) td5.appendChild(el("br")); td5.appendChild(link(r.src, "src-link")); });
-      [td1, td2, td3, td4, td5].forEach((t) => tr.appendChild(t));
-      tb.appendChild(tr);
-    });
-  }
-
   // ------------------------------------------------------------ boot
   async function boot() {
-    renderQuestions();
-    renderFieldTable();
     let doc;
     try {
       const res = await fetch(SBOM_URL);
@@ -361,8 +258,6 @@
     ctx.describesIdx = desc;
     ctx.containsIdx = rels.findIndex((r) => r.relationshipType === "CONTAINS" && r.relatedSpdxElement === repId);
 
-    $("#stat-pk").textContent = String(pk.length);
-    $("#stat-rel").textContent = String(rels.length);
 
     const root = $("#json");
     root.innerHTML = "";
@@ -376,11 +271,8 @@
       if (h.startsWith("f-")) revealAndSelect(h);
     };
     window.addEventListener("hashchange", go);
-    if (location.hash) go(); else select("root", false);
+    if (location.hash) go();
 
-    $("#btn-expand").addEventListener("click", () => {
-      document.querySelectorAll("#json .gap-line").forEach((g) => g.click());
-    });
     window.SBOM_READY = true;
   }
 
